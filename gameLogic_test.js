@@ -250,12 +250,6 @@ describe("Rummikub Unit Tests", function() {
     }));
 
 
-    /**
-     *
-     * @param turnIndexBeforeMove
-     * @param stateBeforeMove dictionary of state.
-     * @param move array of operations in the move.
-     */
     function expectMoveOk(turnIndexBeforeMove, stateBeforeMove, move) {
         expect(_service.isMoveOk( {
             turnIndexBeforeMove: turnIndexBeforeMove,
@@ -270,14 +264,49 @@ describe("Rummikub Unit Tests", function() {
             move: move})).toBe(false);
     }
 
-    it ("[Right] check initial move", function() {
-        expectMoveOk(0, defaultState, initMove);
+    describe("Corner case unit tests", function(){
+        it ("[Right] check initial move", function() {
+            expectMoveOk(0, defaultState, initMove);
+        });
+
+        it ("[Wrong] null move ", function(){
+            expectIllegalMove(0, {}, null);
+        });
+        
+        it ("[Wrong] empty move ", function(){
+            expectIllegalMove(0, {}, [ ]);
+        });
+
+        it ("[Wrong] init should be first move", function(){
+            expectIllegalMove(0, {nplayer: 3}, [
+                {setTurn: {turnIndex: 1}},
+                {set: {key: 'type', value: "PICK"}},
+                {setVisibility: {key: 'tile28', visibleToPlayerIndices: [0]}},
+                {
+                    set: {
+                        key: 'player0', value: {
+                            initial : false,
+                tiles   : [0,1,2,3,4,5,6,7,8,9,10,11,12,13,28],
+                lastTurn: [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+                        }
+                    }
+                },
+                {set: {key: 'nexttile', value: 29}}
+            ]);
+
+            expectIllegalMove(0, {nplayer: 3}, [
+                {setTurn: {turnIndex: 1}},
+                {set: {key: 'type', value: "MELD"}}
+            ]);
+            
+        });
+
+        it ("[Wrong] only player0 can play the initial move", function() {
+            expectIllegalMove(1, defaultState, initMove);
+            expectIllegalMove(6, defaultState, initMove);
+        });
     });
 
-    it ("[Wrong] only player0 can play the initial move", function() {
-        expectIllegalMove(1, defaultState, initMove);
-        expectIllegalMove(6, defaultState, initMove);
-    });
 
     describe("Two Players Mode", function() {
         nPlayers = 2;

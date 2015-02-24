@@ -62,8 +62,8 @@
             var stateBefore = param.stateBeforeMove;
             var actualMove  = param.move;
             var expectedMove;
-            var type = actualMove[1].set.value;
             try {
+                var type = actualMove[1].set.value;
                 switch (type) {
                     case "INIT":
                         check(Object.keys(stateBefore).length === 1 && !angular.isUndefined(stateBefore.nplayers),
