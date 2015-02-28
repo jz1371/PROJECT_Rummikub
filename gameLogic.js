@@ -18,13 +18,12 @@
      * I. The game state is represented by the following elements:
      *
      * 1. for each player: 
-     *    player:  { "initial" : true/false,  // whether initialled meld
-     *               "tiles"   : [ array of indices of tiles player holds ],
-     *               "lastTurn": [ array of indices of tiles player held in last turn] }
+     *    player:  { "initial" : true/false,       // whether initialled meld
+     *               "tiles"   : [ array of indices of tiles player holds in hand ],
      *
      * 2. board: 2D array of tile indices of size 6 rows and 20 columns.
      *
-     * 3. turnfinish: whether current turn is finished
+     * 3. tilesSentToBoardThisTurn: array of tiles, which are sent to board in current turn.
      *
      * 4. tiles: array of 'tile".
      *    non-joker tile: {color: (RED/BLUE/ORANGE/BLACK), score: (1/2/3/.../13) }
@@ -36,13 +35,15 @@
      * 
      *---------------------------------------------------------------------------------- 
      *
-     * II. operation: the operation player chooses for current move.
+     * II. Operations: the operation player chooses for current move.
      *
-     *    "PICK", pick one tile from tile pool.
-     *    "MELD", make valid groups to meld.
-     *    "SEND", send one tile from player to board.
-     *    "RETRIEVE", retrieve one tile from board back to player.
-     *    "REPLACE", replace one tile in board to another position in board.
+     *    "PICK", pick one tile from tile pool. // will ends current turn and shifts to next player
+     *
+     *    "MELD", make valid groups to meld.    // will ends turn and shifts to next players
+     *      | --- "SEND"    , send one tile from player to board.
+     *      | --- "RETRIEVE", retrieve one tile (sent to board in current turn) from board back to player.
+     *      | --- "REPLACE" , replace one tile in board to another position in board.
+     *
      *    "UNDO", undo operations in this turn.
      *
      *
@@ -54,7 +55,7 @@
         /**
          * Checks whether given move is Ok or not.
          *
-         * @param param
+         * @param param (object) {turnIndexBeforeMove:(int), stateBeforeMove: (object), move:[]}
          * @returns {boolean}
          */
         function isMoveOk(param) {
@@ -63,8 +64,13 @@
             var actualMove  = param.move;
             var expectedMove;
             try {
-                var type = actualMove[1].set.value;
-                switch (type) {
+                var moveType = actualMove[1].set.value;
+                if (moveType !== "INIT") {
+                    check ( !isGameOver(stateBefore),
+                        "Game is over, you cannot move any more"
+                    );
+                }
+                switch (moveType) {
                     case "INIT":
                         check(Object.keys(stateBefore).length === 1 && !angular.isUndefined(stateBefore.nplayers),
                             "INIT: should assign number of players in the game."
@@ -72,10 +78,6 @@
                         expectedMove = getInitialMove(playerIndex, stateBefore.nplayers);
                         break;
                     case "PICK":
-                        var typeBefore = stateBefore.type;
-                        check(typeBefore !== "SEND" && typeBefore !== "RETRIEVE" && typeBefore !== "REPLACE",
-                            "PICK: last type = " + typeBefore + ", but last move cannot involve move[SEND/RETRIEVE/REPLACE] towards meld"
-                        );
                         expectedMove = getPickFromPoolMove(stateBefore, playerIndex);
                         break;
                     case "SEND":
@@ -92,22 +94,25 @@
                         expectedMove = getReplaceMove(stateBefore, playerIndex, from, to);
                         break;
                     case "MELD":
-                        /* move example: (player0 is playing, 4 players in total)
-                         * [{set: {key: 'delta', value: {row: 0, col: 0},   // assume board[0][0] = 13
-                         *  {set: {key: 'board', value: [[-1,-1,-1,...],[-1,-1,...],...]]},
-                         *  {set: {key: 'player0', value: {initial: true, tiles: [1,2,3,...12, 13], lastTurn: [1,2,3,...13]},
-                         *  {setVisibility: {key: 'tile13', visibleToPlayerIndices: [0]}]  // ? need this ?
-                         */
-                        var turnFinish = stateBefore.turnfinish;
-                        check (turnFinish === false,
-                            "MELD: last type = " + typeBefore + ", but last move should be move[SEND/RETRIEVE/REPLACE] towards meld"
-                        );
                         expectedMove = getMeldMove(stateBefore, playerIndex);
                         break;
                     default:
                         throw new Error("Unexpected move");
                 }
                 if (!angular.equals(actualMove, expectedMove)) {
+                    //var len1 = Object.keys(actualMove).length;
+                    //var len2 = Object.keys(expectedMove).length;
+                    //if (len1 !== len2) {
+                    //    console.log("len is different. act: " + len1 + " , exp: " + len2);
+                    //} else {
+                    //    for (var i = 0; i < len1; i++) {
+                    //        if ( !angular.equals(actualMove[i], expectedMove[i])) {
+                    //            console.log("different at " + i);
+                    //            console.log("act: " + actualMove[i].set.value);
+                    //            console.log("exp: " + expectedMove[i].set.value);
+                    //        }
+                    //    }
+                    //}
                     return false;
                 }
             } catch (e) {
@@ -115,33 +120,6 @@
                 return false;
             }
             return true;
-        }
-
-        /**
-         * Gets index of winning player. returns -1 if no player wins.
-         * After game is on, player with no tiles left in hand is the winner.
-         *
-         * @param state
-         * @returns {number}
-         */
-        function getWinner(state) {
-            for (var i = 0; i < state.nplayers; i++) {
-                if ( state["player" + i].tiles.length === 0
-                    && state["player" + i].lastTurn.length === 0 ) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        /**
-         * Checks if game is tied. Game is tied when tile pool is empty
-         * and no player can make valid move any more.
-         *
-         * @returns {boolean}
-         */
-        function isTie() {
-            return false;
         }
 
         /**
@@ -167,7 +145,8 @@
             var move = [
                 {setTurn: {turnIndex: 0}},
                 {set: {key: 'type', value: "INIT"}},
-                {set: {key: 'board', value: getGameBoard()}},
+                {set: {key: 'tilesSentToBoardThisTurn', value: []}},
+                {set: {key: 'board', value: getGameBoard(undefined)}},
             ];
 
             // 3.1. initialize game tiles and shuffle keys
@@ -189,7 +168,7 @@
                 var player = {
                     set: {
                         key: 'player' + i,
-                        value: {initial: false, tiles: playerTile, lastTurn: []}
+                        value: {initial: false, tiles: playerTile}
                 }};
                 players.push(player);
             }
@@ -213,7 +192,7 @@
         }
 
         /**
-         * Picks one tile from tile pool, and adds it to player's rack,
+         * Picks one tile from tile pool, and adds it to player's hand,
          * finishes this turn and shifts game turn to next player.
          *
          * @param stateBeforeMove (object)
@@ -225,13 +204,25 @@
             // 1. make sure valid player.
             var player = getPlayer(stateBeforeMove, playerIndex);
 
-            // 2. make sure picking next available tile based on last turn
-            var tileToPick = stateBeforeMove.nexttile;
-            check (tileToPick < 106, "Pick: picking tile" + tileToPick + ", but tile index should be [0, 106]" );
+            // 2. make sure player did not sent any tile to board during this turn.
+            check (stateBeforeMove.tilesSentToBoardThisTurn.length === 0,
+                "PICK: you cannot pick, since you sent tile to board."
+            );
 
-            // 3. construct move operations.
+            // 3. player is able to replace tiles throughout the board, but before picking,
+            //    he should restore the 'able-to-meld' state and retrieve all tiles he sent to board in this turn.
+            check (isMeldOk(stateBeforeMove, stateBeforeMove.board),
+                "PICK: you should not mess up the board, if you want to pick"
+            );
+
+            // 4. make sure picking next available tile based on last turn
+            var tileToPick = stateBeforeMove.nexttile;
+            check (tileToPick < 106,
+                "Pick: picking tile" + tileToPick + ", but tile index should be [0, 106]"
+            );
+
+            // 5. construct move operations.
             var playerAfter = angular.copy(player);
-            playerAfter.lastTurn = angular.copy(playerAfter.tiles);
             playerAfter.tiles.push(tileToPick);
 
             var pickMove = [
@@ -246,10 +237,10 @@
         }
 
         /**
-         * Sends one tile from player to board.
+         * Sends one tile from player's hand to board.
          *
          * @param stateBefore
-         * @param playerIndex
+         * @param playerIndex (int)
          * @param to (object) {tile:(int), row:(int), col:(int)}
          * @returns {*[]}
          */
@@ -282,30 +273,20 @@
                 + ", you cannot send to this non-empty position in board."
             );
 
-            // 5. check if game is over.
-            check( getWinner(stateBefore) !== -1 || isTie() === false ), (
-                "Send: game is over, you cannot move any more"
-            );
-
-            // 6. construct move operations.
+            // 5. construct move operations.
             var boardAfter = angular.copy(board);
             boardAfter[row][col] = tileToSend;
-
-            // 6.1 whether need to change tiles in lastTurn based
             var playerAfter = angular.copy(player);
-            var typeFinish = stateBefore.turnfinish;
-            if ( typeFinish ) {
-                // need to change lastTurn, because starting a new turn towards meld
-                var lastTurn = angular.copy(playerAfter.tiles);
-                playerAfter.lastTurn = lastTurn;
-            }
             playerAfter.tiles.splice(playerAfter.tiles.indexOf(tileToSend), 1);
+            var tilesAfter = angular.copy(stateBefore.tilesSentToBoardThisTurn);
+            tilesAfter.push(tileToSend);
 
             var sendMove = [
                 {setTurn: {turnIndex: playerIndex}},     // 'send' move will not change game turn.
                 {set: {key: 'type' , value: "SEND"}},
                 {set: {key: 'todelta', value: to}},
                 {set: {key: 'player' + playerIndex, value: playerAfter}},
+                {set: {key: 'tilesSentToBoardThisTurn', value: tilesAfter}},
                 {set: {key: 'board', value: boardAfter}},
                 {setVisibility: {key: 'tile' + tileToSend, visibleToPlayerIndices: getRestPlayers(playerIndex, stateBefore.nplayers)}}
             ];
@@ -319,7 +300,7 @@
          *
          * @param stateBefore
          * @param playerIndex
-         * @param from
+         * @param from (object) {row:(int), col(int)}
          * @returns {*[]}
          */
         function getRetrieveFromBoardMove(stateBefore, playerIndex, from) {
@@ -330,37 +311,36 @@
             // 2. make sure correct player index.
             var player = getPlayer(stateBefore, playerIndex);
 
-            // 3. make sure tile to retrieve belongs to player before this move
+            // 3. make sure retrieving an existing tile in board
             var row = from.row;
             var col = from.col;
             checkPositionWithinBoard(board, row, col);
             var tileToRetrieve = board[row][col];
             check (tileToRetrieve !== -1,
-                "Retrieve: no tile in board[" + row + "," + col + "]"
+                "RETRIEVE: no tile in board[" + row + "," + col + "]"
             );
 
-            // 4. make sure tile retrieving belongs to player in the last turn.
-            check ( player.lastTurn.indexOf(tileToRetrieve) !== -1,
-                "Retrieve: retrieving tile" + tileToRetrieve
-                + ", but you should retrieve your own tile: [" + player.tiles + "]"
+            // 4. make sure tile retrieving was sent by player in this turn
+            var index = stateBefore.tilesSentToBoardThisTurn.indexOf(tileToRetrieve);
+            check ( -1 !== index,
+                "RETRIEVE: retrieving tile" + tileToRetrieve +
+                ", but it is not your hand:[" + stateBefore.tilesSentToBoardThisTurn + "]."
             );
 
-            // 5. check if game is over.
-            check( getWinner(stateBefore) !== -1 || isTie() === false ), (
-                "Retrieve: game is over, you cannot move any more"
-            );
-
-            // 6. construct move operations.
+            // 5. construct move operations.
             var boardAfter = angular.copy(board);
             boardAfter[row][col] = -1;
             var playerAfter = angular.copy(player);
             playerAfter.tiles.push(tileToRetrieve);
+            var tilesAfter = angular.copy(stateBefore.tilesSentToBoardThisTurn);
+            tilesAfter.splice(index, 1);
 
             var retrieveMove = [
                 {setTurn: {turnIndex: playerIndex}},     // 'retrieve' move will not change game turn.
                 {set: {key: 'type' , value: "RETRIEVE"}},
                 {set: {key: 'fromdelta', value: from}},
                 {set: {key: 'player' + playerIndex, value: playerAfter}},
+                {set: {key: 'tilesSentToBoardThisTurn', value: tilesAfter}},
                 {set: {key: 'board', value: boardAfter}},
                 {setVisibility: {key: 'tile' + tileToRetrieve, visibleToPlayerIndices: [playerIndex]}}
             ];
@@ -374,8 +354,8 @@
          *
          * @param stateBefore
          * @param playerIndex
-         * @param from
-         * @param to
+         * @param from (object) {row:(int),col:(int)}
+         * @param to (object) {row:(int),col:(int)}
          * @returns {*[]}
          */
         function getReplaceMove(stateBefore, playerIndex, from, to) {
@@ -423,15 +403,16 @@
          * @returns {Array}
          */
         function getMeldMove(stateBefore, playerIndex) {
+            // 0. check player has sent as least one tile from hand to board during this turn.
+            check (stateBefore.tilesSentToBoardThisTurn.length !== 0,
+                "MELD: you cannot meld since no tiles sent to board in this turn"
+            );
+
             // 1. get game board
             var board = getGameBoard(stateBefore.board);
 
             // 2. get valid player
             var player = getPlayer(stateBefore, playerIndex);
-
-            check( (getWinner(stateBefore) || isTie()),
-                "Meld: cannot move any more after game is over"
-            );
 
             // 3. check all sets in board are valid sets (runs or groups)
             var setsInBoard = [];
@@ -449,7 +430,7 @@
             // 4. finish initial meld?
             // for player does not finish initial meld, intial meld needs score at least 30.
             if (player.initial ===  false) {
-                var score = getInitialMeldScore(stateBefore, setsInBoard, player.lastTurn);
+                var score = getInitialMeldScore(stateBefore, setsInBoard, stateBefore.tilesSentToBoardThisTurn);
                 check (score >= 30,
                     "Meld: score is " + score + ", but initial meld needs at least 30 score"
                 );
@@ -457,7 +438,7 @@
 
             // 5. check winner
             var firstOperation;
-            var hasPlayerWon = (player.tiles.length === 0 && player.lastTurn.length !== 0);
+            var hasPlayerWon = (player.tiles.length === 0 && (stateBefore.tilesSentToBoardThisTurn.length !== 0));
             if ( hasPlayerWon ) {
                 firstOperation = {endMatch: {endMatchScores: getEndScores(playerIndex, stateBefore)}};
             } else {
@@ -466,13 +447,12 @@
 
             var playerAfter = angular.copy(player);
             playerAfter.initial = true;
-            playerAfter.lastTurn = playerAfter.tiles;
 
             var meldMove = [
                 firstOperation,
                 {set: {key: 'type', value: "MELD"}},
-                {set: {key: 'turnfinish', value: true}},
                 {set: {key: 'player' + playerIndex, value: playerAfter}},
+                {set: {key: 'tilesSentToBoardThisTurn', value: []}}
             ];
 
             return meldMove;
@@ -484,6 +464,81 @@
         //    return [];
         //}
 
+        /**
+         * Gets all possible moves for the given game state and player index.
+         *
+         * @param stateBefore
+         * @param turnIndexBeforeMove
+         * @returns {Array} [[possible moves1], [possible moves2],...]
+         */
+        //function getPossibleMoves(stateBefore,  playerIndex) {
+        //    var nPlayers = stateBefore.nplayers;
+        //    var possibleMoves = [];
+        //    try {
+        //        if (Object.keys(stateBefore).length === 1 && !angular.isUndefined(stateBefore.nplayers)) {
+        //            // case 1: move can be: ("INIT")
+        //            //         It is new game, only initial move is possible.
+        //            possibleMoves.push( getInitialMove(playerIndex, nPlayers) );
+        //        } else if (stateBefore.tilesSentToBoardThisTurn.length === 0) {
+        //            // case 2: move can be: ("PICK" | "SEND" | "REPLACE")
+        //            //         It is new turn for player, player can choose either "PICK" move or
+        //            //         move towards "MELD", (i.e. "SEND"|"REPLACE"|"RETRIEVE"). Because this will
+        //            //         will be the 1st move in new turn, player has not sent any tile to board,
+        //            //         so "RETRIEVE" move is not possible.
+        //
+        //            // possible "PICK" move
+        //            possibleMoves.push(getPickFromPoolMove(stateBefore, playerIndex));
+        //
+        //            // possible "SEND" moves
+        //            var positions = checkPossiblePositions(stateBefore.board);
+        //            var tos = positions["empty"];
+        //            var tilesInPlayerHand = stateBefore["player" + playerIndex].tiles;
+        //            for (var i = 0; i < tilesInPlayerHand.length; i++) {
+        //                for (var j = 0; j < tos.length; j++) {
+        //                    var to = {tile: tilesInPlayerHand[i], row: tos[j].row, col: tos[j].col};
+        //                    possibleMoves.push(getSendToBoardMove(stateBefore, playerIndex, to));
+        //                }
+        //            }
+        //
+        //            // possible "REPLACE" moves
+        //            var froms = positions["occupied"];
+        //            for (var i = 0; i < froms.length; i++) {
+        //                for (var j = 0; j < tos.length; j++) {
+        //                    var from = froms[i];
+        //                    var to = tos[j];
+        //                    possibleMoves.push(getReplaceMove(stateBefore, playerIndex, from, to));
+        //                }
+        //            }
+        //        } else {
+        //            // case 3: move can be ("SEND" | "REPLACE" | "RETRIEVE" | "MELD")
+        //            //         Player is still in turn towards meld.
+        //
+        //            // possible "SEND" move
+        //            possibleMoves.push(getSendToBoardMove(stateBefore, playerIndex, to));
+        //
+        //            // possible "REPLACE" moves
+        //            var positions = checkPossiblePositions(stateBefore.board);
+        //            var froms = positions["occupied"];
+        //            var tos = positions["empty"];
+        //            for (var i = 0; i < froms.length; i++) {
+        //                for (var j = 0; j < tos.length; j++) {
+        //                    possibleMoves.push(getReplaceMove(stateBefore, playerIndex, froms[i], tos[j]));
+        //                }
+        //            }
+        //
+        //            // possible "RETRIEVE" moves
+        //            for (var i = 0; i < froms.length; i++) {
+        //                possibleMoves.push(getRetrieveFromBoardMove(stateBefore, playerIndex, froms[i]));
+        //            }
+        //
+        //            // possible "MELD" move
+        //            possibleMoves.push(getMeldMove(stateBefore, playerIndex));
+        //        }
+        //    } catch (e) {
+        //        console.log("move is not ok");
+        //    }
+        //    return possibleMoves;
+        //}
 
         /* ===============   Helper Functions    =============== */
 
@@ -750,7 +805,7 @@
          * @param tilesLastTurn (array) of tile indices that player holding in last turn.
          * @returns {number}
          */
-        function getInitialMeldScore(state, setsInBoard, tilesLastTurn) {
+        function getInitialMeldScore(state, setsInBoard, tilesSentThisTurn) {
             var score = 0;
             for (var i = 0; i < setsInBoard.length; i++) {
                 var tilesAllFromPlayer = true;
@@ -758,7 +813,7 @@
                 for (var j = 0; j < setsInBoard[i].length; j++) {
                     var tileIndex = setsInBoard[i][j];
                     setScore += state["tile" + tileIndex].score;
-                    if (tilesLastTurn.indexOf(tileIndex) === -1) {
+                    if (tilesSentThisTurn.indexOf(tileIndex) === -1) {
                         // this tile is from opponent
                         tilesAllFromPlayer = false;
                         break;
@@ -821,10 +876,101 @@
             return result;
         }
 
+        /**
+         * return all empty positions in board and all occupied positions in board.
+         *
+         * @param board
+         * @returns {{empty: Array, occupied: Array}}
+         */
+        //function checkPossiblePositions(board) {
+        //    var empty = [];
+        //    var occupied = [];
+        //    var rows = board.length;
+        //    var cols = board[0].length;
+        //    for (var i = 0; i < rows; i++) {
+        //        for (var j = 0; j < cols; j++) {
+        //            if (board[i][j] == -1) {
+        //                empty.push({row: i, col: j});
+        //            } else {
+        //                occupied.push({row: i, col: j});
+        //            }
+        //        }
+        //    }
+        //    return {empty: empty, occupied: occupied};
+        //}
+
+        /**
+         * check whether current board can meld
+         *
+         * @param stateBefore
+         * @param board
+         * @returns {boolean}
+         */
+        function isMeldOk(stateBefore, board) {
+            var setsInBoard = [];
+            // get all 'sets' in board by scanning each row of board
+            for (var i = 0; i < board.length; i++) {
+                setsInBoard = setsInBoard.concat(parseRowToSets(board[i]));
+            }
+            for (var i = 0; i < setsInBoard.length; i++) {
+                var sets = getSetsOfTilesByIndex(setsInBoard[i], stateBefore);
+                if ( !isRuns(sets) && !isGroups(sets) ) {
+                    return false;
+                }
+            }
+            console.log("dwdafd");
+            return true;
+        }
+
+        /**
+         * check wether game is over.
+         *
+         * @param state
+         * @returns {boolean}
+         */
+        function isGameOver(state) {
+            return ((getWinner(state) !== -1) || isTie(state));
+        }
+
+        /**
+         * get index of winning player. returns -1 if no player wins.
+         * After game is on, player with no tiles left in hand is the winner.
+         *
+         * @param state
+         * @returns {number}
+         */
+        function getWinner(state) {
+            var hasLoser = false;
+            var winner = -1;
+            for (var i = 0; i < state.nplayers; i++) {
+                if ( state["player" + i].tiles.length === 0 && state.tilesSentToBoardThisTurn.length === 0) {
+                    winner = i;
+                } else {
+                    if (hasLoser === false) {
+                        hasLoser = true;
+                    }
+                }
+            }
+            // in case game is not initialized
+            return (hasLoser) ? winner : -1;
+        }
+
+        /**
+         * check if game is tied. Game is tied when tile pool is empty
+         * and no player can make valid move any more.
+         *
+         * @returns {boolean}
+         */
+        function isTie(state) {
+            return false;
+        }
+
+        /* ======= Return functions ======= */
         return {
             isMoveOk: isMoveOk,
             getInitialMove: getInitialMove,
-            getTileByIndex: getTileByIndex
+            getTileByIndex: getTileByIndex,
+            //getPossibleMoves: getPossibleMoves
         };
 
     });
