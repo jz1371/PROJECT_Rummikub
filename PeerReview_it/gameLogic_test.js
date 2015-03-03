@@ -266,6 +266,12 @@ describe("Rummikub Unit Tests", function() {
 
     })
 
+    /* By jz */
+    // possible test scenario for above test.
+    fit("Initial hand should be random, this test checks that for two initial states that change", function (){
+        expect(_service.getInitialMove(0, 4)).toEqual(_service.getInitialMove(0,4));
+    })
+
     it("Change the values of a tile and submit a move should be illegal", function(){
         var initialState = _service.getInitialMove(0, 4);
         //Illegally change a tile in the players hand (board now inconsistant
@@ -485,6 +491,89 @@ describe("Rummikub Unit Tests", function() {
         ]);
     });
 
+    /* By: jz */
+    // possible scenario for above unit test if it is "SEND" move
+    fit ("Expect move ok, send a single tile to the board to win", function() {
+        var stateBefore = state;
+        // player sent tile 26 to board
+        state.board = [
+            [-1,26,27,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+        ];
+        state.player1 = {
+            initial : true,
+            tiles   : [25]    /* player1 still holds tile25 in hand */
+        };
+        state.tilesSentToBoardThisTurn = [26]; /* player1 sent tile26 to board in last move */
 
+        expectMoveOk(1, stateBefore, [
+            {setTurn: {turnIndex: 1}},  /* next move should still be player1 */
+            {set: {key: "type", value: "SEND"}},
+            {set: {key: 'todelta', value: {tile: 25, row: 0, col: 0}}},  // set turn index to other player
+            {set: {key: 'player1', value: {
+                initial : true,
+                tiles   : []   /* after sending tile25 to board, player1 has no tile left in hand */
+            }}},
+            {set: {key: 'tilesSentToBoardThisTurn', value: [26, 25]}},  /* player1 sent tile25 after sending tile26 */
+            {set: {key: 'board', value: [
+               [25,26,27,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            ]}},
+            {setVisibility: {key: 'tile25', visibleToPlayerIndices: [0]}}
+        ]);
+    });
 
+     /* By: jz */
+    // possible scenario for unit test at Line 456 if it is "MELD" move
+    beforeEach(function setTiles(){
+        /* need to set tile in state */
+            for (var i = 0; i < 106; i++) {
+                state['tile' + i] = _service.getTileByIndex(i);
+            }
+    });
+
+    fit ("Expect move ok, send a single tile to the board to win", function() {
+        // game state after making the move in last unit test. (i.e. sending tile25 to board)
+        var stateBefore = state;
+            //{set: {key: 'tile25', value: {color: 'blue'  , score: 13}}},
+            //{set: {key: 'tile26', value: {color: 'red' , score:  1}}},
+            //{set: {key: 'tile27', value: {color: 'red' , score:  2}}},
+            // -> {tile25, tile26, tile27 is qualified for meld
+        state.board = [
+            [25,26,27,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+        ];
+        state.player1 = {
+            initial : true,  
+            tiles   : []     /* player1 has no tile left in hand */
+        };
+        state.player0 = {
+            initial : true,
+            tiles: [0]
+        }
+        state.tilesSentToBoardThisTurn = [26,25];    /* player1 sent tile25 to board in last move */
+
+        expectIllegalMove(1, stateBefore, [
+            {endMatch: {endMatchScores:[-1, 1]}}, /* player1 will win the match after he melds */
+            {set: {key: "type", value: "MELD"}},
+            {set: {key: 'player1', value: {
+                initial : true,
+                tiles   : []   /* after sending tile25 to board, player1 has no tile left in hand */
+            }}},
+            {set: {key: 'tilesSentToBoardThisTurn', value: []}},  /* after successful meld, tilesSentToBoardThisTurn is cleared */
+            ]
+            );
+    });
 });
