@@ -31,7 +31,7 @@ describe("Rummikub Unit Tests", function() {
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
                 [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
             ]}
             },
 
@@ -236,7 +236,7 @@ describe("Rummikub Unit Tests", function() {
             {setVisibility: {key: 'tile52', visibleToPlayerIndices: [3]}},
             {setVisibility: {key: 'tile53', visibleToPlayerIndices: [3]}},
             {setVisibility: {key: 'tile54', visibleToPlayerIndices: [3]}},
-            {setVisibility: {key: 'tile55', visibleToPlayerIndices: [3]}},
+            {setVisibility: {key: 'tile55', visibleToPlayerIndices: [3]}}
         ];
         move = move.concat( visibility.slice(0, 14 * nPlayers) );
 
@@ -326,7 +326,7 @@ describe("Rummikub Unit Tests", function() {
                     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
                     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
                     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
                 ]}},
                 {setVisibility: {key: 'tile13', visibleToPlayerIndices: [(1 - playerIndex)]}}
             ];
