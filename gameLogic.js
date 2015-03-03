@@ -471,74 +471,90 @@
          * @param turnIndexBeforeMove
          * @returns {Array} [[possible moves1], [possible moves2],...]
          */
-        //function getPossibleMoves(stateBefore,  playerIndex) {
-        //    var nPlayers = stateBefore.nplayers;
-        //    var possibleMoves = [];
-        //    try {
-        //        if (Object.keys(stateBefore).length === 1 && !angular.isUndefined(stateBefore.nplayers)) {
-        //            // case 1: move can be: ("INIT")
-        //            //         It is new game, only initial move is possible.
-        //            possibleMoves.push( getInitialMove(playerIndex, nPlayers) );
-        //        } else if (stateBefore.tilesSentToBoardThisTurn.length === 0) {
-        //            // case 2: move can be: ("PICK" | "SEND" | "REPLACE")
-        //            //         It is new turn for player, player can choose either "PICK" move or
-        //            //         move towards "MELD", (i.e. "SEND"|"REPLACE"|"RETRIEVE"). Because this will
-        //            //         will be the 1st move in new turn, player has not sent any tile to board,
-        //            //         so "RETRIEVE" move is not possible.
-        //
-        //            // possible "PICK" move
-        //            possibleMoves.push(getPickFromPoolMove(stateBefore, playerIndex));
-        //
-        //            // possible "SEND" moves
-        //            var positions = checkPossiblePositions(stateBefore.board);
-        //            var tos = positions["empty"];
-        //            var tilesInPlayerHand = stateBefore["player" + playerIndex].tiles;
-        //            for (var i = 0; i < tilesInPlayerHand.length; i++) {
-        //                for (var j = 0; j < tos.length; j++) {
-        //                    var to = {tile: tilesInPlayerHand[i], row: tos[j].row, col: tos[j].col};
-        //                    possibleMoves.push(getSendToBoardMove(stateBefore, playerIndex, to));
-        //                }
-        //            }
-        //
-        //            // possible "REPLACE" moves
-        //            var froms = positions["occupied"];
-        //            for (var i = 0; i < froms.length; i++) {
-        //                for (var j = 0; j < tos.length; j++) {
-        //                    var from = froms[i];
-        //                    var to = tos[j];
-        //                    possibleMoves.push(getReplaceMove(stateBefore, playerIndex, from, to));
-        //                }
-        //            }
-        //        } else {
-        //            // case 3: move can be ("SEND" | "REPLACE" | "RETRIEVE" | "MELD")
-        //            //         Player is still in turn towards meld.
-        //
-        //            // possible "SEND" move
-        //            possibleMoves.push(getSendToBoardMove(stateBefore, playerIndex, to));
-        //
-        //            // possible "REPLACE" moves
-        //            var positions = checkPossiblePositions(stateBefore.board);
-        //            var froms = positions["occupied"];
-        //            var tos = positions["empty"];
-        //            for (var i = 0; i < froms.length; i++) {
-        //                for (var j = 0; j < tos.length; j++) {
-        //                    possibleMoves.push(getReplaceMove(stateBefore, playerIndex, froms[i], tos[j]));
-        //                }
-        //            }
-        //
-        //            // possible "RETRIEVE" moves
-        //            for (var i = 0; i < froms.length; i++) {
-        //                possibleMoves.push(getRetrieveFromBoardMove(stateBefore, playerIndex, froms[i]));
-        //            }
-        //
-        //            // possible "MELD" move
-        //            possibleMoves.push(getMeldMove(stateBefore, playerIndex));
-        //        }
-        //    } catch (e) {
-        //        console.log("move is not ok");
-        //    }
-        //    return possibleMoves;
-        //}
+        function getPossibleMoves(stateBefore,  playerIndex) {
+            var nPlayers = stateBefore.nplayers;
+            var possibleMoves = [];
+            try {
+                if (Object.keys(stateBefore).length === 1 && !angular.isUndefined(stateBefore.nplayers)) {
+                    // case 1: move can be: ("INIT")
+                    //         It is new game, only initial move is possible.
+                    try {
+                        possibleMoves.push( getInitialMove(playerIndex, nPlayers) );
+                    } catch (e) {}
+                } else if (stateBefore.tilesSentToBoardThisTurn.length === 0) {
+                    // case 2: move can be: ("PICK" | "SEND" | "REPLACE")
+                    //         It is new turn for player, player can choose either "PICK" move or
+                    //         move towards "MELD", (i.e. "SEND"|"REPLACE"|"RETRIEVE"). Because this will
+                    //         will be the 1st move in new turn, player has not sent any tile to board,
+                    //         so "RETRIEVE" move is not possible.
+
+                    // possible "PICK" move
+                    try {
+                        possibleMoves.push(getPickFromPoolMove(stateBefore, playerIndex));
+                    } catch (e)  {}
+
+                    // possible "SEND" moves
+                    var positions = checkPossiblePositions(stateBefore.board);
+                    var tos = positions["empty"];
+                    var tilesInPlayerHand = stateBefore["player" + playerIndex].tiles;
+                    for (var i = 0; i < tilesInPlayerHand.length; i++) {
+                        for (var j = 0; j < tos.length; j++) {
+                            var to = {tile: tilesInPlayerHand[i], row: tos[j].row, col: tos[j].col};
+                            try {
+                                possibleMoves.push(getSendToBoardMove(stateBefore, playerIndex, to));
+                            } catch (e) {}
+                        }
+                    }
+
+                    // possible "REPLACE" moves
+                    var froms = positions["occupied"];
+                    for (var i = 0; i < froms.length; i++) {
+                        for (var j = 0; j < tos.length; j++) {
+                            var from = froms[i];
+                            var to = tos[j];
+                            try {
+                                possibleMoves.push(getReplaceMove(stateBefore, playerIndex, from, to));
+                            } catch (e) {}
+                        }
+                    }
+                } else {
+                    // case 3: move can be ("SEND" | "REPLACE" | "RETRIEVE" | "MELD")
+                    //         Player is still in turn towards meld.
+
+                    // possible "SEND" move
+                    try {
+                        possibleMoves.push(getSendToBoardMove(stateBefore, playerIndex, to));
+                    } catch (e) {}
+
+                    // possible "REPLACE" moves
+                    var positions = checkPossiblePositions(stateBefore.board);
+                    var froms = positions["occupied"];
+                    var tos = positions["empty"];
+                    for (var i = 0; i < froms.length; i++) {
+                        for (var j = 0; j < tos.length; j++) {
+                            try {
+                                possibleMoves.push(getReplaceMove(stateBefore, playerIndex, froms[i], tos[j]));
+                            } catch (e) {}
+                        }
+                    }
+
+                    // possible "RETRIEVE" moves
+                    for (var i = 0; i < froms.length; i++) {
+                        try {
+                            possibleMoves.push(getRetrieveFromBoardMove(stateBefore, playerIndex, froms[i]));
+                        } catch (e) {}
+                    }
+
+                    // possible "MELD" move
+                    try {
+                        possibleMoves.push(getMeldMove(stateBefore, playerIndex));
+                    } catch (e) {}
+                }
+            } catch (e) {
+                console.log("move is not ok");
+            }
+            return possibleMoves;
+        }
 
         /* ===============   Helper Functions    =============== */
 
@@ -882,22 +898,22 @@
          * @param board
          * @returns {{empty: Array, occupied: Array}}
          */
-        //function checkPossiblePositions(board) {
-        //    var empty = [];
-        //    var occupied = [];
-        //    var rows = board.length;
-        //    var cols = board[0].length;
-        //    for (var i = 0; i < rows; i++) {
-        //        for (var j = 0; j < cols; j++) {
-        //            if (board[i][j] == -1) {
-        //                empty.push({row: i, col: j});
-        //            } else {
-        //                occupied.push({row: i, col: j});
-        //            }
-        //        }
-        //    }
-        //    return {empty: empty, occupied: occupied};
-        //}
+        function checkPossiblePositions(board) {
+            var empty = [];
+            var occupied = [];
+            var rows = board.length;
+            var cols = board[0].length;
+            for (var i = 0; i < rows; i++) {
+                for (var j = 0; j < cols; j++) {
+                    if (board[i][j] == -1) {
+                        empty.push({row: i, col: j});
+                    } else {
+                        occupied.push({row: i, col: j});
+                    }
+                }
+            }
+            return {empty: empty, occupied: occupied};
+        }
 
         /**
          * check whether current board can meld
@@ -915,10 +931,10 @@
             for (var i = 0; i < setsInBoard.length; i++) {
                 var sets = getSetsOfTilesByIndex(setsInBoard[i], stateBefore);
                 if ( !isRuns(sets) && !isGroups(sets) ) {
+                    console.log("isMeldOk, invalid sets: [" + setsInBoard[i] + "]");
                     return false;
                 }
             }
-            console.log("dwdafd");
             return true;
         }
 
@@ -970,7 +986,7 @@
             isMoveOk: isMoveOk,
             getInitialMove: getInitialMove,
             getTileByIndex: getTileByIndex,
-            //getPossibleMoves: getPossibleMoves
+            getPossibleMoves: getPossibleMoves
         };
 
     });

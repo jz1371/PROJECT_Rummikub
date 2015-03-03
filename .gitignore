@@ -1,4 +1,5 @@
 roadtrip.md
 *.swp
 coverage
+/*/coverage
 .DS_Store
