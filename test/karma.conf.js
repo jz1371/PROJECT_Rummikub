@@ -4,15 +4,6 @@ module.exports = function(config){
     basePath : '../',
 
     files : [
-<<<<<<< HEAD
-      'app/bower_components/angular/angular.js',
-      'app/bower_components/angular-route/angular-route.js',
-      'app/bower_components/angular-mocks/angular-mocks.js',
-      'app/js/**/*.js',
-      'test/unit/**/*.js'
-    ],
-
-=======
       // use web service, so no local npm dependency required
       'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js',
       'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-mocks.js',
@@ -35,7 +26,6 @@ module.exports = function(config){
         dir : 'coverage/'
     },
 
->>>>>>> master
     autoWatch : true,
 
     frameworks: ['jasmine'],

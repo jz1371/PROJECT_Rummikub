@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<<<<<<< HEAD
-<html>
-
+<html lang="en" ng-app="myApp">
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
@@ -12,7 +10,7 @@
     <title>Project rummikub</title>
   </head>
 
-  <body>
+  <body ng-cloak ng-controller="Ctrl">
 
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
@@ -27,26 +25,8 @@
               <a class="tar_download_link" href="https://github.com/jz1371/PROJECT_Rummikub/tarball/master">Download this project as a tar.gz file</a>
             </section>
         </header>
-=======
-<html lang="en" ng-app="myApp">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Rummikub</title>
-  <meta name="description" content="Connect6 game">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js"></script>
-  <script src="app/js/services/gameLogicService.js"></script>
-  <script src="http://yoav-zibin.github.io/emulator/alphaBetaService.js"></script>
-  <script src="http://yoav-zibin.github.io/emulator/resizeGameAreaService.js"></script>
-  <script src="http://yoav-zibin.github.io/emulator/gameService.js"></script>
-  <script src="http://yoav-zibin.github.io/emulator/messageService.js"></script>
-  <script src="http://yoav-zibin.github.io/emulator/stateService.js"></script>
-  <link rel="stylesheet" type="text/css" href="app/css/game.css">
-</head>
-<body ng-cloak ng-controller="Ctrl">
 
-<div id="gameArea">
+    <div id="gameArea">
   <div ng-repeat="row in [0, 1, 2]"
       style="position:absolute; top:{{row * 33}}%; left:0; width:100%; height:33%;">
     <div ng-repeat="col in [0, 1, 2]"
@@ -56,10 +36,7 @@
       <img ng-class="{piece: true, slowlyAppear: shouldSlowlyAppear(row, col)}"
           ng-show="shouldShowImage(row, col)"
           ng-src="{{getImageSrc(row, col)}}">
->>>>>>> master
-    </div>
-  </div>
 </div>
 
-</body>
+    </body>
 </html>

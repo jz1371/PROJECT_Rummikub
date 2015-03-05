@@ -1,16 +1,11 @@
-<<<<<<< HEAD
 logs/*
 !.gitkeep
+.idea
 node_modules/
 bower_components/
 tmp
-.DS_Store
-.idea
-=======
-.idea
 *.swp
 coverage
 /*/coverage
 .DS_Store
 roadmap.md
->>>>>>> master
