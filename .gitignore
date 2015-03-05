@@ -1,5 +1,6 @@
-roadtrip.md
+.idea
 *.swp
 coverage
 /*/coverage
 .DS_Store
+roadmap.md

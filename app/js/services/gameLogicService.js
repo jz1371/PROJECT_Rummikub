@@ -70,6 +70,7 @@
                         "Game is over, you cannot move any more"
                     );
                 }
+
                 switch (moveType) {
                     case "INIT":
                         check(Object.keys(stateBefore).length === 1 && !angular.isUndefined(stateBefore.nplayers),
