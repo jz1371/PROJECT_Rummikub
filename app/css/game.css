@@ -1,0 +1,36 @@
+.piece {
+  /*position: absolute;*/
+  width: 60%;
+  top: 20%;
+  left: 20%;
+}
+.r {
+  border-right: 4pt solid black;
+}
+.b {
+  border-bottom: 4pt solid black;
+}
+
+.slowlyAppear {
+  -webkit-animation: slowlyAppear 0.5s linear; /* Chrome, Safari, Opera */
+  animation: slowlyAppear 0.5s linear;
+}
+/* Chrome, Safari, Opera */
+@-webkit-keyframes slowlyAppear {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+/* Standard syntax */
+@keyframes slowlyAppear {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+.square {
+    position: relative;
+    width: 12.5%;
+    padding-bottom: 12.5%;
+    float: left;
+    height: 0;
+}
