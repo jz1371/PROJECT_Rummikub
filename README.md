@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # angular-seed — the seed for AngularJS apps
 
 This project is an application skeleton for a typical [AngularJS](http://angularjs.org/) web app.
@@ -287,3 +288,22 @@ For more information on AngularJS please check out http://angularjs.org/
 [karma]: http://karma-runner.github.io
 [travis]: https://travis-ci.org/
 [http-server]: https://github.com/nodeapps/http-server
+=======
+## Game Rummikub
+#### game project for NYU social multiplayer games (2015 Spring)
+
+1. HW1 introduction
+
+2. HW2 implement `isMoveOK`.
+   please see source file `gameLogicService.js`.
+
+3. HW3 write unit tests for game logic. To run unit tests: (assuming node has been installed at the root directory of project)
+
+    ```bash
+    npm install karma karma-jasmine karma-chrome-launcher karma-coverage  --save-dev
+    ./node_modules/karma/bin/karma start
+    ```
+4. HW4 implement `getPossibleMoves` in gameLogicService.js
+    * peer review for [Backgammon](https://github.com/ibtawfik/Backgammon/commit/c1a68db3284487c23a6468614023fe01b40fe7bc)
+    * peer review for [Halatafl](https://github.com/ColinZang/Halatafl/tree/master/PeerReview_jz)
+>>>>>>> master
