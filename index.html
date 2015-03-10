@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Rummikub</title>
-  <meta name="description" content="Connect6 game">
+  <meta name="description" content="Rummikub game">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js"></script>
   <script src="app/js/services/gameLogicService.js"></script>
+  <script src="app/js/controllers/gameCtrl.js"></script>
   <script src="http://yoav-zibin.github.io/emulator/alphaBetaService.js"></script>
   <script src="http://yoav-zibin.github.io/emulator/resizeGameAreaService.js"></script>
   <script src="http://yoav-zibin.github.io/emulator/gameService.js"></script>
@@ -15,7 +16,7 @@
   <script src="http://yoav-zibin.github.io/emulator/stateService.js"></script>
   <link rel="stylesheet" type="text/css" href="app/css/game.css">
 </head>
-<body ng-cloak ng-controller="Ctrl">
+<body ng-cloak ng-controller="GameCtrl">
 
 <div id="gameArea">
   <div ng-repeat="row in [0, 1, 2]"

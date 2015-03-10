@@ -1,3 +1,4 @@
+
 .piece {
   /*position: absolute;*/
   width: 60%;
@@ -27,10 +28,89 @@
   to {opacity: 1;}
 }
 
-.square {
-    position: relative;
-    width: 12.5%;
-    padding-bottom: 12.5%;
+/*
+ * +-----------------------------------------+   -
+ * |       |         opponent        |       |   |
+ * |- 10% -|---------- 80% ----------|- 10% -|   7%
+ * |       |                         |       |   |
+ * |-----------------------------------------|   -
+ * |       |  info  |        |  btn  |       |   6%
+ * |       |-------------------------|       |   -
+ * |       |                         |       |   |
+ * |       |                         |       |   |
+ * |       |                         |       |   |
+ * |       |                         |       |   |
+ * |- 10% -|          board          |- 10% -|  72%
+ * |       |                         |       |   |
+ * |       |                         |       |   |
+ * |       |                         |       |   |
+ * |       |                         |       |   |
+ * |       |                         |       |   |
+ * |       |                         |       |   |
+ * |-----------------------------------------|   -
+ * |       |                         |       |   |
+ * |- 10% -|---------- 80% ----------|- 10% -|  15%
+ * |       |          player         |       |   |
+ * +-----------------------------------------+   -
+ *
+ */
+
+
+#opponent_top {
+    position: absolute;
+    top: 0;
+    left: 10%;
+    width: 80%;
+    height: 7%;
+    border: groove;
+}
+
+#center-area {
+    position: absolute;
+    top: 7%;
+    left: 10%;
+    width: 80%;
+    height: 78%;
+}
+
+#curPlayer {
+    position: absolute;
+    top: 85%;
+    left: 10%;
+    width: 80%;
+    height: 15%;
+    border: groove;
+}
+
+#center-area .info-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8%;
+}
+
+#center-area .info {
+    font-size: 2vh;
     float: left;
+}
+
+#center-area .game-btn {
+    float: right;
+}
+
+#board {
+    position: absolute;
+    top: 8%;
+    left: 0;
+    width: 100%;
+    height: 92%;
+}
+
+.cell {
+    position: relative;
+    width: 5%;                /* board's cols = 20 */
     height: 0;
+    padding-bottom: 15%;   /* board's rows = 6  */
+    float: left;
 }

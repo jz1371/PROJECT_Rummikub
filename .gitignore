@@ -4,3 +4,7 @@ coverage
 /*/coverage
 .DS_Store
 roadmap.md
+bower_components
+.idea
+node_modules
+*.log

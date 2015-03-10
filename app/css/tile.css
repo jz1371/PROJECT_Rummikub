@@ -1,0 +1,87 @@
+
+/*
+ *   +-----------------------------------+
+ *   |                10%                |
+ *   |----+-------------------------+----|
+ *   |    |            5%           |    |
+ *   |    |-------------------------|    |
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |-5%-|-20%-|    joker    |-20%-|-5%-|
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |    |                         |    |
+ *   |----+-------------------------+----|
+ *   |    |          10%            |    |
+ *   +-----------------------------------+
+ */
+.tile {
+    position: absolute;
+    width: 90%;
+    top: 10%;
+    left: 5%;
+    /*
+    background-image: url('../img/tile-base.png');
+    background-size: contain;
+    */
+}
+
+.joker {
+    position: absolute;
+    width: 60%;
+    top: 40%;
+    left: 20%;
+}
+
+#board .joker {
+    top: 40%;
+}
+
+#opponent_top .tile-back {
+    position: relative;
+    width: 5%;
+    height: 0;
+    float: left;
+    padding-bottom:2%;
+}
+
+.tile-back {
+    position: relative;
+    width: 5%;
+    height: 0;
+    float: left;
+    padding-bottom: 5%;
+}
+
+.tile-score {
+    position: absolute;
+    width: 90%;
+    top: 10%;
+    left: 5%;
+    font-weight: bold;
+    text-align: center;
+    font-size: 2.5vmin;
+}
+
+
+div[data-value*='orange'][data-value]{
+    color: #aa7832;
+}
+
+div[data-value*='red'][data-value]{
+    color: #aa0909;
+}
+
+div[data-value*='blue'][data-value]{
+    color: #0f74aa;
+}
+
+div[data-value*='black'][data-value]{
+    color: #010100;
+}

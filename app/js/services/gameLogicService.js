@@ -1,5 +1,5 @@
 /**
- * File: gameLogic.js
+ * File: gameLogicService.js
  * ----------------------------------------------------------
  * Game logic for Rummikub game.
  *
@@ -18,8 +18,10 @@
      * I. The game state is represented by the following elements:
      *
      * 1. for each player: 
-     *    player:  { "initial" : true/false,       // whether initialled meld
+     *    player:  {
+     *               "initial" : true/false,       // whether initialled meld
      *               "tiles"   : [ array of indices of tiles player holds in hand ],
+     *             }
      *
      * 2. board: 2D array of tile indices of size 6 rows and 20 columns.
      *
@@ -32,6 +34,8 @@
      * 5. nplayers: number of players in current game.
      *
      * 6. nexttile: index of first invisible tile in tile pool.
+     *
+     * 7. type: "PICK" / "MELD" / "SEND" / "RETRIEVE" / "REPLACE" / "UNDO"
      * 
      *---------------------------------------------------------------------------------- 
      *
@@ -50,7 +54,7 @@
      **************************************************************************************
      */
 
-    angular.module('myApp', []).factory('gameLogic', function() {
+    angular.module('myApp', []).factory('gameLogicService', function() {
 
         /**
          * Checks whether given move is Ok or not.
@@ -62,58 +66,9 @@
             var playerIndex = param.turnIndexBeforeMove;
             var stateBefore = param.stateBeforeMove;
             var actualMove  = param.move;
-            var expectedMove;
             try {
-                var moveType = actualMove[1].set.value;
-                if (moveType !== "INIT") {
-                    check ( !isGameOver(stateBefore),
-                        "Game is over, you cannot move any more"
-                    );
-                }
-
-                switch (moveType) {
-                    case "INIT":
-                        check(Object.keys(stateBefore).length === 1 && !angular.isUndefined(stateBefore.nplayers),
-                            "INIT: should assign number of players in the game."
-                        );
-                        expectedMove = getInitialMove(playerIndex, stateBefore.nplayers);
-                        break;
-                    case "PICK":
-                        expectedMove = getPickFromPoolMove(stateBefore, playerIndex);
-                        break;
-                    case "SEND":
-                        var to   = actualMove[2].set.value;
-                        expectedMove = getSendToBoardMove(stateBefore, playerIndex, to);
-                        break;
-                    case "RETRIEVE":
-                        var from = actualMove[2].set.value;
-                        expectedMove = getRetrieveFromBoardMove(stateBefore, playerIndex, from);
-                        break;
-                    case "REPLACE":
-                        var from = actualMove[3].set.value;
-                        var to   = actualMove[4].set.value;
-                        expectedMove = getReplaceMove(stateBefore, playerIndex, from, to);
-                        break;
-                    case "MELD":
-                        expectedMove = getMeldMove(stateBefore, playerIndex);
-                        break;
-                    default:
-                        throw new Error("Unexpected move");
-                }
+                var expectedMove = createMove(stateBefore, playerIndex, actualMove);
                 if (!angular.equals(actualMove, expectedMove)) {
-                    //var len1 = Object.keys(actualMove).length;
-                    //var len2 = Object.keys(expectedMove).length;
-                    //if (len1 !== len2) {
-                    //    console.log("len is different. act: " + len1 + " , exp: " + len2);
-                    //} else {
-                    //    for (var i = 0; i < len1; i++) {
-                    //        if ( !angular.equals(actualMove[i], expectedMove[i])) {
-                    //            console.log("different at " + i);
-                    //            console.log("act: " + actualMove[i].set.value);
-                    //            console.log("exp: " + expectedMove[i].set.value);
-                    //        }
-                    //    }
-                    //}
                     return false;
                 }
             } catch (e) {
@@ -121,6 +76,52 @@
                 return false;
             }
             return true;
+        }
+
+        /**
+         * Creates move based on move type.
+         *
+         * @param stateBefore
+         * @param playerIndex
+         * @param actualMove
+         * @returns {expectedMove} [Array of operations]
+         */
+        function createMove(stateBefore, playerIndex, actualMove) {
+            var moveType = actualMove[1].set.value;
+            if (moveType !== "INIT") {
+                check ( !isGameOver(stateBefore),
+                    "Game is over, you cannot move any more"
+                );
+            }
+            var expectedMove;
+            switch (moveType) {
+                case "INIT":
+                    var nPlayers = actualMove[2].set.value;
+                    expectedMove = getInitialMove(playerIndex, nPlayers);
+                    break;
+                case "PICK":
+                    expectedMove = getPickFromPoolMove(stateBefore, playerIndex);
+                    break;
+                case "SEND":
+                    var to   = actualMove[2].set.value;
+                    expectedMove = getSendToBoardMove(stateBefore, playerIndex, to);
+                    break;
+                case "RETRIEVE":
+                    var from = actualMove[2].set.value;
+                    expectedMove = getRetrieveFromBoardMove(stateBefore, playerIndex, from);
+                    break;
+                case "REPLACE":
+                    var from = actualMove[3].set.value;
+                    var to   = actualMove[4].set.value;
+                    expectedMove = getReplaceMove(stateBefore, playerIndex, from, to);
+                    break;
+                case "MELD":
+                    expectedMove = getMeldMove(stateBefore, playerIndex);
+                    break;
+                default:
+                    throw new Error("Unexpected move");
+            }
+            return expectedMove;
         }
 
         /**
@@ -146,6 +147,7 @@
             var move = [
                 {setTurn: {turnIndex: 0}},
                 {set: {key: 'type', value: "INIT"}},
+                {set: {key: 'nplayers', value: nPlayers}},
                 {set: {key: 'tilesSentToBoardThisTurn', value: []}},
                 {set: {key: 'board', value: getGameBoard(undefined)}},
             ];
@@ -188,6 +190,7 @@
             move.push({shuffle: {keys: shuffleKeys}});
             move = move.concat(players);
             move = move.concat(visibility);
+            move.push({set: {key: 'nexttile', value: nPlayers * 14}});
 
             return move;
         }
@@ -987,7 +990,14 @@
             isMoveOk: isMoveOk,
             getInitialMove: getInitialMove,
             getTileByIndex: getTileByIndex,
-            getPossibleMoves: getPossibleMoves
+            getPossibleMoves: getPossibleMoves,
+            createMove: createMove,
+
+            getPickMove: getPickFromPoolMove,
+            getMeldMove: getMeldMove,
+            getSendMove: getSendToBoardMove,
+            getRetrieveMove: getRetrieveFromBoardMove,
+            getReplaceMove: getReplaceMove
         };
 
     });
