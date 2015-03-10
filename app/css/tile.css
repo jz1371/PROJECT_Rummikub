@@ -35,12 +35,12 @@
 .joker {
     position: absolute;
     width: 60%;
-    top: 40%;
+    top: 25%;
     left: 20%;
 }
 
 #board .joker {
-    top: 40%;
+    top: 15%;
 }
 
 #opponent_top .tile-back {

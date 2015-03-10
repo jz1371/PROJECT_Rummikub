@@ -1,8 +1,6 @@
 logs/*
 !.gitkeep
 .idea
-node_modules/
-bower_components/
 tmp
 *.swp
 coverage
