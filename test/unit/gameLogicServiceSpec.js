@@ -22,6 +22,8 @@ describe("Rummikub Unit Tests", function() {
             // 2. set move type
             {set: {key: 'type' , value: "INIT"}},
 
+            {set: {key: 'nplayers', value: nPlayers}},
+
             {set: {key: 'tilesSentToBoardThisTurn', value: []}},
 
             // 3. set game board
@@ -239,12 +241,14 @@ describe("Rummikub Unit Tests", function() {
             {setVisibility: {key: 'tile55', visibleToPlayerIndices: [3]}},
         ];
         move = move.concat( visibility.slice(0, 14 * nPlayers) );
+        move.push({set: {key: 'nexttile', value: nPlayers * 14}});
+
 
         return move;
     }
 
-    beforeEach(inject(function (gameLogic) {
-        _service = gameLogic;
+    beforeEach(inject(function (gameLogicService) {
+        _service = gameLogicService;
     }));
 
     function expectMoveOk(turnIndexBeforeMove, stateBeforeMove, move) {
@@ -312,10 +316,10 @@ describe("Rummikub Unit Tests", function() {
 
         beforeEach(function twoPlayerMode() {
             initialMove = getInitMove(nPlayers);
-            state.tilesSentToBoardThisTurn = initialMove[2].set.value;
-            state.board = initialMove[3].set.value;
-            state.player0 = initialMove[111].set.value;
-            state.player1 = initialMove[112].set.value;
+            state.tilesSentToBoardThisTurn = initialMove[3].set.value;
+            state.board = initialMove[4].set.value;
+            state.player0 = initialMove[112].set.value;
+            state.player1 = initialMove[113].set.value;
             state.nplayers = 2;
             state.nexttile = 28;
         });

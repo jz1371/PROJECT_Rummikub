@@ -1,0 +1,99 @@
+/*Small Devices (Tablets)*/
+@media only screen and (min-width: 768px) {
+    /*1*/
+    .grid > li {
+        width: 57px;
+        height: 88px;
+        margin: 10px -22px 10px 0px;
+    }
+
+    .grid-sm > li {
+        /*1 x 0.75*/
+        width: 42.75px;
+        height: 66px;
+        margin: 10px -20px 10px 0px;
+    }
+
+    .grid {
+        min-height: 108px;
+    }
+
+    .grid-sm {
+        min-height: 81px;
+    }
+}
+
+/*Medium devices*/
+@media only screen and (min-width: 992px) {
+    /*1*/
+    .grid > li {
+        width: 57px;
+        height: 88px;
+        margin: 10px -22px 10px 0px;
+    }
+
+    .grid-sm > li {
+        /*1 x 0.75*/
+        width: 42.75px;
+        height: 66px;
+        margin: 10px -20px 10px 0px;
+    }
+
+    .grid {
+        min-height: 108px;
+    }
+
+    .grid-sm {
+        min-height: 81px;
+    }
+}
+
+/*Large devices*/
+@media only screen and (min-width: 1200px) {
+    /*1.2*/
+    .grid > li {
+        width: 68.4px;
+        height: 105.6px;
+        margin: 10px -20px 10px 0px;
+    }
+
+    .grid-sm > li {
+        /*1.2 x 0.75*/
+        width: 51.3px;
+        height: 79.2px;
+        margin: 10px -20px 10px 0px;
+    }
+
+    .grid {
+        min-height: 125.6px;
+    }
+
+    .grid-sm {
+        min-height: 94.2px;
+    }
+}
+
+/*Large devices*/
+@media only screen and (min-width: 1920px) {
+    /*1.5*/
+    .grid > li {
+        width: 85.5px;
+        height: 132px;
+        margin: 10px -18px 10px 0px;
+    }
+
+    .grid-sm > li {
+        /*1.5 x 0.75*/
+        width: 64.125px;
+        height: 49.5px;
+        margin: 10px -20px 10px 0px;
+    }
+
+    .grid {
+        min-height: 152px;
+    }
+
+    .grid-sm {
+        min-height: 114px;
+    }
+}

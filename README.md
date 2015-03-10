@@ -15,4 +15,3 @@
 4. HW4 implement `getPossibleMoves` in gameLogicService.js
     * peer review for [Backgammon](https://github.com/ibtawfik/Backgammon/commit/c1a68db3284487c23a6468614023fe01b40fe7bc)
     * peer review for [Halatafl](https://github.com/ColinZang/Halatafl/tree/master/PeerReview_jz)
->>>>>>> master
