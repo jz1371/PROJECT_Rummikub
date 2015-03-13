@@ -91,7 +91,8 @@
 
         $scope.shouldShowTileOnBoard = function (row, col) {
             // -1 stands for empty position on board
-            return $scope.board[row][col] !== -1;
+            //return $scope.board[row][col] !== -1;
+            return true;
         };
 
         $scope.isJoker = function(tileIndex) {
@@ -148,23 +149,26 @@
         //TODO: only need tile's color here
         $scope.getTileDataValue = function(tileIndex) {
             var dataValue = "";
-            if ($scope.state['tile' + tileIndex] !== undefined) {
-                var tile = $scope.state['tile' + tileIndex];
+            var tile = getTileByIndex(tileIndex);
+            if ( tile !== undefined) {
                 dataValue = tile.color + " " + tile.score;
             }
             return dataValue;
         };
 
         $scope.canDrag = function (tileIndex) {
-            if ($scope.isYourTurn && $scope.state["tile" + tileIndex] != null) {
+            if ($scope.isYourTurn &&  getTileByIndex(tileIndex) != undefined) {
                 return true;
             }
             return false;
         };
 
         $scope.getTileScore = function(tileIndex) {
-            if ($scope.state['tile' + tileIndex] !== undefined) {
-                return $scope.state['tile' + tileIndex].score;
+            var tile = getTileByIndex(tileIndex);
+            if (tile !== undefined) {
+                return tile.score;
+            } else {
+                return "";
             }
         };
 
@@ -195,8 +199,16 @@
             return true;
         }
 
+        /**
+         * Returns tile object if tileIndex is valid and tile exists.
+         * @param tileIndex
+         * @returns {*} {score: int, color: string}
+         */
         function getTileByIndex(tileIndex) {
-            return $scope.state['tile' + tileIndex];
+            if (tileIndex !== undefined && $scope.state['tile' + tileIndex] !== undefined) {
+                return $scope.state['tile' + tileIndex];
+            }
+            return undefined;
         }
 
         function clearActiveTile() {
