@@ -1,17 +1,3 @@
-
-.piece {
-  /*position: absolute;*/
-  width: 60%;
-  top: 20%;
-  left: 20%;
-}
-.r {
-  border-right: 4pt solid black;
-}
-.b {
-  border-bottom: 4pt solid black;
-}
-
 .slowlyAppear {
   -webkit-animation: slowlyAppear 0.5s linear; /* Chrome, Safari, Opera */
   animation: slowlyAppear 0.5s linear;

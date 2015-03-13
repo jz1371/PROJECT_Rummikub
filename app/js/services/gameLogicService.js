@@ -479,13 +479,7 @@
             var nPlayers = stateBefore.nplayers;
             var possibleMoves = [];
             try {
-                if (Object.keys(stateBefore).length === 1 && !angular.isUndefined(stateBefore.nplayers)) {
-                    // case 1: move can be: ("INIT")
-                    //         It is new game, only initial move is possible.
-                    try {
-                        possibleMoves.push( getInitialMove(playerIndex, nPlayers) );
-                    } catch (e) {}
-                } else if (stateBefore.tilesSentToBoardThisTurn.length === 0) {
+             if (stateBefore.tilesSentToBoardThisTurn.length === 0) {
                     // case 2: move can be: ("PICK" | "SEND" | "REPLACE")
                     //         It is new turn for player, player can choose either "PICK" move or
                     //         move towards "MELD", (i.e. "SEND"|"REPLACE"|"RETRIEVE"). Because this will

@@ -12,6 +12,11 @@
 
         resizeGameAreaService.setWidthToHeight(1);
 
+        function sendComputerMove() {
+            var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
+            gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
+        }
+
         function updateUI(params) {
 
             // initialize move

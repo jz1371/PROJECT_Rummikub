@@ -1,9 +1,12 @@
+logs/*
+!.gitkeep
 .idea
+tmp
 *.swp
 coverage
 /*/coverage
 .DS_Store
-roadmap.md
+roadtrip.md
 bower_components
 .idea
 node_modules
