@@ -73,6 +73,7 @@
             </div>
         </section>
 
+        <div id="turn-info" style="position: absolute; top: 80%; left: 10%;">{{turnInfo}}</div>
         <section id="curPlayer" ng-click="curPlayerAreaClicked()">
             <div class="tile-back" ng-repeat="tile in curPlayer" data-value="{{getTileDataValue(tile)}}">
                 <div ng-click="tileClicked(tile)" class="">

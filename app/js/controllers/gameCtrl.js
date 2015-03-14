@@ -15,6 +15,9 @@
         function sendComputerMove() {
             var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
             gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
+            console.log("here");
+            $scope.info = "computer picks one tile";
+            $scope.turnInfo = "Your turn";
         }
 
         function updateUI(params) {
