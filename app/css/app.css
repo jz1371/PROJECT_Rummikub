@@ -1,8 +1,20 @@
 /* app css stylesheet */
 
-.game{
-    background-image: url("../img/background-grey.png");
+body {
+    @text-bg: #fff;
+    text-align: center;
+    font-size: 2.0vmin;
+    /*background-image: url("../img/background-grey.png");*/
 }
+
+ul {
+    margin-bottom: 0px;
+}
+
+.list-inline {
+    margin-left: 0px;
+}
+
 
 .menu {
   list-style: none;
@@ -31,4 +43,12 @@
 .menu > li:nth-child(1):before {
   content: "";
   padding: 0;
+}
+
+.carousel-control.left{
+    background-image: none;
+}
+
+.carousel-control.right{
+    background-image: none;
 }

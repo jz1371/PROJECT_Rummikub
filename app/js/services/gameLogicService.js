@@ -626,9 +626,10 @@
          * @returns {*[]}
          */
         function getInitialBoard() {
-            var board = [[], [], [], [], [], []];
-            for (var i = 0; i < 6; i++) {
-                for (var j = 0; j < 20; j++) {
+            var board = [];
+            for (var i = 0; i < getBoardRows(); i++) {
+                board.push([]);
+                for (var j = 0; j < getBoardCols(); j++) {
                     board[i].push(-1);
                 }
             }
@@ -973,6 +974,14 @@
             return (hasLoser) ? winner : -1;
         }
 
+        function getBoardRows() {
+            return 9;
+        }
+
+        function getBoardCols() {
+            return 10;
+        }
+
         /**
          * check if game is tied. Game is tied when tile pool is empty
          * and no player can make valid move any more.
@@ -996,6 +1005,9 @@
             getSendMove: getSendToBoardMove,
             getRetrieveMove: getRetrieveFromBoardMove,
             getReplaceMove: getReplaceMove
+
+            //setBoardRows: getBoardRows,
+            //setBoardCols: getBoardCols
         };
 
     });

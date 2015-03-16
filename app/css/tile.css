@@ -1,3 +1,4 @@
+/** File: app/css/tile.css */
 
 /*
  *   +-----------------------------------+
@@ -6,10 +7,10 @@
  *   |    |            5%           |    |
  *   |    |-------------------------|    |
  *   |    |                         |    |
- *   |    |                         |    |
- *   |    |                         |    |
- *   |    |                         |    |
- *   |-5%-|-20%-|    joker    |-20%-|-5%-|
+ *   |    |         number          |    |
+ *   |    |           or            |    |
+ *   |    |          joker          |    |
+ *   |-5%-|-20%-|             |-20%-|-5%-|
  *   |    |                         |    |
  *   |    |                         |    |
  *   |    |                         |    |
@@ -21,54 +22,57 @@
  *   |    |          10%            |    |
  *   +-----------------------------------+
  */
-.tile {
-    position: absolute;
-    width: 90%;
-    top: 10%;
-    left: 5%;
-    /*
-    background-image: url('../img/tile-base.png');
-    background-size: contain;
-    */
-}
 
-.joker {
-    position: absolute;
-    width: 60%;
-    top: 25%;
-    left: 20%;
-}
-
-#board .joker {
-    top: 15%;
-}
-
-#opponent_top .tile-back {
+.tile-wrapper {
+    border-style: outset;
+    border-width: 1px;
+    width: 100%;
+    height: 100%;
+    /*padding-bottom: 150%;*/ /* for fixed width-height ratio */
+    display: inline-block;
     position: relative;
-    width: 5%;
-    height: 0;
-    float: left;
-    padding-bottom:2%;
+    background-color: #E0E0E0;
 }
 
-.tile-back {
-    position: relative;
-    width: 5%;
-    height: 0;
-    float: left;
-    padding-bottom: 5%;
+.tile-content{
+    position: absolute;
+    left: 25%;
+    width: 50%;
+    right: 25%;
+    top: 5%;
+    height: 50%;
+    bottom: 0;
+
+    /* fill parent */
+    /*background-color: #f5f5f5;*/
+    /* let's see it! */
 }
 
 .tile-score {
     position: absolute;
     width: 90%;
-    top: 10%;
+    top: 5%;
     left: 5%;
     font-weight: bold;
     text-align: center;
-    font-size: 2.5vmin;
+    font-size: 3.5vmin;
+    /*background-color: #f5f5f5;*/
 }
 
+.tile-joker {
+    position: absolute;
+    width: 60%;
+    height: 60%;
+    top: 12%;
+    left: 20%;
+    /*background-color: #f5f5f5;*/
+}
+
+
+
+#board .joker {
+    top: 15%;
+}
 
 div[data-value*='orange'][data-value]{
     color: #aa7832;

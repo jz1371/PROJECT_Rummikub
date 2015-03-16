@@ -10,13 +10,19 @@
     ['$scope', '$log', '$animate', '$timeout', 'gameService', 'gameLogicService','resizeGameAreaService',
     function($scope, $log, $animate, $timeout, gameService, gameLogicService ,resizeGameAreaService) {
 
-        resizeGameAreaService.setWidthToHeight(1);
+        resizeGameAreaService.setWidthToHeight(1.5);
+        $scope.rows = 9;
+        $scope.cols = 10;
+
+        //$scope.modalstate = "show";
+        //gameLogicService.setBoardRows($scope.rows);
+        //gameLogicService.setBoardCols($scope.cols);
 
         function sendComputerMove() {
             var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
             gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
             console.log("here");
-            $scope.info = "computer picks one tile";
+            $scope.debug = "computer picks one tile";
             $scope.turnInfo = "Your turn";
         }
 
@@ -52,9 +58,20 @@
 
         //window.e2e_test_stateService = stateService; // to allow us to load any state in our e2e tests.
 
+        /* Select one tile */
+        $scope.tileClicked= function(tileIndex) {
+            if ($scope.isYourTurn) {
+                $scope.activeTile = tileIndex;
+                $scope.activeOrigin = "curPlayer";
+                $scope.debug = ("picking tile " + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score) + ")";
+                //$scope.debug = ("clicked tile: " + tileIndex);
+
+            }
+        };
+
         $scope.boardCellClicked = function (row, col) {
             $log.info(["Clicked on cell:", row, col]);
-            $scope.info = "click board cell: (" + row + "," + col + ")";
+            $scope.debug = "click board cell: (" + row + "," + col + ")";
             if ( !$scope.isYourTurn ) {
                 return false;
             }
@@ -65,7 +82,7 @@
                         $scope.activeOrigin = 'board';
                         $scope.activeTile = $scope.board[row][col];
                         $scope.from = {row: row, col: col};
-                        $scope.info = "picking tile: "
+                        $scope.debug = "picking tile: "
                         +  getTileByIndex($scope.activeTile).color
                         + "," + getTileByIndex($scope.activeTile).score
                         + " from: (" + row + "," + col + ")";
@@ -83,8 +100,9 @@
                         var move = gameLogicService.getSendMove($scope.state, $scope.turnIndex, to);
                         $scope.isYourTurn = false; // to prevent making another move
                         gameService.makeMove(move);
+                        $log.info("tile: " + $scope.board[row][col]);
                     }
-                    $scope.info = "tile: ("
+                    $scope.debug = "tile: " + to.tile + " ("
                     +  getTileByIndex($scope.activeTile).color
                     + "," + getTileByIndex($scope.activeTile).score
                     + ") to: (" + row + "," + col + ")";
@@ -99,8 +117,7 @@
 
         $scope.shouldShowTileOnBoard = function (row, col) {
             // -1 stands for empty position on board
-            //return $scope.board[row][col] !== -1;
-            return true;
+            return $scope.board !== undefined && $scope.board[row][col] !== -1;
         };
 
         $scope.isJoker = function(tileIndex) {
@@ -108,16 +125,6 @@
             return tile !== undefined && tile.color === 'joker';
         }
 
-        /* Select one tile */
-        $scope.tileClicked= function(tileIndex) {
-            if ($scope.isYourTurn) {
-                $scope.activeTile = tileIndex;
-                $scope.activeOrigin = "curPlayer";
-                console.log("clicked tile: " + tileIndex);
-                $scope.info = ("picking tile: " + getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score);
-
-            }
-        };
 
         $scope.curPlayerAreaClicked = function() {
             if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
@@ -138,9 +145,9 @@
                 try {
                     var move = gameLogicService.getPickMove($scope.state, $scope.turnIndex);
                     gameService.makeMove(move);
-                    $scope.info = "pick one tile";
+                    $scope.debug = "pick one tile";
                 } catch (e) {
-                    $scope.info = "cannot pick when tiles sent to board";
+                    $scope.debug = "cannot pick when tiles sent to board";
                 }
             }
         }
@@ -150,7 +157,7 @@
                 var move = gameLogicService.getMeldMove($scope.state, $scope.turnIndex);
                 gameService.makeMove(move);
             } catch (e) {
-                $scope.info = "cannot meld";
+                $scope.debug = "cannot meld";
             }
         }
 
@@ -212,12 +219,15 @@
          * @param tileIndex
          * @returns {*} {score: int, color: string}
          */
+
         function getTileByIndex(tileIndex) {
             if (tileIndex !== undefined && $scope.state['tile' + tileIndex] !== undefined) {
                 return $scope.state['tile' + tileIndex];
             }
             return undefined;
         }
+
+        $scope.getTileByIndex = getTileByIndex;
 
         function clearActiveTile() {
             $scope.activeTile = undefined;
