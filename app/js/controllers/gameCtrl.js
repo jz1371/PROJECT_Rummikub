@@ -14,9 +14,6 @@
         $scope.rows = 9;
         $scope.cols = 10;
 
-        //$scope.modalstate = "show";
-        //gameLogicService.setBoardRows($scope.rows);
-        //gameLogicService.setBoardCols($scope.cols);
 
         function sendComputerMove() {
             var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
@@ -61,11 +58,22 @@
         /* Select one tile */
         $scope.tileClicked= function(tileIndex) {
             if ($scope.isYourTurn) {
-                $scope.activeTile = tileIndex;
-                $scope.activeOrigin = "curPlayer";
-                $scope.debug = ("picking tile " + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score) + ")";
-                //$scope.debug = ("clicked tile: " + tileIndex);
-
+                if ($scope.activeTile !== undefined) {
+                    if ($scope.activeOrigin === 'board' && $scope.from !== undefined) {
+                        // 'retrieve' move
+                        var from = $scope.from;
+                        try {
+                            var move = gameLogicService.getRetrieveMove($scope.state, $scope.turnIndex, from);
+                            gameService.makeMove(move);
+                        } catch (e) {
+                        }
+                        clearActiveTile();
+                    }
+                } else {
+                    $scope.activeTile = tileIndex;
+                    $scope.activeOrigin = "curPlayer";
+                    $scope.debug = ("picking Tile" + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score) + ")";
+                }
             }
         };
 
@@ -77,12 +85,12 @@
             }
             try {
                 if ($scope.activeTile === undefined) {
-                    // either replace move or send move
                     if ($scope.board[row][col] !== -1) {
+                        // clicking an occupied position
                         $scope.activeOrigin = 'board';
                         $scope.activeTile = $scope.board[row][col];
                         $scope.from = {row: row, col: col};
-                        $scope.debug = "picking tile: "
+                        $scope.debug = "picking Tile" + $scope.activeTile + " ("
                         +  getTileByIndex($scope.activeTile).color
                         + "," + getTileByIndex($scope.activeTile).score
                         + " from: (" + row + "," + col + ")";
@@ -100,9 +108,9 @@
                         var move = gameLogicService.getSendMove($scope.state, $scope.turnIndex, to);
                         $scope.isYourTurn = false; // to prevent making another move
                         gameService.makeMove(move);
-                        $log.info("tile: " + $scope.board[row][col]);
+                        //$log.info("tile: " + $scope.board[row][col]);
                     }
-                    $scope.debug = "tile: " + to.tile + " ("
+                    $scope.debug = "Tile" + $scope.activeTile + " ("
                     +  getTileByIndex($scope.activeTile).color
                     + "," + getTileByIndex($scope.activeTile).score
                     + ") to: (" + row + "," + col + ")";
@@ -114,17 +122,6 @@
                 return false;
             }
         };
-
-        $scope.shouldShowTileOnBoard = function (row, col) {
-            // -1 stands for empty position on board
-            return $scope.board !== undefined && $scope.board[row][col] !== -1;
-        };
-
-        $scope.isJoker = function(tileIndex) {
-            var tile = getTileByIndex(tileIndex);
-            return tile !== undefined && tile.color === 'joker';
-        }
-
 
         $scope.curPlayerAreaClicked = function() {
             if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
@@ -138,6 +135,17 @@
                 clearActiveTile();
             }
         }
+
+        $scope.shouldShowTileOnBoard = function (row, col) {
+            // -1 stands for empty position on board
+            return $scope.board !== undefined && $scope.board[row][col] !== -1;
+        };
+
+        $scope.isJoker = function(tileIndex) {
+            var tile = getTileByIndex(tileIndex);
+            return tile !== undefined && tile.color === 'joker';
+        }
+
 
         $scope.pickBtnClicked = function() {
             if ($scope.isYourTurn) {
@@ -161,7 +169,6 @@
             }
         }
 
-        //TODO: only need tile's color here
         $scope.getTileDataValue = function(tileIndex) {
             var dataValue = "";
             var tile = getTileByIndex(tileIndex);

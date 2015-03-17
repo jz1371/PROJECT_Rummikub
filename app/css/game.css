@@ -17,25 +17,23 @@
 /*
  * +-----------------------------------------+   -
  * |       |         opponent        |       |   |
- * |- 10% -|---------- 80% ----------|- 10% -|   7%
- * |       |                         |       |   |
+ * |- 1% - |---------- 98% ----------|-  1% -|   4%
  * |-----------------------------------------|   -
- * |       |  info  |        |  btn  |       |   6%
- * |       |-------------------------|       |   -
  * |       |                         |       |   |
  * |       |                         |       |   |
  * |       |                         |       |   |
  * |       |                         |       |   |
- * |- 10% -|          board          |- 10% -|  72%
- * |       |                         |       |   |
+ * |-  1% -|          board          |-  1% -|  72%
  * |       |                         |       |   |
  * |       |                         |       |   |
  * |       |                         |       |   |
  * |       |                         |       |   |
  * |       |                         |       |   |
  * |-----------------------------------------|   -
+ * |     info  |               |    btn      |   6%
+ * |-----------------------------------------|   -
  * |       |                         |       |   |
- * |- 10% -|---------- 80% ----------|- 10% -|  15%
+ * |- 1%  -|---------- 80% ----------|-  1% -|  18%
  * |       |          player         |       |   |
  * +-----------------------------------------+   -
  *
@@ -43,38 +41,42 @@
 
 .panel-container {
     position: absolute;
-    left: 2%;
-    width: 96%;
-    right: 2%;
-    padding: 1px 1px;
-    border: groove;
+    left: 1%;
+    width: 98%;
+    right: 1%;
+    padding: -15px -15px;
+    /*border: groove;*/
 }
 
 .player-panel{
     top: 0;
     height: 4%;
-    border: groove;
+    /*border: groove;*/
 }
 
 .center-panel{
     top: 4%;
-    height: 72%;
+    padding: 5px 15px;
+    height: 77%;
 }
 
 .info-panel {
-    top: 76%;
-    height: 6%;
+    top: 80%;
+    height: 8%;
 }
 
 .hand-panel {
-    top: 82%;
-    height: 18%;
+    top: 88%;
+    height: 12%;
     border: groove;
 }
 
 .player-info {
+    display: inline-block;
     position: relative;
     width: 25%;
+    height: 100%;
+    font-size: 3vmin;
 }
 
 #board {
@@ -85,15 +87,17 @@
     /*padding: 1% 1%;*/
 }
 
+
+
 div#hand {
     position: relative;
-    left: 0%;
-    width: 100%;
+    left: 5%;
+    width: 90%;
     height: 100%;
 }
 
 .info {
-    font-size: 2vh;
+    font-size: 3vh;
     float: left;
 }
 
@@ -104,7 +108,7 @@ div#hand {
 #hand ul {
     padding-left: 0;
     width: 100%;
-    height: 50%;
+    height: 80%;
     list-style: none;
     overflow-x: scroll;
     overflow-y: hidden;
