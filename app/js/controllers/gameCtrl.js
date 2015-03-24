@@ -60,9 +60,20 @@
         /* Select one tile from player's hand */
         $scope.tileClicked= function(tileIndex) {
             if ($scope.isYourTurn) {
-                $scope.activeTile = tileIndex;
-                $scope.activeOrigin = "curPlayer";
-                $scope.debug = ("picking Tile" + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score) + ")";
+                if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
+                    // if one tile inside board is activated then we are expecting a 'retrieve' move
+                    var from = $scope.from;
+                    try {
+                        var move = gameLogicService.getRetrieveMove($scope.state, $scope.turnIndex, from);
+                        gameService.makeMove(move);
+                    } catch (e) {
+                    }
+                    clearActiveTile();
+                } else {
+                    $scope.activeTile = tileIndex;
+                    $scope.activeOrigin = "curPlayer";
+                    $scope.debug = ("picking Tile" + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score) + ")";
+                }
             }
         };
 
@@ -89,6 +100,10 @@
                         // one tile on board has been activated before, so we are expecting a 'replace' move
                         var from = $scope.from;
                         var to = {row: row, col: col};
+
+                        // may 'replace' itself
+                        if (angular.equals(from, to)) {return false};
+
                         var move = gameLogicService.getReplaceMove($scope.state, $scope.turnIndex, from, to);
                         gameService.makeMove(move);
 
@@ -116,6 +131,8 @@
         };
 
         $scope.curPlayerAreaClicked = function() {
+            $scope.debug = $scope.activeOrigin + " , " + $scope.activeTile + "," + $scope.from;
+            //$scope.debug = "adaf";
             if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
                 // if one tile inside board is activated then we are expecting a 'retrieve' move
                 var from = $scope.from;
@@ -126,6 +143,7 @@
                 }
                 clearActiveTile();
             }
+            //$scope.debug = "here also";
         }
 
         $scope.shouldShowTileOnBoard = function (row, col) {

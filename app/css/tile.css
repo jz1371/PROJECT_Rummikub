@@ -21,6 +21,10 @@
     right: 0;
 }
 
+.tile-wrapper p {
+    text-shadow: none;
+}
+
 
 .tile-score {
     top: 0%;

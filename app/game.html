@@ -68,12 +68,17 @@
                         <div class="col-xs-18" ng-repeat="col in [] | range: cols"
                              id="{{'e2e_test_board_div_' + row + 'x' + col}}"
                              ng-click="boardCellClicked(row, col)">
+                            <div class="test-hidden" tile-index="board[row][col]"></div>
                             <div class="tile-wrapper">
-                                <div ng-if="notJoker(board[row][col])" class="tile-score" ng-init="tile = getTileByIndex(board[row][col])" data-value="{{tile.color}}">
+                                <div id="{{'e2e_test_nonjoker_' + row + 'x' + col}}"
+                                        ng-if="notJoker(board[row][col])" class="tile-score" ng-init="tile = getTileByIndex(board[row][col])" data-value="{{tile.color}}">
+                                    <div class="test-hidden" style="display: none" tile-index={{board[row][col]}}>{{board[row][col]}}</div>
                                     {{tile.score}}
                                 </div>
 
-                                <div ng-if="isJoker(board[row][col])" class="tile-joker">
+                                <div id="{{'e2e_test_joker_' + row + 'x' + col}}"
+                                        ng-if="isJoker(board[row][col])" class="tile-joker">
+                                    <div class="test-hidden" style="display: none" tile-index={{board[row][col]}}>{{board[row][col]}}</div>
                                     <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
                                 </div>
                             </div>
@@ -98,14 +103,18 @@
 
 
                             <div class="tile-wrapper"
-                                 id="{{'e2e_test_tile_' + tileIndex }}"
+                                 id="{{'e2e_test_wrapper_' + $index}}"
                                  ng-click="tileClicked(tileIndex)"
                                  ng-init="tile = getTileByIndex(tileIndex)">
 
+                                <div id="{{'e2e_test_hand_' + $index}}" style="display: none;"
+                                     tile-index="{{tileIndex}}" color="{{tile.color}}" score="{{tile.score}}">
+                                </div>
+
                             <div ng-if="tile != undefined && tile.color != 'joker'" class="tile-score" data-value="{{tile.color}}">
-                            {{tile.score}}
+                                {{tile.score}}
                             </div>
-                            <div ng-if="tile != undefined && tile.color == 'joker'" class="tile-score">
+                            <div ng-if="tile != undefined && tile.color == 'joker'" class="tile-joker">
                             <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
                             </div>
                             </div>
