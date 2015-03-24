@@ -1,0 +1,162 @@
+#gameArea {
+    background-image: url('../img/game-background.jpg');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+
+    /* adding below to fix background image bug for mobile browsers */
+    -o-background-size: cover;
+    -moz-background-size: cover;
+    -webkit-background-size:cover;
+}
+
+/* vertically center a div */
+.vertical-align{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+#menu-panel > .row > .col-xs-12{
+    padding-bottom: 30%;   /* [Setter] here for distance between items in left menu */
+    text-align: center;    /* center the column in left menu */
+}
+
+
+
+#board-panel .row {
+    margin: 0.8vh 0px;       /* [Setter] distance between rows in board */
+}
+
+/* customed column for Bootstrap's grid system */
+#board-panel .col-xs-18 {
+    width: 5.55555%;      /* 100 / 18 = 5.55% */
+    float: left;
+    position: relative;
+    min-height: 1px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+
+#player-panel ul {
+    padding-left: 0;
+    width: 100%;
+    height: 80%;
+    list-style: none;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+#player-panel ul li {
+    position: relative;
+    width: 7.14%;
+    /*float: left;*/
+    display: inline-block;
+    vertical-align: middle;
+}
+
+
+
+@media (min-width: 240px) {
+
+    .container {
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+
+    /* case not rotate: a little optimization for small device */
+    .col-xs-11 {
+        padding-top: 8vh;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    #board-panel .col-xs-18 {
+        padding-left: 0px;
+        padding-right: 1px;
+    }
+
+    #player-panel {
+        margin-top: 15%;
+    }
+
+    #player-panel .col-xs-1 {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+
+}
+
+@media (min-width: 480px) {
+    .col-xs-11 {
+        padding-top: 1vh;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    #board-panel {
+        padding: 0 1px;
+    }
+
+    #board-panel .col-xs-18 {
+        padding-left: 1px;
+        padding-right: 1px;
+    }
+
+    #player-panel {
+        margin-top: 0%;
+    }
+
+    #player-panel .col-xs-1 {
+        padding-left: 1px;
+        padding-right: 1px;
+    }
+}
+
+@media (min-width: 600px) {
+    .col-xs-11 {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    #board-panel .col-xs-18 {
+        padding-left: 5px;
+        padding-right: 0px;
+    }
+}
+
+.scroll {
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+
+.btn-circle {
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 12px;
+    line-height: 1.428571429;
+    border-radius: 15px;
+}
+
+/* center the image of carousel inside modal */
+.carousel-inner > .item > img, h6, p {
+    margin: 0 auto;
+    text-align: center;
+    color: #808080;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+
+/* move the carousel indicators down a little bit */
+.carousel-indicators {
+    /*bottom:-10px;*/
+}
+
+.row-eq-height {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display:         flex;
+}

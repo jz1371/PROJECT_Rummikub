@@ -426,8 +426,11 @@
             }
             for (var i = 0; i < setsInBoard.length; i++) {
                 var sets = getSetsOfTilesByIndex(setsInBoard[i], stateBefore);
+                var position = findPosition(board, setsInBoard[i][0]);
                 check (isRuns(sets) || isGroups(sets),
-                    "Meld: board contains invalid sets: " + setsInBoard[i]
+                    "Meld: board contains invalid sets from (" +
+                    (position.row + 1) + "," + (position.col + 1) + ") to (" +
+                    (position.row + 1) + "," + (position.col + sets.length) + ")"
                 );
             }
 
@@ -436,7 +439,7 @@
             if (player.initial ===  false) {
                 var score = getInitialMeldScore(stateBefore, setsInBoard, stateBefore.tilesSentToBoardThisTurn);
                 check (score >= 30,
-                    "Meld: score is " + score + ", but initial meld needs at least 30 score"
+                    "Meld: score is " + score + ", but initial meld needs at least 30 score (excluding 'joker' tile)"
                 );
             }
 
@@ -974,12 +977,26 @@
             return (hasLoser) ? winner : -1;
         }
 
+        function findPosition(board, tileIndex) {
+            var position = {};
+            for (var row = 0; row < board.length; row++) {
+                for (var col = 0; col < board[0].length; col++) {
+                    if (board[row][col] === tileIndex) {
+                        position.row = row;
+                        position.col = col;
+                        break;
+                    }
+                }
+            }
+            return position;
+        }
+
         function getBoardRows() {
-            return 9;
+            return 6;
         }
 
         function getBoardCols() {
-            return 10;
+            return 18;
         }
 
         /**

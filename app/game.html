@@ -14,8 +14,7 @@
     <script src="js/controllers/gameCtrl.js"></script>
     <script src="js/filters/filters.js"></script>
 
-    <!--<script src="http://yoav-zibin.github.io/emulator/resizeGameAreaService.js"></script>-->
-    <script src="js/services/resizeGameAreaService.js"></script>
+    <script src="http://yoav-zibin.github.io/emulator/resizeGameAreaService.js"></script>
     <script src="http://yoav-zibin.github.io/emulator/alphaBetaService.js"></script>
     <script src="http://yoav-zibin.github.io/emulator/gameService.js"></script>
     <script src="http://yoav-zibin.github.io/emulator/messageService.js"></script>
@@ -23,145 +22,239 @@
     <link rel="stylesheet" type="text/css" href="http://yoav-zibin.github.io/emulator/main.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
     <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="css/game.css">
-    <link rel="stylesheet" type="text/css" href="css/app.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <!--<link rel="stylesheet" type="text/css" href="css/game.css">-->
+    <!--<link rel="stylesheet" type="text/css" href="css/app.css">-->
     <link rel="stylesheet" type="text/css" href="css/tile.css">
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.min.css">
 </head>
 
 <body ng-cloak ng-controller="GameCtrl">
 
-<div id="gameArea" class="game">
+<div id="gameArea" class="container-fluid">
+    <div class="row">
+       <div id="menu-panel" class="col-xs-1 vertical-align" style="padding: 0;height: 100vh; border: groove">
+            <div class="row">
 
-    <section class="panel-container player-panel">
-        <ul class="list-inline">
-            <li class="player-info" ng-repeat="i in [] | range: state.nplayers" ng-init="player=state['player'+i]">
-                <span class="label label-info">player{{i}}: {{state["player" + i].tiles.length}} tiles left</span>
-            </li>
-        </ul>
-    </section>
+                <div class="col-xs-12" ng-repeat="i in [] | range: state.nplayers">
+                    <p ng-if="i == turnIndex" class="text-info small">
+                        Me: {{state["player" + i].tiles.length}}
+                    </p>
+                    <p ng-if="i != turnIndex" class="text-warning  small">
+                        P{{i}}: {{state["player" + i].tiles.length}}
+                    </p>
+                </div>
 
-    <section class="panel-container center-panel">
-        <div id="board">
-            <div ng-repeat="row in [] | range: rows" class="board-row" style="position:absolute; top:{{100 * row / rows}}%; left: 0%; width: 100%; height:{{100.0 /rows}}%;">
-                <div class="" ng-repeat="col in [] | range: cols" style="position: absolute; top: 0%; left: {{col * 100 / cols}}%; width: {{100.0 / cols}}%; height: 100%; border: groove;"
-                     ng-click="boardCellClicked(row, col)">
+                <div class="col-xs-12">
+                    <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">pick</button>
+                </div>
 
-                    <div class="tile-wrapper"
-                         style="color:{{getTileByIndex(board[row][col]).color}}"
-                         ng-show="shouldShowTileOnBoard(row, col)">
-                        <div class="tile-score">{{getTileScore(board[row][col])}}</div>
-                        <div ng-if="getTileByIndex(board[row][col]).color == 'joker'">
-                            <img class="tile-joker" src="img/joker-red.png">
-                        </div>
-                    </div>
+                <div class="col-xs-12">
+                    <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">meld</button>
+                </div>
 
+                <div class="col-xs-12">
+                    <button type="button" class="btn btn-primary btn-circle" data-toggle="modal" data-target="#introModal">
+                        Help
+                    </button>
                 </div>
             </div>
-        </div>
-    </section>
+       </div><!-- /.menu-panel -->
 
-    <section class="panel-container info-panel">
-        <div class="info"><span class="label label-warning">{{debug}}</span></div>
-        <div class="game-btn">
-            <button type="button" class="btn btn-info" ng-click="pickBtnClicked()">pick</button>
-            <button type="button" class="btn btn-info" ng-click="meldBtnClicked()">meld</button>
-        </div>
-    </section>
+        <div class="col-xs-11">
 
-    <section class="panel-container hand-panel">
-        <a href="#hand0" style="position: absolute; top: 30%; left: 0%"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></a>
-        <div id="hand" ng-click="curPlayerAreaClicked()">
-            <ul>
-                <li style="border: groove; height: 100%; width: {{100/(14)}}%"
-                    ng-click="tileClicked(tileIndex)"
-                    ng-animate="'animate'"
-                    ng-repeat="tileIndex in curPlayer "
-                    id="hand{{$index}}">
-                    <div class="tile-wrapper"
-                         style="color: {{getTileByIndex(tileIndex).color}}">
-                        <div class="tile-score">{{getTileByIndex(tileIndex).score}}</div>
-                        <div ng-if="getTileByIndex(tileIndex).color == 'joker'">
-                            <img class="tile-joker" src="img/joker-red.png">
-                        </div>
+            <div id="board-panel" class="row">
+                <div id="board" class="col-xs-12">
+                    <div class="row" ng-repeat="row in [] | range: rows" style="">
+                        <div class="col-xs-18" ng-repeat="col in [] | range: cols"
+                             ng-click="boardCellClicked(row, col)">
+                            <div class="tile-wrapper">
+                                <div ng-if="notJoker(board[row][col])" class="tile-score" ng-init="tile = getTileByIndex(board[row][col])" data-value="{{tile.color}}">
+                                    {{tile.score}}
+                                </div>
+
+                                <div ng-if="isJoker(board[row][col])" class="tile-joker">
+                                    <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
+                                </div>
+                            </div>
+                        </div><!-- /.col -->
                     </div>
-                </li>
-            </ul>
-        </div>
-        <a href="#hand{{curPlayer.length}}" style="position: absolute; top: 30%; right: 0%"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
-    </section>
+                </div>
+            </div><!-- /#board-panel -->
 
-    <!-- Welcome Modal -->
-    <!--
-    <div id="welcome"  class="modal {{modalstate}}" ng-init="modalstate='show'" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog ">
+            <div id="" class="row">
+                {{debug}}
+            </div>
+
+            <div id="player-panel" class="row row-eq-height" style="border: groove;" ng-click="curPlayerAreaClicked()">
+
+                <div class="col-xs-1 text-center" style="padding-top: 2%">
+                    <i class="icon-chevron-sign-left icon-large"></i>
+                </div>
+
+                <div class="col-xs-10">
+                    <ul>
+                        <li  ng-repeat="tileIndex in curPlayer">
+
+                            <div class="tile-wrapper"
+                            ng-click="tileClicked(tileIndex)"
+                            ng-init="tile = getTileByIndex(tileIndex)">
+
+                            <div ng-if="tile != undefined && tile.color != 'joker'" class="tile-score" data-value="{{tile.color}}">
+                            {{tile.score}}
+                            </div>
+                            <div ng-if="tile != undefined && tile.color == 'joker'" class="tile-score">
+                            <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
+                            </div>
+                            </div>
+
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-xs-1 text-center" style="padding-top: 2%">
+                    <i class="icon-chevron-sign-right icon-large"></i>
+                </div>
+            </div>
+
+            <!--<div id="player-panel" ng-click="curPlayerAreaClicked()" class="container" style="border: groove">-->
+                <!--<div class="col-xs-12" style="height: 1vh">-->
+                    <!--<p style="float: left">-->
+                        <!--{{debug}}-->
+                    <!--</p>-->
+                <!--</div>-->
+
+                <!--<div class="row" style="height: 3vh;">-->
+                <!--<div class="col-xs-1">-->
+                    <!--<a href="#hand0"><div class="glyphicon glyphicon-chevron-left" aria-hidden="true"></div></a>-->
+                <!--</div>-->
+
+                <!--<div class="col-xs-10">-->
+                    <!--<ul>-->
+                        <!--<li style="border: groove; height: 100%; width: {{100 / 12}}%"-->
+                            <!--ng-click="tileClicked(tileIndex)"-->
+                            <!--ng-repeat="tileIndex in curPlayer "-->
+                            <!--id="hand{{$index}}">-->
+
+                            <!--<div class="tile-wrapper"-->
+                            <!--style="height: 1vh;"-->
+                            <!--ng-click="tileClicked(tileIndex)"-->
+                            <!--ng-init="tile = getTileByIndex(tileIndex)">-->
+
+                            <!--<div ng-if="tile != undefined && tile.color != 'joker'" class="tile-score" data-value="{{tile.color}}">-->
+                            <!--{{tile.score}}-->
+                            <!--</div>-->
+                            <!--<div ng-if="tile != undefined && tile.color == 'joker'" class="tile-score">-->
+                            <!--<img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">-->
+                            <!--</div>-->
+                            <!--</div>-->
+                        <!--</li>-->
+                    <!--</ul>-->
+                <!--</div>-->
+                <!--<div class="col-xs-2">-->
+                    <!--<a href="#hand{{curPlayer.length}}">-->
+                        <!--<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>-->
+                    <!--</a>-->
+                <!--</div>-->
+                <!--</div>-->
+
+                <!--<div class="col-xs-12">-->
+                    <!--<p class="small">slide on tiles to show more</p>-->
+                <!--</div>-->
+
+
+                <!--<div class="row col-xs-11 col-sm-10 col-md-8 col-lg-6 col-xs-offset-0 col-sm-offset-1 col-md-offset-2">-->
+                    <!--<div class="col-xs-1 col-sm-1"  ng-repeat="tileIndex in curPlayer">-->
+
+                        <!--<div class="tile-wrapper"-->
+                             <!--style="height: 1vh;"-->
+                             <!--ng-click="tileClicked(tileIndex)"-->
+                             <!--ng-init="tile = getTileByIndex(tileIndex)">-->
+
+                            <!--<div ng-if="tile != undefined && tile.color != 'joker'" class="tile-score" data-value="{{tile.color}}">-->
+                                <!--{{tile.score}}-->
+                            <!--</div>-->
+                            <!--<div ng-if="tile != undefined && tile.color == 'joker'" class="tile-score">-->
+                                <!--<img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">-->
+                            <!--</div>-->
+                        <!--</div>-->
+
+                    <!--</div>-->
+                <!--</div>-->
+            </div>
+
+        </div><!-- /.col-xs-11 -->
+    </div><!-- /.row -->
+</div><!-- /#gameArea -->
+
+<div id="introModal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" ng-click="modalstate='hide'" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4> First time to play Rummikub? See rules on <a href="http://en.wikipedia.org/wiki/Rummikub">wiki</a>. </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">
+                        First time to play Rummikub?
+                    </h4>
                 </div>
                 <div class="modal-body">
-                    <div id="myCarousel" class="carousel slide" data-ride="carousel">
-                        <ol class="carousel-indicators">
-                            <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
-                            <li data-target="#myCarousel" data-slide-to="1"></li>
-                            <li data-target="#myCarousel" data-slide-to="2"></li>
-                            <li data-target="#myCarousel" data-slide-to="3"></li>
-                        </ol>
+                        <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                            <ol class="carousel-indicators">
+                                <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+                                <li data-target="#myCarousel" data-slide-to="1"></li>
+                                <li data-target="#myCarousel" data-slide-to="2"></li>
+                                <li data-target="#myCarousel" data-slide-to="3"></li>
+                            </ol>
 
-                        <div class="carousel-inner" role="listbox">
-                            <div class="item active">
-                                <img src="img/valid0.png">
-                                <h6>Meld tiles in your hand in runs or groups</h6>
-                                <img src="img/valid1.png">
+                            <div class="carousel-inner" role="listbox">
+                                <div class="item active">
+                                    <img src="img/valid.png" alt="valid runs">
+                                    <h6>Meld tiles in your hand in runs or groups</h6>
+                                </div>
+
+                                <div class="item">
+                                    <img src="img/valid-runs.png">
+                                    <h6 class=""> Valid runs: same color, at least 3 tiles in order </h6>
+                                </div>
+
+                                <div class="item">
+                                    <img src="img/valid-groups.png">
+                                    <p> Valid groups: different color,same number </p>
+                                </div>
+
+                                <div class="item">
+                                    <img src="img/valid-joker.png">
+                                      <p> Use joker to substitute </p>
+                                </div>
+
+                                <div class="item">
+                                    <p>Sum of tiles' number >= 30 to achieve first meld.</p>
+                                    <img src="img/valid-run2.png">
+                                    <p> 'Pick' one more tile when cannot meld.</p>
+                                    <p>
+                                        See rules on <a href="http://en.wikipedia.org/wiki/Rummikub">wiki</a>.
+                                    </p>
+                                </div>
+
                             </div>
 
-                            <div class="item">
-                                <img src="img/valid-run.png">
-                                <h6 class=""> Valid runs: same color, at least 3 tiles in order </h6>
-                                <img src="img/valid-run2.png">
-                            </div>
+                            <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
+                                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                            <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
+                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </div><!-- /.myCarousel -->
 
-                            <div class="item">
-                                <img src="img/valid-group.png">
-                                <h6> Valid groups: different color, same number </h6>
-                                <img src="img/valid-group2.png">
-                            </div>
-
-                            <div class="item">
-                                <img src="img/joker-sub1.png">
-                                <h6> Use joker to substitute</h6>
-                                <img src="img/joker-sub2.png">
-                            </div>
-
-                            <div class="item">
-                                <h6>Sum of tiles' number >= 30 to achieve first meld.</h6>
-                                <img src="img/valid-run2.png">
-                                <h6> 'Pick' one more tile when cannot meld.</h6>
-                            </div>
-
-                        </div>
-
-                        <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
-                            <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-                            <span class="sr-only">Previous</span>
-                        </a>
-                        <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
-                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="false"></span>
-                            <span class="sr-only">Next</span>
-                        </a>
-                    </div>
-                </div>
+                </div><!-- /.modal-body -->
                 <div class="modal-footer">
-                    <button type="button" ng-click="modalstate = 'hide' " class="btn btn-default" >Skip</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
                 </div>
-            </div>
-        </div>
-    </div>
-    -->
-
-</div> <!-- gameArea div -->
-
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>

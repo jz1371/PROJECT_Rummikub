@@ -1,19 +1,24 @@
 exports.config = {
-  allScriptsTimeout: 11000,
+    allScriptsTimeout: 11000,
 
-  specs: [
-    'e2e/*.js'
-  ],
+    // uncomment below line and comment Line 6 to test actual web version
+    //baseUrl: 'http://jz1371.github.io/PROJECT_Rummikub/app/',
+    baseUrl: 'http://localhost:9000/app/',
 
-  capabilities: {
-    'browserName': 'chrome'
-  },
+    specs: [
+        'e2e/*.js'
+    ],
 
-  baseUrl: 'http://localhost:8000/app/',
+    capabilities: {
+        'browserName': 'chrome'
+    },
 
-  framework: 'jasmine',
+    directConnect: true, // only works with Chrome and Firefox
 
-  jasmineNodeOpts: {
-    defaultTimeoutInterval: 30000
-  }
+
+    framework: 'jasmine',
+
+    jasmineNodeOpts: {
+        defaultTimeoutInterval: 30000
+    }
 };
