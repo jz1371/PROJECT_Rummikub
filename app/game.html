@@ -22,11 +22,10 @@
     <link rel="stylesheet" type="text/css" href="http://yoav-zibin.github.io/emulator/main.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
     <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="css/main.css">
-    <!--<link rel="stylesheet" type="text/css" href="css/game.css">-->
-    <!--<link rel="stylesheet" type="text/css" href="css/app.css">-->
-    <link rel="stylesheet" type="text/css" href="css/tile.css">
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.min.css">
+
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <link rel="stylesheet" type="text/css" href="css/tile.css">
 </head>
 
 <body ng-cloak ng-controller="GameCtrl">
@@ -67,6 +66,7 @@
                 <div id="board" class="col-xs-12">
                     <div class="row" ng-repeat="row in [] | range: rows" style="">
                         <div class="col-xs-18" ng-repeat="col in [] | range: cols"
+                             id="{{'e2e_test_board_div_' + row + 'x' + col}}"
                              ng-click="boardCellClicked(row, col)">
                             <div class="tile-wrapper">
                                 <div ng-if="notJoker(board[row][col])" class="tile-score" ng-init="tile = getTileByIndex(board[row][col])" data-value="{{tile.color}}">
@@ -77,12 +77,12 @@
                                     <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
                                 </div>
                             </div>
-                        </div><!-- /.col -->
+                        </div><!-- /.col-xs-18 -->
                     </div>
                 </div>
             </div><!-- /#board-panel -->
 
-            <div id="" class="row">
+            <div id="info-panel" class="row">
                 {{debug}}
             </div>
 
@@ -94,11 +94,13 @@
 
                 <div class="col-xs-10">
                     <ul>
-                        <li  ng-repeat="tileIndex in curPlayer">
+                        <li ng-repeat="tileIndex in curPlayer">
+
 
                             <div class="tile-wrapper"
-                            ng-click="tileClicked(tileIndex)"
-                            ng-init="tile = getTileByIndex(tileIndex)">
+                                 id="{{'e2e_test_tile_' + tileIndex }}"
+                                 ng-click="tileClicked(tileIndex)"
+                                 ng-init="tile = getTileByIndex(tileIndex)">
 
                             <div ng-if="tile != undefined && tile.color != 'joker'" class="tile-score" data-value="{{tile.color}}">
                             {{tile.score}}
@@ -115,72 +117,6 @@
                 <div class="col-xs-1 text-center" style="padding-top: 2%">
                     <i class="icon-chevron-sign-right icon-large"></i>
                 </div>
-            </div>
-
-            <!--<div id="player-panel" ng-click="curPlayerAreaClicked()" class="container" style="border: groove">-->
-                <!--<div class="col-xs-12" style="height: 1vh">-->
-                    <!--<p style="float: left">-->
-                        <!--{{debug}}-->
-                    <!--</p>-->
-                <!--</div>-->
-
-                <!--<div class="row" style="height: 3vh;">-->
-                <!--<div class="col-xs-1">-->
-                    <!--<a href="#hand0"><div class="glyphicon glyphicon-chevron-left" aria-hidden="true"></div></a>-->
-                <!--</div>-->
-
-                <!--<div class="col-xs-10">-->
-                    <!--<ul>-->
-                        <!--<li style="border: groove; height: 100%; width: {{100 / 12}}%"-->
-                            <!--ng-click="tileClicked(tileIndex)"-->
-                            <!--ng-repeat="tileIndex in curPlayer "-->
-                            <!--id="hand{{$index}}">-->
-
-                            <!--<div class="tile-wrapper"-->
-                            <!--style="height: 1vh;"-->
-                            <!--ng-click="tileClicked(tileIndex)"-->
-                            <!--ng-init="tile = getTileByIndex(tileIndex)">-->
-
-                            <!--<div ng-if="tile != undefined && tile.color != 'joker'" class="tile-score" data-value="{{tile.color}}">-->
-                            <!--{{tile.score}}-->
-                            <!--</div>-->
-                            <!--<div ng-if="tile != undefined && tile.color == 'joker'" class="tile-score">-->
-                            <!--<img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">-->
-                            <!--</div>-->
-                            <!--</div>-->
-                        <!--</li>-->
-                    <!--</ul>-->
-                <!--</div>-->
-                <!--<div class="col-xs-2">-->
-                    <!--<a href="#hand{{curPlayer.length}}">-->
-                        <!--<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>-->
-                    <!--</a>-->
-                <!--</div>-->
-                <!--</div>-->
-
-                <!--<div class="col-xs-12">-->
-                    <!--<p class="small">slide on tiles to show more</p>-->
-                <!--</div>-->
-
-
-                <!--<div class="row col-xs-11 col-sm-10 col-md-8 col-lg-6 col-xs-offset-0 col-sm-offset-1 col-md-offset-2">-->
-                    <!--<div class="col-xs-1 col-sm-1"  ng-repeat="tileIndex in curPlayer">-->
-
-                        <!--<div class="tile-wrapper"-->
-                             <!--style="height: 1vh;"-->
-                             <!--ng-click="tileClicked(tileIndex)"-->
-                             <!--ng-init="tile = getTileByIndex(tileIndex)">-->
-
-                            <!--<div ng-if="tile != undefined && tile.color != 'joker'" class="tile-score" data-value="{{tile.color}}">-->
-                                <!--{{tile.score}}-->
-                            <!--</div>-->
-                            <!--<div ng-if="tile != undefined && tile.color == 'joker'" class="tile-score">-->
-                                <!--<img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">-->
-                            <!--</div>-->
-                        <!--</div>-->
-
-                    <!--</div>-->
-                <!--</div>-->
             </div>
 
         </div><!-- /.col-xs-11 -->

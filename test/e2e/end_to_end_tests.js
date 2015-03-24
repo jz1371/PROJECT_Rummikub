@@ -1,7 +1,7 @@
 describe('myApp', function() {
 
-    var rowsInBoard = 1;
-    var colsInRow = 1;
+    var rowsInBoard = 6;
+    var colsInRow = 18;
 
     beforeEach(function () {
         var url  = "game.html";
@@ -9,8 +9,12 @@ describe('myApp', function() {
         browser.get(url);
     });
 
-    function getDiv() {
+    function getBoardDiv(row, col) {
+        return element(by.id('e2e_test_board_div_' + row + 'x' + col));
+    }
 
+    function getTile(tileIndex) {
+        return element(by.id('e2e_test_tile_' + tileIndex));
     }
 
     function setMatchState(matchState, playMode) {

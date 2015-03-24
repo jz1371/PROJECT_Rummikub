@@ -6,7 +6,11 @@ exports.config = {
     baseUrl: 'http://localhost:9000/app/',
 
     specs: [
-        'e2e/*.js'
+        'e2e/end_to_end_tests.js',
+
+        //'e2e/end_to_end_tests_Wenzhao.js',
+
+        //'e2e/end_to_end_tests_Islam.js',
     ],
 
     capabilities: {
@@ -14,7 +18,6 @@ exports.config = {
     },
 
     directConnect: true, // only works with Chrome and Firefox
-
 
     framework: 'jasmine',
 

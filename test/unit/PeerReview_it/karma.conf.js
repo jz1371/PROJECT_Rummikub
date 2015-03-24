@@ -1,7 +1,7 @@
 module.exports = function(config){
     config.set({
 
-        basePath : './',
+        basePath : '',
 
         files : [
             'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js',
