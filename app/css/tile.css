@@ -1,10 +1,9 @@
-/** File: app/css/tile.css */
 
 /* create a wrapper with fixed width-to-height ratio */
 .tile-wrapper {
     position: relative;
     width: 100%;
-    padding-bottom: 120%;       /* [Setter] tile's width to height ratio */
+    padding-bottom: 120%;        /* [Setter] tile's width to height ratio */
 
     /* set 3D border style */
     border-style: inset;
@@ -24,6 +23,15 @@
 .tile-wrapper p {
     text-shadow: none;
 }
+.tile {
+    top: 0%;
+    font-weight: bold;
+    text-align: center;
+
+    border-style: outset;
+    border-width: 0 2px;
+    background-color: rgba(172, 172, 172, 0.58);
+}
 
 
 .tile-score {
@@ -41,85 +49,6 @@
     border-style: outset;
     border-width: 0 2px;
     background-color: rgba(172, 172, 172, 0.58);
-}
-
-@media (min-width: 240px) {
-    .tile-wrapper > .tile-score, .tile-joker {
-        border: none;
-        font-size: 2.5vmin;
-        background-color: rgba(172, 172, 172, 0.58);
-    }
-
-    .tile-wrapper img {
-        width: 75%;
-        margin: 18% auto;
-    }
-}
-
-@media (min-width: 480px) {
-    .tile-wrapper > .tile-score{
-        padding-top: 10%;
-        border-style: outset;
-        border-width: 0 1px;
-        background-color: rgba(172, 172, 172, 0.58);
-        font-size: 4vmin;
-    }
-
-    .tile-joker {
-        border-style: outset;
-        border-width: 0 1px;
-        background-color: rgba(172, 172, 172, 0.58);
-    }
-
-    .tile-wrapper img {
-        width: 70%;
-        margin: 20% auto;
-    }
-}
-
-@media (min-width: 600px) {
-
-    .tile-wrapper {
-        border-width: 2px 2px;
-    }
-
-    .tile-wrapper > .tile-score {
-        padding-top: 7%;
-        font-size: 6vmin;
-    }
-
-    .tile-joker {
-        border-style: outset;
-        border-bottom: 5px;
-        border-left: 5px;
-        border-right: 5px;
-    }
-
-    .tile-wrapper img {
-        width: 60%;
-        margin: 18% auto;
-    }
-}
-
-@media (min-width: 768px) {
-    .tile-wrapper > .tile-score {
-        padding-top: 5%;
-        font-size: 4vmin;
-    }
-}
-
-@media (min-width: 970px) {
-    .tile-wrapper > .tile-score {
-        padding-top: 4%;
-        font-size: 4vmin;
-    }
-}
-
-@media (min-width: 1024px) {
-    .tile-wrapper > .tile-score {
-        padding-top: 4%;
-        font-size: 4vmin;
-    }
 }
 
 #board .joker {

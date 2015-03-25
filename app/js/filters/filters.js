@@ -1,5 +1,16 @@
 /**
- * Created by Steven on 3/15/15.
+ * File: app/js/filters/filters.js
+ * ----------------------------------------
+ * provide range filter for ng-repeat
+ *
+ * usage (repeat 3 times) :
+ *
+ *      ng-repeat="i in [] | range: 3"
+ *
+ * ----------------------------------------
+ * @author: Jingxin Zhu
+ * @date:   2015.03.15
+ *
  */
 
 'use strict';

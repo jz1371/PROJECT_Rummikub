@@ -1,7 +1,7 @@
 #gameArea {
     background-image: url('../img/game-background.jpg');
-    background-repeat: no-repeat;
     background-size: 100% 100%;
+    font-size: 3vw;
 
     /* adding below to fix background image bug for mobile browsers */
     -o-background-size: cover;
@@ -9,19 +9,56 @@
     -webkit-background-size:cover;
 }
 
-/* vertically center a div */
-.vertical-align{
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
+/*
+ *  |----------------    game area   -------------|
+ *  +---------------------------------------------+
+ *  |col-xs-1|------------- col-xs-11 ------------|
+ *  |        | +--------------------------------+ |
+ *  |        | |                                | |
+ *  |        | |                                | |
+ *  |        | |                                | |
+ *  |        | |              board             | |
+ *  |        | |            (6  x 18)           | |
+ *  |        | |                                | |
+ *  |  menu  | |                                | |
+ *  |        | |                                | |
+ *  |        | |col-xs-18|............|col-xs-18| |
+ *  |        | +--------------------------------+ |
+ *  |        |                                    |
+ *  |        | +--------------------------------+ |
+ *  |        | |   +--------------------------+ | |
+ *  |        | |   |          player          | | |
+ *  |        | |   +------- col-xs-10 --------+ | |
+ *  |        | +--------------------------------+ |
+ *  +---------------------------------------------+
+ */
+
+#menu-panel {
+    padding: 0;     /* clear left, right padding to save space for board */
+    border: groove;
+    height: 100vh;  /* let menu fill the whole height space */
+    text-align: center;
 }
+
+#menu-panel .row {
+    margin-top: 10vh;
+    height: 100%;
+}
+
 
 #menu-panel > .row > .col-xs-12{
-    padding-bottom: 30%;   /* [Setter] here for distance between items in left menu */
-    text-align: center;    /* center the column in left menu */
+    padding-bottom: 3vw   /* [Setter] here for distance between items in left menu */
 }
 
-
+.btn-circle {
+    width: 24px;
+    height: 24px;
+    text-align: center;
+    padding: 0 0;
+    font-size: 2vw;
+    line-height: 1.428571429;
+    border-radius: 12px;
+}
 
 #board-panel .row {
     margin: 0.8vh 0px;       /* [Setter] distance between rows in board */
@@ -35,6 +72,10 @@
     min-height: 1px;
     padding-left: 2px;
     padding-right: 2px;
+}
+
+#info-panel {
+    font-size: 1.5vw;
 }
 
 
@@ -125,24 +166,8 @@
     }
 }
 
-.scroll {
-    overflow-x: scroll;
-    overflow-y: hidden;
-    white-space: nowrap;
-}
-
-.btn-circle {
-    width: 30px;
-    height: 30px;
-    text-align: center;
-    padding: 6px 0;
-    font-size: 12px;
-    line-height: 1.428571429;
-    border-radius: 15px;
-}
-
 /* center the image of carousel inside modal */
-.carousel-inner > .item > img, h6, p {
+.carousel-inner > .item > img, h6{
     margin: 0 auto;
     text-align: center;
     color: #808080;
