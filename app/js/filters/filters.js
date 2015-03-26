@@ -12,14 +12,19 @@
  * @date:   2015.03.15
  *
  */
+(function(){
 
-'use strict';
+    'use strict';
 
-angular.module('myApp').filter('range', function() {
-    return function(input, total) {
-        total = parseInt(total);
-        for (var i=0; i<total; i++)
-            input.push(i);
-        return input;
-    };
-});
+    angular.module('myApp').filter('range', function() {
+        return function(input, total) {
+            total = parseInt(total);
+            for (var i=0; i<total; i++) {
+                input.push(i);
+            }
+            return input;
+        };
+    });
+
+}());
+

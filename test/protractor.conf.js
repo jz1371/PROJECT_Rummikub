@@ -3,15 +3,16 @@ exports.config = {
 
     // uncomment below line and comment Line 6 to test actual web version
     //baseUrl: 'http://jz1371.github.io/PROJECT_Rummikub/app/',
-    //baseUrl: 'http://localhost:9000/app/',
+
+    baseUrl: 'http://localhost:1371/app/',
 
     specs: [
 
-        'e2e/end_to_end_tests.js',
+        //'e2e/end_to_end_tests.js',
 
-        //'e2e/end_to_end_tests_Wenzhao.js',
+        //'e2e/end_to_end_tests_Wenzhao_Zang.js',
 
-        //'e2e/end_to_end_tests_Islam.js',
+        'e2e/end_to_end_tests_Islam.js',
     ],
 
     capabilities: {

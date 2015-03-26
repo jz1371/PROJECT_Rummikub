@@ -35,7 +35,8 @@ module.exports = function(grunt) {
                     browser: false, element: false, by: false, // Protractor
                 },
             },
-            all: ['Gruntfile.js', 'test/karma.conf.js', 'test/protractor.conf.js', 'app/js/*/*.js', 'languages/*.js']
+            all: ['Gruntfile.js', 'test/karma.conf.js', 'test/protractor.conf.js',
+                'app/js/*/*.js','test/unit/*.js' ,'test/e2e/*tests.js','languages/*.js']
         },
         karma: {
             unit: {
@@ -101,7 +102,7 @@ module.exports = function(grunt) {
             'dev': {
                 // the server root directory
                 root: '.',
-                port: 9000,
+                port: 1371,
                 host: "0.0.0.0",
                 cache: 1,
                 showDir : true,

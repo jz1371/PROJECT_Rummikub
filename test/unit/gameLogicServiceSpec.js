@@ -7,6 +7,8 @@
  */
 describe("Rummikub Unit Tests", function() {
 
+    'use strict';
+
     var _service;
     var initMove = [];
     var nPlayers = 4;
@@ -33,8 +35,8 @@ describe("Rummikub Unit Tests", function() {
                     [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
                     [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
                     [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                ]}
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+            ]}
             },
 
             // 4. set game tiles
@@ -238,7 +240,7 @@ describe("Rummikub Unit Tests", function() {
             {setVisibility: {key: 'tile52', visibleToPlayerIndices: [3]}},
             {setVisibility: {key: 'tile53', visibleToPlayerIndices: [3]}},
             {setVisibility: {key: 'tile54', visibleToPlayerIndices: [3]}},
-            {setVisibility: {key: 'tile55', visibleToPlayerIndices: [3]}},
+            {setVisibility: {key: 'tile55', visibleToPlayerIndices: [3]}}
         ];
         move = move.concat( visibility.slice(0, 14 * nPlayers) );
         move.push({set: {key: 'nexttile', value: nPlayers * 14}});
@@ -348,7 +350,7 @@ describe("Rummikub Unit Tests", function() {
                 expectIllegalMove(0, stateBefore, move);
 
                 stateBefore.nplayers = -2;
-                var move = getInitMove(-2);
+                move = getInitMove(-2);
                 expectIllegalMove(0, stateBefore, move);
             });
         });
@@ -362,7 +364,7 @@ describe("Rummikub Unit Tests", function() {
             function defaultPickMove(playerIndex) {
                 // player0 picks one tile28 from tile pool
                 var pickMove = [
-                    {setTurn: {turnIndex: (1 - playerIndex)}},
+                    {setTurn: {turnIndex: 1 - playerIndex}},
                     {set: {key: 'type', value: "PICK"}},
                     {setVisibility: {key: 'tile28', visibleToPlayerIndices: [playerIndex]}},
                     {
@@ -446,10 +448,10 @@ describe("Rummikub Unit Tests", function() {
 
                 stateBefore.nexttile = 28;
 
-                move[2].setVisibility.key = 'tile30'
+                move[2].setVisibility.key = 'tile30';
                 expectIllegalMove(0, stateBefore, move);
 
-                move[2].setVisibility.key = 'tile27'
+                move[2].setVisibility.key = 'tile27';
                 expectIllegalMove(0, stateBefore, move);
             });
 
@@ -534,7 +536,7 @@ describe("Rummikub Unit Tests", function() {
                         [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
                         [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
                     ]}},
-                    {setVisibility: {key: 'tile13', visibleToPlayerIndices: [(1 - playerIndex)]}}
+                    {setVisibility: {key: 'tile13', visibleToPlayerIndices: [1 - playerIndex]}}
                 ];
                 return sendMove;
             }
@@ -639,7 +641,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] checkPositionWithinBoard: (row, col) = (undefined, undefined) is undefined", function() {
                 var stateBefore = state;
-                var playerIndex = 1
+                var playerIndex = 1;
                 var move = defaultSendMove(playerIndex);
                 move[2] = {set: {key: 'todelta', value: {tile: 1}}};
                 expectIllegalMove(0, stateBefore, move);
@@ -1008,7 +1010,7 @@ describe("Rummikub Unit Tests", function() {
                 // 'tile60', {color: 'black', score:  9}
                 stateBefore.tilesSentToBoardThisTurn = [15,16,34,60,21,17,18];
                 stateBefore.board[1] = [-1,-1,21,34,60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-                stateBefore.board[3] = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,15,16,17,18]
+                stateBefore.board[3] = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,15,16,17,18];
 
                 var move = [
                     {setTurn: {turnIndex: 1 - playerIndex}},
@@ -1087,7 +1089,7 @@ describe("Rummikub Unit Tests", function() {
                 var stateBefore = state;
                 stateBefore["player" + playerIndex] = {
                     initial  : true,
-                    tiles    : [17,18,19,20,21,23,24,25],
+                    tiles    : [17,18,19,20,21,23,24,25]
                 };
                 stateBefore.tilesSentToBoardThisTurn = [14,16,105,15];
                 stateBefore.board = [
@@ -1149,7 +1151,7 @@ describe("Rummikub Unit Tests", function() {
                 stateBefore.player0 = {
                     initial  : false,
                     tiles    : [0,      4,5,6,7,8,9,10,11,12,13]
-                }
+                };
                 stateBefore.tilesSentToBoardThisTurn = [1,2,3];
                 stateBefore.board = [
                     [-1, 1, 2, 3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -1180,7 +1182,7 @@ describe("Rummikub Unit Tests", function() {
                 stateBefore['player' + playerIndex] = {
                     initial  : true,
                     tiles    : [0,    3,4,5,6,7,8,9,10,11,12,13]
-                }
+                };
                 stateBefore.tilesSentToBoardThisTurn = [2,1];
                 stateBefore.board[0] = [-1,2,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
 
@@ -1198,7 +1200,7 @@ describe("Rummikub Unit Tests", function() {
                 stateBefore['player' + playerIndex] = {
                     initial  : true,
                     tiles    : [0,1,2,3,4,5,6,7,8,9,      12,13   ]
-                }
+                };
                 stateBefore.tilesSentToBoardThisTurn = [64,11,10];
                 // tile10: {color: "blue" , score: 11}
                 // tile10: {color: "blue" , score: 12}
@@ -1219,7 +1221,7 @@ describe("Rummikub Unit Tests", function() {
                 stateBefore['player' + playerIndex] = {
                     initial  : true,
                     tiles    : [0,1,2,3,4,5,6,7,  9,      12,13]
-                }
+                };
                 stateBefore.tilesSentToBoardThisTurn = [11,8,10];
                 // tile10: {color: "blue" , score: 11}
                 // tile11: {color: "blue" , score: 12}
@@ -1246,7 +1248,7 @@ describe("Rummikub Unit Tests", function() {
                 var stateBefore = state;
                 stateBefore["player" + playerIndex] = {
                     initial  : false,
-                    tiles    : [14,15,16,17,18,19,20,21,   23,24,25,     ]
+                    tiles    : [14,15,16,17,18,19,20,21,   23,24,25]
                 };
                 stateBefore.tilesSentToBoardThisTurn = [35,22,60];
                 // 'tile22', {color: 'blue',  score: 10}
@@ -1274,7 +1276,7 @@ describe("Rummikub Unit Tests", function() {
                 var stateBefore = state;
                 stateBefore["player" + playerIndex] = {
                     initial  : false,
-                    tiles    : [14,15,16,17,18,19,20,21,   23,24,25,     ]
+                    tiles    : [14,15,16,17,18,19,20,21,   23,24,25]
                 };
                 stateBefore.tilesSentToBoardThisTurn = [22,48,35];
                 // 'tile22', {color: 'blue',  score: 10}
@@ -1380,13 +1382,14 @@ describe("Rummikub Unit Tests", function() {
                 stateBefore["player" + playerIndex] = {
                     initial : true,
                     tiles   : []
-                }
-                stateBefore["player" + (1-playerIndex)] = {
+                };
+                var playerIndexBefore = 1 - playerIndex;
+                stateBefore["player" + playerIndexBefore] = {
                     initial : true,
                     // 'tile14': {color:'blue',score:  2}
                     // 'tile15': {color:'blue',score:  3}
                     tiles   : [14,15]
-                }
+                };
 
                 stateBefore.board = [
                     [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -1419,7 +1422,8 @@ describe("Rummikub Unit Tests", function() {
                     initial : true,
                     tiles   : []
                 };
-                stateBefore["player" + (1 - playerIndex)] = {
+                var playerIndexBefore = 1 - playerIndex;
+                stateBefore["player" + playerIndexBefore] = {
                     initial : true,
                     // 'tile14': {color:'blue',score:  2}
                     // 'tile15': {color:'blue',score:  3}
@@ -1451,18 +1455,19 @@ describe("Rummikub Unit Tests", function() {
             it ("[Wrong] cannot move any more when someone wins the game.", function(){
                 var playerIndex = 1;
                 var stateBefore = state;
-                stateBefore.tilesSentToBoardThisTurn = []
-                stateBefore["player" + (1 - playerIndex)] = {
+                stateBefore.tilesSentToBoardThisTurn = [];
+                var playerIndexBefore = 1 - playerIndex;
+                stateBefore["player" + playerIndexBefore] = {
                     initial : true,
                     tiles   : []
-                }
+                };
                 stateBefore["player" + playerIndex] = {
                     initial : true,
                     // 'tile14': {color:'blue',score:  2}
                     // 'tile15': {color:'blue',score:  3}
                     // 'tile104': {color:'joker',score:0}
                     tiles   : [14,15,104]
-                }
+                };
 
                 stateBefore.board = [
                     [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -1475,7 +1480,7 @@ describe("Rummikub Unit Tests", function() {
 
 
                 expectIllegalMove(playerIndex, stateBefore, [
-                        {setTurn: {turnIndex: (1 - playerIndex)}},
+                        {setTurn: {turnIndex: 1 - playerIndex}},
                         {set: {key: 'type', value: "MELD"}},
                         {set: {key: 'player' + playerIndex, value: {
                             initial:  true,
@@ -1492,16 +1497,17 @@ describe("Rummikub Unit Tests", function() {
                 // all tiles are sent to players
                 stateBefore.nexttile = 106;
 
-                stateBefore.tilesSentToBoardThisTurn = []
-                stateBefore["player" + (1 - playerIndex)] = {
+                stateBefore.tilesSentToBoardThisTurn = [];
+                var playerIndexBefore = 1 - playerIndex;
+                stateBefore["player" + playerIndexBefore] = {
                     initial : true,
                     // player can send tile to board
                     tiles   : [2]
-                }
+                };
                 stateBefore["player" + playerIndex] = {
                     initial : true,
                     tiles   : [14]
-                }
+                };
 
                 stateBefore.board = [
                     [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -1514,7 +1520,7 @@ describe("Rummikub Unit Tests", function() {
 
 
                 expectIllegalMove(playerIndex, stateBefore, [
-                        {setTurn: {turnIndex: (1 - playerIndex)}},
+                        {setTurn: {turnIndex: 1 - playerIndex}},
                         {set: {key: 'type', value: "MELD"}},
                         {set: {key: 'player' + playerIndex, value: {
                             initial:  true,
@@ -1532,15 +1538,16 @@ describe("Rummikub Unit Tests", function() {
                 // all tiles are sent to players
                 stateBefore.nexttile = 106;
 
-                stateBefore.tilesSentToBoardThisTurn = []
-                stateBefore["player" + (1 - playerIndex)] = {
+                stateBefore.tilesSentToBoardThisTurn = [];
+                var playerIndexBefore = 1 - playerIndex;
+                stateBefore["player" + playerIndexBefore] = {
                     initial : true,
                     tiles   : [2]
-                }
+                };
                 stateBefore["player" + playerIndex] = {
                     initial : true,
                     tiles   : [14]
-                }
+                };
 
                 stateBefore.board = [
                     [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -1553,7 +1560,7 @@ describe("Rummikub Unit Tests", function() {
 
 
                 expectIllegalMove(playerIndex, stateBefore, [
-                        {setTurn: {turnIndex: (1 - playerIndex)}},
+                        {setTurn: {turnIndex: 1 - playerIndex}},
                         {set: {key: 'type', value: "MELD"}},
                         {set: {key: 'player' + playerIndex, value: {
                             initial:  true,

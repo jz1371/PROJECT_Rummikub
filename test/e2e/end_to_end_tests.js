@@ -1,6 +1,17 @@
 /**
- * File: test/end_to_end_tests.js
- * ----------------------------------
+ * File: test/e2e/end_to_end_tests.js
+ * -----------------------------------------------------------------------------
+ * Usage: (assuming at the root of project)
+ *
+ *      $ sudo npm install
+ *      $ sudo npm install -g grunt-cli
+ *      $ ./node_modules/http-server/bin/http-server --cors -a localhost -p 1371
+ *      $ ./node_modules/protractor/bin/webdriver-manager update
+ *      $ ./node_modules/grunt-protractor-runner/node_modules/protractor/bin/webdriver-manager update
+ *      $ cd test
+ *      $  ../node_modules/protractor/bin/protractor protractor.conf.js
+ *
+ * -----------------------------------------------------------------------------
  * @author: Jingxin Zhu
  * @date  : 2015.03.25
  */
@@ -13,7 +24,9 @@ describe('myApp', function(){
     var colsInRow = 18;
 
     beforeEach(function () {
-        var baseUrl = 'http://localhost:9000/app/';
+        // assuming in the steps described in above 'Usage'
+        // port 1371 is binded.
+        var baseUrl = 'http://localhost:1371/app/';
 
         // uncomment below to test actual page
         //var baseUrl = 'http://jz1371.github.io/PROJECT_Rummikub/app/';
@@ -97,7 +110,7 @@ describe('myApp', function(){
     function clickHandAreaAndExpectTile(tileIndex) {
         // before click it is not in player's hand
         expectHandTile(tileIndex, false);
-        var tilesInHandBefore = element.all(by.repeater("tileIndex in curPlayer")).count().then(function(countBefore){
+        element.all(by.repeater("tileIndex in curPlayer")).count().then(function(countBefore){
 
             clickHandArea();
 
@@ -178,7 +191,7 @@ describe('myApp', function(){
                 var tileIndex = parseTileIndexFromId(id);
 
                 // 2. click one empty position in board to send to
-                var row = getRandom(rowsInBoard)
+                var row = getRandom(rowsInBoard);
                 var col = getRandom(colsInRow);
 
                 clickBoardDivAndExpectTile(row, col, tileIndex);
@@ -255,13 +268,13 @@ describe('myApp', function(){
      * @returns {number} index of tile in player's hand
      */
     function getRandomTileFromHand(length) {
-        var len = (length === undefined) ? 14 : length;
-        return Math.floor((Math.random() * len) + 1) - 1;
+        var len = length === undefined ? 14 : length;
+        return Math.floor(Math.random() * len + 1) - 1;
     }
 
 
     function getRandom(boundary) {
-        return Math.floor((Math.random() * boundary) + 1) - 1;
+        return Math.floor(Math.random() * boundary + 1) - 1;
     }
 
     function getAnotherRandom(posToAvoid, boundary) {
@@ -282,7 +295,7 @@ describe('myApp', function(){
     function parseTileIndexFromId(id) {
         var idPrefix = "e2e_test_hand_tile_";
         var tileIndex = parseInt(id.substring(idPrefix.length));
-        return (tileIndex !== NaN && tileIndex >= 0 && tileIndex < 105)? tileIndex : -1;
+        return !isNaN(tileIndex) && tileIndex >= 0 && tileIndex < 105 ? tileIndex : -1;
     }
 
     /**

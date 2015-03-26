@@ -1,48 +1,51 @@
 module.exports = function(config){
-  config.set({
 
-    basePath : '../',
+    'use strict';
 
-    files : [
-      // use web service, so no local npm dependency required
-      'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js',
-      'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-mocks.js',
+    config.set({
 
-      'app/js/services/*.js',
-      'test/unit/**/gameLogicServiceSpec.js'
-    ],
+        basePath : '../',
 
-    reporters: ['progress', 'coverage'],
+        files : [
+            // use web service, so no local npm dependency required
+            'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js',
+            'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-mocks.js',
 
-    preprocessors: {
-    // source files, that you wanna generate coverage for
-    // do not include tests or libraries
-    // (these files will be instrumented by Istanbul)
-        'app/js/services/gameLogicService.js': ['coverage']
-    },
+            'app/js/services/*.js',
+            'test/unit/**/gameLogicServiceSpec.js'
+        ],
 
-    coverageReporter: {
-        type : 'html',
-        dir : 'coverage/'
-    },
+        reporters: ['progress', 'coverage'],
 
-    autoWatch : true,
+        preprocessors: {
+            // source files, that you wanna generate coverage for
+            // do not include tests or libraries
+            // (these files will be instrumented by Istanbul)
+            'app/js/services/gameLogicService.js': ['coverage']
+        },
 
-    frameworks: ['jasmine'],
+        coverageReporter: {
+            type : 'html',
+            dir : 'coverage/'
+        },
 
-    browsers : ['Chrome'],
+        autoWatch : true,
 
-    plugins : [
+        frameworks: ['jasmine'],
+
+        browsers : ['Chrome'],
+
+        plugins : [
             'karma-chrome-launcher',
             'karma-firefox-launcher',
             'karma-jasmine',
             'karma-junit-reporter'
-            ],
+        ],
 
-    junitReporter : {
-      outputFile: 'test_out/unit.xml',
-      suite: 'unit'
-    }
+        junitReporter : {
+            outputFile: 'test_out/unit.xml',
+            suite: 'unit'
+        }
 
-  });
+    });
 };

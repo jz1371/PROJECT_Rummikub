@@ -10,7 +10,7 @@
 
 (function () {
 
-    'user strict';
+    'use strict';
 
     /**
      **************************************************************************************
@@ -53,8 +53,8 @@
      *
      **************************************************************************************
      */
-
     angular.module('myApp', []).factory('gameLogicService', function() {
+
 
         /**
          * Checks whether given move is Ok or not.
@@ -111,9 +111,9 @@
                     expectedMove = getRetrieveFromBoardMove(stateBefore, playerIndex, from);
                     break;
                 case "REPLACE":
-                    var from = actualMove[3].set.value;
-                    var to   = actualMove[4].set.value;
-                    expectedMove = getReplaceMove(stateBefore, playerIndex, from, to);
+                    var replace_from = actualMove[3].set.value;
+                    var replace_to   = actualMove[4].set.value;
+                    expectedMove = getReplaceMove(stateBefore, playerIndex, replace_from, replace_to);
                     break;
                 case "MELD":
                     expectedMove = getMeldMove(stateBefore, playerIndex);
@@ -155,9 +155,9 @@
             // 3.1. initialize game tiles and shuffle keys
             var tiles = [];
             var shuffleKeys = [];
-            for (var i = 0; i < 106; i++) {
-                tiles[i] = {set: {key: "tile" + i, value: getTileByIndex(i)}};
-                shuffleKeys[i] = 'tile' + i;
+            for (var tileIndex = 0; tileIndex< 106; tileIndex++) {
+                tiles[tileIndex] = {set: {key: "tile" + tileIndex, value: getTileByIndex(tileIndex)}};
+                shuffleKeys[tileIndex] = 'tile' + tileIndex;
             }
 
             // 3.2. initialize game players
@@ -178,11 +178,11 @@
 
             // 3.3. initialize tile visibility
             var visibility = [];
-            for (var i = 0; i < nPlayers; i++) {
-                for (var j = 0; j < nTilesPerPlayerInitially; j++) {
+            for (var ii = 0; ii < nPlayers; ii++) {
+                for (var jj = 0; jj < nTilesPerPlayerInitially; jj++) {
                     // each player can see 14 tiles initially
-                    var tileIndex = i * nTilesPerPlayerInitially + j;
-                    visibility[tileIndex] = {setVisibility: {key: 'tile' + tileIndex, visibleToPlayerIndices: [i]}};
+                    tileIndex = ii * nTilesPerPlayerInitially + jj;
+                    visibility[tileIndex] = {setVisibility: {key: 'tile' + tileIndex, visibleToPlayerIndices: [ii]}};
                 }
             }
 
@@ -262,8 +262,8 @@
                 "Send: sending undefined tile"
             );
             check( player.tiles.indexOf(tileToSend) !== -1,
-                "Send: sending tile" + tileToSend
-                + ", but you should send your own tile: [" + player.tiles + "]"
+                "Send: sending tile" + tileToSend +
+                ", but you should send your own tile: [" + player.tiles + "]"
             );
 
             // 4. make sure sending tile to an empty position within the board.
@@ -272,9 +272,10 @@
             checkPositionWithinBoard(board, row, col);
 
             var toIndex = board[row][col];
-            check( (toIndex === -1),
-                "Send: board["+ row + ", " + col + "] is already occupied with tile" + board[row][col]
-                + ", you cannot send to this non-empty position in board."
+            check( toIndex === -1,
+                "Send: board["+ row + ", " + col +
+                "] is already occupied with tile" + board[row][col] +
+                ", you cannot send to this non-empty position in board."
             );
 
             // 5. construct move operations.
@@ -369,19 +370,19 @@
             // 2. check from's position is within board and not empty.
             checkPositionWithinBoard(board, from.row, from.col);
             var fromIndex = board[from.row][from.col];
-            check( (fromIndex !== -1),
+            check( fromIndex !== -1,
                 "Replace: no tile in board[" + from.row + "," + from.col + "] "
             );
 
             // 3. check to's position is within board and is empty.
             checkPositionWithinBoard(board, to.row, to.col);
             var toIndex = board[to.row][to.col];
-            check( (toIndex === -1),
+            check( toIndex === -1,
                 "Replace: board[ " + to.row + "," + to.col + "] has been occupied with tile" + toIndex
             );
 
             // 4. get game player, make sure it is a valid player.
-            var player = getPlayer(stateBefore, playerIndex);
+            //var player = getPlayer(stateBefore, playerIndex);
 
             // 5. construct move
             var boardAfter = angular.copy(board);
@@ -424,9 +425,9 @@
             for (var i = 0; i < board.length; i++) {
                 setsInBoard = setsInBoard.concat(parseRowToSets(board[i]));
             }
-            for (var i = 0; i < setsInBoard.length; i++) {
-                var sets = getSetsOfTilesByIndex(setsInBoard[i], stateBefore);
-                var position = findPosition(board, setsInBoard[i][0]);
+            for (var ii = 0; ii < setsInBoard.length; ii++) {
+                var sets = getSetsOfTilesByIndex(setsInBoard[ii], stateBefore);
+                var position = findPosition(board, setsInBoard[ii][0]);
                 check (isRuns(sets) || isGroups(sets),
                     "Meld: board contains invalid sets from (" +
                     (position.row + 1) + "," + (position.col + 1) + ") to (" +
@@ -445,7 +446,7 @@
 
             // 5. check winner
             var firstOperation;
-            var hasPlayerWon = (player.tiles.length === 0 && (stateBefore.tilesSentToBoardThisTurn.length !== 0));
+            var hasPlayerWon = player.tiles.length === 0 && stateBefore.tilesSentToBoardThisTurn.length !== 0;
             if ( hasPlayerWon ) {
                 firstOperation = {endMatch: {endMatchScores: getEndScores(playerIndex, stateBefore)}};
             } else {
@@ -597,7 +598,7 @@
         function getPlayerIndexOfNextTurn(playerIndex, nPlayers) {
             checkPlayerIndex(playerIndex, nPlayers);
             var index = 0;
-            if (playerIndex === (nPlayers - 1)) {
+            if (playerIndex === nPlayers - 1) {
                 index = 0;
             } else {
                 index = playerIndex + 1;
@@ -606,7 +607,7 @@
         }
 
         function checkPlayerIndex(playerIndex, nPlayers) {
-            check((playerIndex >= 0) && (playerIndex < nPlayers),
+            check( playerIndex >= 0 && playerIndex < nPlayers,
                 "checkPlayerIndex, [playerIndex:  " + playerIndex + ", nPlayers: " + nPlayers);
         }
 
@@ -664,7 +665,7 @@
             );
             var rows = board.length;
             var cols = board[0].length;
-            check( (row >= 0 && row < rows) && (col >= 0 && col < cols),
+            check( row >= 0 && row < rows && col >= 0 && col < cols,
                 "checkPositionWithinBoard: position out Of board, [row: " + row + ", col: " + col + "]"
             );
         }
@@ -694,7 +695,7 @@
                 } else {
                     color = 'orange';
                 }
-                score = (index % 13 ) + 1;
+                score = index % 13  + 1;
             }
             return {color: color, score: score};
         }
@@ -904,22 +905,22 @@
          * @param board
          * @returns {{empty: Array, occupied: Array}}
          */
-        function checkPossiblePositions(board) {
-            var empty = [];
-            var occupied = [];
-            var rows = board.length;
-            var cols = board[0].length;
-            for (var i = 0; i < rows; i++) {
-                for (var j = 0; j < cols; j++) {
-                    if (board[i][j] == -1) {
-                        empty.push({row: i, col: j});
-                    } else {
-                        occupied.push({row: i, col: j});
-                    }
-                }
-            }
-            return {empty: empty, occupied: occupied};
-        }
+        //function checkPossiblePositions(board) {
+        //    var empty = [];
+        //    var occupied = [];
+        //    var rows = board.length;
+        //    var cols = board[0].length;
+        //    for (var i = 0; i < rows; i++) {
+        //        for (var j = 0; j < cols; j++) {
+        //            if (board[i][j] === -1) {
+        //                empty.push({row: i, col: j});
+        //            } else {
+        //                occupied.push({row: i, col: j});
+        //            }
+        //        }
+        //    }
+        //    return {empty: empty, occupied: occupied};
+        //}
 
         /**
          * check whether current board can meld
@@ -934,10 +935,10 @@
             for (var i = 0; i < board.length; i++) {
                 setsInBoard = setsInBoard.concat(parseRowToSets(board[i]));
             }
-            for (var i = 0; i < setsInBoard.length; i++) {
-                var sets = getSetsOfTilesByIndex(setsInBoard[i], stateBefore);
+            for (var ii = 0; ii < setsInBoard.length; ii++) {
+                var sets = getSetsOfTilesByIndex(setsInBoard[ii], stateBefore);
                 if ( !isRuns(sets) && !isGroups(sets) ) {
-                    console.log("isMeldOk, invalid sets: [" + setsInBoard[i] + "]");
+                    console.log("isMeldOk, invalid sets: [" + setsInBoard[ii] + "]");
                     return false;
                 }
             }
@@ -951,7 +952,7 @@
          * @returns {boolean}
          */
         function isGameOver(state) {
-            return ((getWinner(state) !== -1) || isTie(state));
+            return getWinner(state) !== -1 || isTie(state);
         }
 
         /**
@@ -974,7 +975,7 @@
                 }
             }
             // in case game is not initialized
-            return (hasLoser) ? winner : -1;
+            return hasLoser ? winner : -1;
         }
 
         function findPosition(board, tileIndex) {
@@ -1006,6 +1007,9 @@
          * @returns {boolean}
          */
         function isTie(state) {
+            if (state !== undefined) {
+                console.log("initialed game");
+            }
             return false;
         }
 

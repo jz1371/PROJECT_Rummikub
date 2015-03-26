@@ -7,8 +7,8 @@
 (function() {
     'use strict';
     angular.module('myApp').controller('GameCtrl',
-    ['$scope', '$log', '$window', '$animate', '$timeout', 'stateService', 'gameService', 'gameLogicService','resizeGameAreaService',
-    function($scope, $log, $window,  $animate, $timeout, stateService ,gameService, gameLogicService ,resizeGameAreaService) {
+    ['$scope', '$log', '$window', '$animate', '$timeout', 'stateService', 'gameService', 'gameLogicService',
+    function($scope, $log, $window,  $animate, $timeout, stateService ,gameService, gameLogicService ) {
 
         //console.log("height: " + window.innerWidth);
         //resizeGameAreaService.setWidthToHeight(0.6);
@@ -39,9 +39,10 @@
             $scope.state = params.stateAfterMove;
             $scope.turnIndex = params.turnIndexAfterMove;
             $scope.board = params.stateAfterMove.board;
-            $scope.opponent_top = params.stateAfterMove["player" + (1 - $scope.turnIndex)].tiles;
+            var opponentIndex = 1 - $scope.turnIndex;
+            $scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
             $scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
-            $scope.isYourTurn = (params.yourPlayerIndex === params.turnIndexAfterMove);
+            $scope.isYourTurn = params.yourPlayerIndex === params.turnIndexAfterMove;
             $scope.nexttile = params.stateAfterMove.nexttile;
 
             // Is it the computer's turn?
@@ -72,7 +73,7 @@
                 } else {
                     $scope.activeTile = tileIndex;
                     $scope.activeOrigin = "curPlayer";
-                    $scope.debug = ("picking Tile" + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score) + ")";
+                    $scope.debug = "picking Tile" + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score + ")";
                 }
             }
         };
@@ -90,36 +91,40 @@
                         $scope.activeOrigin = 'board';
                         $scope.activeTile = $scope.board[row][col];
                         $scope.from = {row: row, col: col};
-                        $scope.debug = "picking Tile" + $scope.activeTile + " ("
-                        +  getTileByIndex($scope.activeTile).color
-                        + "," + getTileByIndex($scope.activeTile).score
-                        + " from: (" + row + "," + col + ")";
+                        $scope.debug = "picking Tile" + $scope.activeTile + " (" +
+                        getTileByIndex($scope.activeTile).color +
+                        "," + getTileByIndex($scope.activeTile).score +
+                        " from: (" + row + "," + col + ")";
                     }
                 } else {
+                    var to = {};
+                    var move;
                     if ($scope.activeOrigin === 'board') {
                         // one tile on board has been activated before, so we are expecting a 'replace' move
                         var from = $scope.from;
-                        var to = {row: row, col: col};
+                        to = {row: row, col: col};
 
                         // may 'replace' itself
-                        if (angular.equals(from, to)) {return false};
+                        if (angular.equals(from, to)) {
+                            return false;
+                        }
 
-                        var move = gameLogicService.getReplaceMove($scope.state, $scope.turnIndex, from, to);
+                        move = gameLogicService.getReplaceMove($scope.state, $scope.turnIndex, from, to);
                         gameService.makeMove(move);
 
                     } else if ($scope.activeOrigin === 'curPlayer') {
                         // one tile in player's hand has been activated, so we are expecting a 'send' move
-                        var to = {tile: $scope.activeTile, row: row, col: col};
-                        var move = gameLogicService.getSendMove($scope.state, $scope.turnIndex, to);
+                        to = {tile: $scope.activeTile, row: row, col: col};
+                        move = gameLogicService.getSendMove($scope.state, $scope.turnIndex, to);
                         $scope.isYourTurn = false; // to prevent making another move
                         gameService.makeMove(move);
                         //$log.info("tile: " + $scope.board[row][col]);
                         $scope.debug = "here";
                     }
-                    $scope.debug = "Tile" + $scope.activeTile + " ("
-                    +  getTileByIndex($scope.activeTile).color
-                    + "," + getTileByIndex($scope.activeTile).score
-                    + ") to: (" + row + "," + col + ")";
+                    $scope.debug = "Tile" + $scope.activeTile + " (" +
+                    getTileByIndex($scope.activeTile).color +
+                    "," + getTileByIndex($scope.activeTile).score +
+                    ") to: (" + row + "," + col + ")";
                     clearActiveTile();
                 }
 
@@ -144,7 +149,7 @@
                 clearActiveTile();
             }
             //$scope.debug = "here also";
-        }
+        };
 
         $scope.shouldShowTileOnBoard = function (row, col) {
             // -1 stands for empty position on board
@@ -153,13 +158,13 @@
 
         $scope.notJoker = function (tileIndex) {
             var tile = getTileByIndex(tileIndex);
-            return tile !== undefined && tile.color != 'joker';
-        }
+            return tile !== undefined && tile.color !== 'joker';
+        };
 
         $scope.isJoker = function(tileIndex) {
             var tile = getTileByIndex(tileIndex);
             return tile !== undefined && tile.color === 'joker';
-        }
+        };
 
         $scope.pickBtnClicked = function() {
             if ($scope.isYourTurn) {
@@ -172,7 +177,7 @@
                     $scope.debug = "cannot pick when tiles sent to board";
                 }
             }
-        }
+        };
 
         $scope.meldBtnClicked = function() {
             try {
@@ -182,7 +187,7 @@
                 $scope.debug = "cannot meld";
                 $window.alert(e);
             }
-        }
+        };
 
         $scope.getTileDataValue = function(tileIndex) {
             var dataValue = "";
@@ -194,7 +199,7 @@
         };
 
         $scope.canDrag = function (tileIndex) {
-            if ($scope.isYourTurn &&  getTileByIndex(tileIndex) != undefined) {
+            if ($scope.isYourTurn &&  getTileByIndex(tileIndex) !== undefined) {
                 return true;
             }
             return false;
@@ -210,8 +215,8 @@
         };
 
         //TODO:
-        function sortTiles() {
-        }
+        //function sortTiles() {
+        //}
 
 
 
@@ -219,18 +224,26 @@
         function isEmptyObj(obj) {
 
             // null and undefined are "empty"
-            if (obj == null) return true;
+            if (obj === null) {
+                return true;
+            }
 
             // Assume if it has a length property with a non-zero value
             // that that property is correct.
-            if (obj.length > 0)    return false;
-            if (obj.length === 0)  return true;
+            if (obj.length > 0)    {
+                return false;
+            }
+            if (obj.length === 0)  {
+                return true;
+            }
 
             // Otherwise, does it have any properties of its own?
             // Note that this doesn't handle
             // toString and valueOf enumeration bugs in IE < 9
             for (var key in obj) {
-                if (hasOwnProperty.call(obj, key)) return false;
+                if (hasOwnProperty.call(obj, key)) {
+                    return false;
+                }
             }
 
             return true;
