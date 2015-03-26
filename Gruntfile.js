@@ -58,7 +58,7 @@ module.exports = function(grunt) {
             dist: {
                 // Order is important! gameLogic.js must be first because it defines myApp angular module.
                 src: ['app/js/services/gameLogic*.js', 'app/js/controllers/gameCtrl.js', 'app/js/services/aiService.js'],
-                dest: 'dist/everything.js',
+                dest: 'app/dist/everything.js',
             },
         },
         uglify: {
@@ -67,14 +67,14 @@ module.exports = function(grunt) {
             },
             my_target: {
                 files: {
-                    'dist/everything.min.js': ['dist/everything.js']
+                    'app/dist/everything.min.js': ['app/dist/everything.js']
                 }
             }
         },
         processhtml: {
             dist: {
                 files: {
-                    'game.min.html': ['app/game.html']
+                    'app/dist/game.min.html': ['app/game.html']
                 }
             }
         },
@@ -88,13 +88,13 @@ module.exports = function(grunt) {
                         'http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.2.6.1.min.js',
                         'languages/en.js',
                         'http://yoav-zibin.github.io/emulator/main.css',
-                        'dist/everything.min.js',
+                        'app/dist/everything.min.js',
                         'app/css/*.css'
                     ],
-                    network: ['dist/everything.min.js.map', 'dist/everything.js'],
+                    network: ['app/dist/everything.min.js.map', 'app/dist/everything.js'],
                     timestamp: true
                 },
-                dest: 'game.appcache',
+                dest: 'app/game.appcache',
                 src: []
             }
         },
