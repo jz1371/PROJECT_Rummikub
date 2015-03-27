@@ -41,14 +41,14 @@
             $scope.isYourTurn = params.turnIndexAfterMove >= 0 && // game is ongoing , -1 means game is over
             params.yourPlayerIndex === params.turnIndexAfterMove; // it's my turn
             $scope.turnIndex = params.turnIndexAfterMove;
+            $scope.state = params.stateAfterMove;
+            $scope.board = params.stateAfterMove.board;
+            $scope.nexttile = params.stateAfterMove.nexttile;
 
             if ($scope.isYourTurn) {
-                $scope.board = params.stateAfterMove.board;
-                $scope.state = params.stateAfterMove;
                 var opponentIndex = 1 - $scope.turnIndex;
                 $scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
                 $scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
-                $scope.nexttile = params.stateAfterMove.nexttile;
             }
 
             // Is it the computer's turn?

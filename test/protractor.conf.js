@@ -8,11 +8,11 @@ exports.config = {
 
     specs: [
 
-        //'e2e/end_to_end_tests.js',
+        'e2e/end_to_end_tests.js',
 
         //'e2e/end_to_end_tests_Wenzhao_Zang.js',
 
-        'e2e/end_to_end_tests_Islam.js',
+        //'e2e/end_to_end_tests_Islam.js',
     ],
 
     capabilities: {
