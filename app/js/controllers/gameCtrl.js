@@ -23,7 +23,7 @@
             console.log("here");
             $scope.debug = "computer picks one tile";
             $scope.turnInfo = "Your turn";
-        }
+        };
 
         function updateUI(params) {
 
@@ -32,18 +32,24 @@
                 var playerIndex = 0;
                 var nPlayers = 2;
                 var move = gameLogicService.getInitialMove(playerIndex, nPlayers);
+                /* let player0 initializes the game. */
+                params.yourPlayerIndex = 0;
                 gameService.makeMove(move);
                 return;
             }
 
-            $scope.state = params.stateAfterMove;
+            $scope.isYourTurn = params.turnIndexAfterMove >= 0 && // game is ongoing , -1 means game is over
+            params.yourPlayerIndex === params.turnIndexAfterMove; // it's my turn
             $scope.turnIndex = params.turnIndexAfterMove;
-            $scope.board = params.stateAfterMove.board;
-            var opponentIndex = 1 - $scope.turnIndex;
-            $scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
-            $scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
-            $scope.isYourTurn = params.yourPlayerIndex === params.turnIndexAfterMove;
-            $scope.nexttile = params.stateAfterMove.nexttile;
+
+            if ($scope.isYourTurn) {
+                $scope.board = params.stateAfterMove.board;
+                $scope.state = params.stateAfterMove;
+                var opponentIndex = 1 - $scope.turnIndex;
+                $scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
+                $scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
+                $scope.nexttile = params.stateAfterMove.nexttile;
+            }
 
             // Is it the computer's turn?
             if ($scope.isYourTurn &&
@@ -136,6 +142,9 @@
         };
 
         $scope.curPlayerAreaClicked = function() {
+            if (!$scope.isYourTurn) {
+                return;
+            }
             $scope.debug = $scope.activeOrigin + " , " + $scope.activeTile + "," + $scope.from;
             //$scope.debug = "adaf";
             if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
@@ -180,13 +189,16 @@
         };
 
         $scope.meldBtnClicked = function() {
-            try {
-                var move = gameLogicService.getMeldMove($scope.state, $scope.turnIndex);
-                gameService.makeMove(move);
-            } catch (e) {
-                $scope.debug = "cannot meld";
-                $window.alert(e);
+            if ($scope.isYourTurn) {
+                try {
+                    var move = gameLogicService.getMeldMove($scope.state, $scope.turnIndex);
+                    gameService.makeMove(move);
+                } catch (e) {
+                    $scope.debug = "cannot meld";
+                    $window.alert(e);
+                }
             }
+
         };
 
         $scope.getTileDataValue = function(tileIndex) {
@@ -272,7 +284,8 @@
         gameService.setGame( {
             gameDeveloperEmail: "jz1371@nyu.edu",
             minNumberOfPlayers: 2,
-            maxNumberOfPlayers: 4,
+            //maxNumberOfPlayers: 4, // if bug in stateService fixed
+            maxNumberOfPlayers: 2,
             isMoveOk: gameLogicService.isMoveOk,
             updateUI: updateUI
         });
