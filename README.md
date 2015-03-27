@@ -16,5 +16,18 @@
     * peer review for [Backgammon](https://github.com/ibtawfik/Backgammon/commit/c1a68db3284487c23a6468614023fe01b40fe7bc)
     * peer review for [Halatafl](https://github.com/ColinZang/Halatafl/tree/master/PeerReview_jz)
 
-5. [HW5] game graphics   (submission: [here](http://github.com/jz1371/PROJECT_Rummikub/tree/hw5))
+5. [[HW5](http://github.com/jz1371/PROJECT_Rummikub/tree/hw5)] game graphics
    * github io pages: [http://jz1371.github.io/PROJECT_Rummikub/app/game.html](http://jz1371.github.io/PROJECT_Rummikub/app/game.html)
+
+6. [[HW6](http://github.com/jz1371/PROJECT_Rummikub/tree/hw6)] e2e tests for game and use of Gruntfile. 
+ After cd to the root of project
+   ```bash
+   sudo npm install
+   sudo npm install -g grunt-cli
+   ./node_modules/http-server/bin/http-server --cors -a localhost -p 1371
+   ./node_modules/protractor/bin/webdriver-manager update
+   ./node_modules/grunt-protractor-runner/node_modules/protractor/bin/webdriver-manager update
+   cd test
+    ../node_modules/protractor/bin/protractor protractor.conf.js
+   ```
+  
