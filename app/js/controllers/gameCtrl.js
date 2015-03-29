@@ -1,11 +1,20 @@
 /**
  * File: app/js/controllers/gameCtrl.js
- * @author:
- * @date:
+ * ------------------------------------
+ * @author: Jingxin Zhu
+ * @date:   2015.03.10
  */
 
 (function() {
+
     'use strict';
+
+    /**
+     **************************************************************************************
+     * I. Elements in $scope
+     *
+     **************************************************************************************
+     */
     angular.module('myApp').controller('GameCtrl',
     ['$scope', '$log', '$window', '$animate', '$timeout', 'stateService', 'gameService', 'gameLogicService',
     function($scope, $log, $window,  $animate, $timeout, stateService ,gameService, gameLogicService ) {
@@ -15,86 +24,84 @@
         $scope.rows = 6;
         $scope.cols = 18;
 
+        var animationEnded = false;
+        var canMakeMove = false;
+        var isComputerTurn = false;
+        var state = null;
+        var turnIndex = null;
+        var playerHand = null;
+
+
         window.e2e_test_stateService = stateService; // to allow us to load any state in our e2e tests.
 
         function sendComputerMove() {
             var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
             gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
-            console.log("here");
             $scope.debug = "computer picks one tile";
             $scope.turnInfo = "Your turn";
-        };
+        }
 
+        /**
+         *
+         * @param params (object) {yourPlayerIndex: (int),
+         *                         stateAfterMove: *,
+         *                         turnIndexAfterMove: *,
+         *                         playersInfo: [{playerId: (int)},{}]}
+         */
         function updateUI(params) {
+
+            animationEnded = false;
 
             // initialize move
             if (isEmptyObj(params.stateAfterMove)) {
                 var playerIndex = 0;
                 var nPlayers = 2;
-                var move = gameLogicService.getInitialMove(playerIndex, nPlayers);
+                //var nPlayers = params.playersInfo.length;
+                var move = gameLogicService.createInitialMove(playerIndex, nPlayers);
                 /* let player0 initializes the game. */
                 params.yourPlayerIndex = 0;
                 gameService.makeMove(move);
                 return;
             }
 
-            $scope.isYourTurn = params.turnIndexAfterMove >= 0 && // game is ongoing , -1 means game is over
-            params.yourPlayerIndex === params.turnIndexAfterMove; // it's my turn
+            $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
+                params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn
+            turnIndex = params.turnIndexAfterMove;
+
             $scope.turnIndex = params.turnIndexAfterMove;
             $scope.state = params.stateAfterMove;
             $scope.board = params.stateAfterMove.board;
-            $scope.nexttile = params.stateAfterMove.nexttile;
+            $scope.nexttile = params.stateAfterMove.trace.nexttile;
+            $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
 
             if ($scope.isYourTurn) {
-                var opponentIndex = 1 - $scope.turnIndex;
-                $scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
-                $scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
+                //var opponentIndex = 1 - $scope.turnIndex;
+                //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
+                //$scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
             }
 
             // Is it the computer's turn?
-            if ($scope.isYourTurn &&
-                params.playersInfo[params.yourPlayerIndex].playerId === '') {
+            isComputerTurn = $scope.isYourTurn &&
+            params.playersInfo[params.yourPlayerIndex].playerId  === '';
+            if(isComputerTurn) {
                 $scope.isYourTurn = false; // to make sure the UI won't send another move.
                 // Waiting 0.5 seconds to let the move animation finish; if we call aiService
                 // then the animation is paused until the javascript finishes.
                 $timeout(sendComputerMove, 500);
             }
-
         }
 
-        //window.e2e_test_stateService = stateService; // to allow us to load any state in our e2e tests.
-
-        /* Select one tile from player's hand */
-        $scope.tileClicked= function(tileIndex) {
-            if ($scope.isYourTurn) {
-                if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
-                    // if one tile inside board is activated then we are expecting a 'retrieve' move
-                    var from = $scope.from;
-                    try {
-                        var move = gameLogicService.getRetrieveMove($scope.state, $scope.turnIndex, from);
-                        gameService.makeMove(move);
-                    } catch (e) {
-                    }
-                    clearActiveTile();
-                } else {
-                    $scope.activeTile = tileIndex;
-                    $scope.activeOrigin = "curPlayer";
-                    $scope.debug = "picking Tile" + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score + ")";
-                }
-            }
-        };
-
-        $scope.boardCellClicked = function (row, col) {
+        $scope.boardCellClicked = function(row, col) {
             $log.info(["Clicked on cell:", row, col]);
             $scope.debug = "click board cell: (" + row + "," + col + ")";
-            if ( !$scope.isYourTurn ) {
-                return false;
+            if ( $scope.isYourTurn === false ) {
+                return;
             }
             try {
                 if ($scope.activeTile === undefined) {
+                    // no tile has been activated
                     if ($scope.board[row][col] !== -1) {
-                        // clicking an position occupied by tile
-                        $scope.activeOrigin = 'board';
+                        // clicking a tile to activate it
                         $scope.activeTile = $scope.board[row][col];
                         $scope.from = {row: row, col: col};
                         $scope.debug = "picking Tile" + $scope.activeTile + " (" +
@@ -103,62 +110,63 @@
                         " from: (" + row + "," + col + ")";
                     }
                 } else {
-                    var to = {};
-                    var move;
-                    if ($scope.activeOrigin === 'board') {
-                        // one tile on board has been activated before, so we are expecting a 'replace' move
-                        var from = $scope.from;
-                        to = {row: row, col: col};
-
-                        // may 'replace' itself
-                        if (angular.equals(from, to)) {
-                            return false;
-                        }
-
-                        move = gameLogicService.getReplaceMove($scope.state, $scope.turnIndex, from, to);
+                    $scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
+                    // some tile has been activated before clicking
+                    if ($scope.board[row][col] === -1) {
+                        // clicking an empty position to send tile to
+                        $scope.to = {row: row, col: col};
+                        var delta = {tileIndex: $scope.activeTile, from: $scope.from, to: $scope.to};
+                        $scope.debug = "index: " + delta.tileIndex;
+                        var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                         gameService.makeMove(move);
-
-                    } else if ($scope.activeOrigin === 'curPlayer') {
-                        // one tile in player's hand has been activated, so we are expecting a 'send' move
-                        to = {tile: $scope.activeTile, row: row, col: col};
-                        move = gameLogicService.getSendMove($scope.state, $scope.turnIndex, to);
-                        $scope.isYourTurn = false; // to prevent making another move
-                        gameService.makeMove(move);
-                        //$log.info("tile: " + $scope.board[row][col]);
-                        $scope.debug = "here";
                     }
-                    $scope.debug = "Tile" + $scope.activeTile + " (" +
-                    getTileByIndex($scope.activeTile).color +
-                    "," + getTileByIndex($scope.activeTile).score +
-                    ") to: (" + row + "," + col + ")";
                     clearActiveTile();
                 }
-
+                // In case the board is not updated
+                if (!$scope.$$phase) {
+                    $scope.$apply();
+                }
             } catch (e) {
-                //$log.info(["Cell is already full in position:", row, col]);
                 clearActiveTile();
+                $scope.debug = e.message;
+                $log.info(e);
                 return false;
             }
         };
 
+        /**
+         * click current player area to retrieve tile from board back to hand
+         */
         $scope.curPlayerAreaClicked = function() {
             if (!$scope.isYourTurn) {
                 return;
             }
-            $scope.debug = $scope.activeOrigin + " , " + $scope.activeTile + "," + $scope.from;
-            //$scope.debug = "adaf";
-            if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
+            $log.info('dafasf');
+            if ($scope.activeTile !== undefined &&
+                $scope.from !== undefined &&
+                $scope.from.row >= 0 && $scope.from.row < $scope.rows) {
+
                 // if one tile inside board is activated then we are expecting a 'retrieve' move
                 var from = $scope.from;
                 try {
-                    var move = gameLogicService.getRetrieveMove($scope.state, $scope.turnIndex, from);
+                    var to = {row: $scope.rows + $scope.turnIndex, col: findFirstEmptyColumnInHand($scope.playerHand)};
+                    var delta = {tileIndex: $scope.activeTile, from: from, to: to};
+                    var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                     gameService.makeMove(move);
                 } catch (e) {
                 }
                 clearActiveTile();
             }
-            //$scope.debug = "here also";
         };
+
+        function findFirstEmptyColumnInHand(playerHand) {
+            for (var i = 0; i < playerHand.length; i++) {
+                if (playerHand[i] === -1) {
+                    return i;
+                }
+            }
+            return -1;
+        }
 
         $scope.shouldShowTileOnBoard = function (row, col) {
             // -1 stands for empty position on board
@@ -179,11 +187,12 @@
             if ($scope.isYourTurn) {
                 console.log("next: " + $scope.nexttile);
                 try {
-                    var move = gameLogicService.getPickMove($scope.state, $scope.turnIndex);
+                    var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
                     gameService.makeMove(move);
                     $scope.debug = "pick one tile";
                 } catch (e) {
-                    $scope.debug = "cannot pick when tiles sent to board";
+                    $scope.debug = e.message;
+                    $log.info(e);
                 }
             }
         };
@@ -191,10 +200,11 @@
         $scope.meldBtnClicked = function() {
             if ($scope.isYourTurn) {
                 try {
-                    var move = gameLogicService.getMeldMove($scope.state, $scope.turnIndex);
+                    var move = gameLogicService.createMeldMove($scope.turnIndex, $scope.state);
                     gameService.makeMove(move);
                 } catch (e) {
                     $scope.debug = "cannot meld";
+                    $log.info(e);
                     $window.alert(e);
                 }
             }
@@ -229,8 +239,6 @@
         //TODO:
         //function sortTiles() {
         //}
-
-
 
         /* ================= Helper Functions =================== */
         function isEmptyObj(obj) {
@@ -279,6 +287,7 @@
             $scope.activeTile = undefined;
             $scope.activeOrigin = undefined;
             $scope.from = undefined;
+            $scope.to = undefined;
         }
 
         gameService.setGame( {
