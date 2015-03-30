@@ -69,7 +69,7 @@
      *
      **************************************************************************************
      */
-    angular.module('myApp', []).factory('gameLogicService', function() {
+    angular.module('myApp').factory('gameLogicService', function() {
 
         /**
          * Checks whether given move is Ok or not.
@@ -135,7 +135,6 @@
          * @returns {*[]} array of operations in initial move.
          */
         function getInitialMove(playerIndex, nPlayers) {
-            console.log("playerIndex:  " + playerIndex);
             // 1. make sure player0 is initializing the game.
             check(playerIndex === 0,
                 "INIT: player" + playerIndex + " is trying to move, but only player0 can play the initial move."
