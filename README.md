@@ -31,7 +31,7 @@
     ../node_modules/protractor/bin/protractor protractor.conf.js
    ```
 
-7. [HW7]
+7. [[HW7](http://github.com/jz1371/PROJECT_Rummikub/tree/hw7)]
    * Drag and drop on game board
    * some animations
    * create appcache
