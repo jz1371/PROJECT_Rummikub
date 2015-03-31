@@ -42,12 +42,15 @@
 
 #menu-panel .row {
     height: 100%;
-    font-size: 2vw;
+    font-size: 2.5vw;
 }
 
+/*#menu-panel > .info {*/
+    /*padding-bottom: 2vw   *//* [Setter] here for distance between items in left menu */
+/*}*/
 
 #menu-panel > .row > .col-xs-12{
-    padding-bottom: 3vw   /* [Setter] here for distance between items in left menu */
+    padding-bottom: 2vw    /* [Setter] here for distance between items in left menu */
 }
 
 .btn-circle {
@@ -65,7 +68,7 @@
 }
 
 /* customed column for Bootstrap's grid system */
-#board-panel .col-xs-18 {
+.col-xs-18 {
     width: 5.55555%;      /* 100 / 18 = 5.55% */
     float: left;
     position: relative;
@@ -81,7 +84,7 @@
 
 #player-panel ul {
     padding-left: 0;
-    width: 100%;
+    /*width: 100%;*/
     height: 80%;
     list-style: none;
     overflow-x: scroll;
@@ -112,7 +115,7 @@
         padding-right: 5px;
     }
 
-    #board-panel .col-xs-18 {
+    .col-xs-18 {
         padding-left: 0px;
         padding-right: 1px;
     }
@@ -139,7 +142,7 @@
         padding: 0 1px;
     }
 
-    #board-panel .col-xs-18 {
+    .col-xs-18 {
         padding-left: 1px;
         padding-right: 1px;
     }
@@ -160,9 +163,9 @@
         padding-right: 15px;
     }
 
-    #board-panel .col-xs-18 {
-        padding-left: 5px;
-        padding-right: 0px;
+    .col-xs-18 {
+        padding-left: 2px;
+        padding-right: 2px;
     }
 }
 

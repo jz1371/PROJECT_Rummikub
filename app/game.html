@@ -42,11 +42,7 @@
               stroke="red"
               stroke-width="1%"/>
     </svg>
-    <!--<img ng-attr-width="{{100 / colsNum}}%" ng-attr-height="{{100 / rowsNum}}%"-->
-         <!--id="clickToDragPiece"-->
-         <!--src="img/joker-red.png"-->
-         <!--alt="joker tile" class="center-block img-responsive"-->
-         <!--style="display:none; position:absolute; z-index: 31;" />-->
+
     <div class="tile-wrapper"
          id="MyDrag" style="display: none; position: absolute;width: 0; padding-bottom: 0;z-index: 106;">
         <div class="tile">
@@ -139,6 +135,10 @@
                     <i class="icon-chevron-sign-left icon-large"></i>
                 </div>
 
+                <div class="col-xs-1">
+                    <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">pick</button>
+                </div>
+
                 <div class="col-xs-10" id="hand-panel">
 
                     <!--<ul>-->
@@ -203,8 +203,8 @@
     </div><!-- /.row -->
 </div><!-- /#gameArea -->
 
-<!--<div ng-include="'template/help.html'"></div>-->
-<div ng-include="'template/error.html'"></div>
+<div ng-include="'template/help.html'"></div>
+<!--<div ng-include="'template/error.html'"></div>-->
 
 
 <script src="http://yoav-zibin.github.io/emulator/alphaBetaService.js"></script>
@@ -213,15 +213,8 @@
 <script src="http://yoav-zibin.github.io/emulator/stateService.js"></script>
 <script src="http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js"></script>
 <script src="lib/bootstrap/ui-bootstrap-tpls-0.12.1.min.js"></script>
-<!--<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>-->
-<!--<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>-->
-<!--<script src="http://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>-->
-<!--<script src="http://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>-->
-<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>-->
-<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap-theme.min.js"></script>-->
 <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-touch.min.js"></script>
 <!--<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-animate.min.js"></script>-->
-<!--<script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/1.10.3/TweenMax.min.js"></script>-->
 
 </body>
 
