@@ -9,6 +9,32 @@
     -webkit-background-size:cover;
 }
 
+
+.slowlyAppear {
+    -webkit-animation: slowlyAppear 0.5s linear;
+    -moz-animation: slowlyAppear 0.5s linear;
+    -ms-animation: slowlyAppear 0.5s linear;
+    -o-animation: slowlyAppear 0.5s linear;
+    animation: slowlyAppear 0.5s linear;
+}
+
+@-webkit-keyframes slowlyAppear {
+    from {opacity: 0.1;}
+    to {opacity: 1;}
+}
+@-moz-keyframes slowlyAppear {
+    from {opacity: 0.1;}
+    to {opacity: 1;}
+}
+@-o-keyframes slowlyAppear {
+    from {opacity: 0.1;}
+    to {opacity: 1;}
+}
+@keyframes slowlyAppear {
+    from {opacity: 0.1;}
+    to {opacity: 1;}
+}
+
 /*
  *  |----------------    game area   -------------|
  *  +---------------------------------------------+
@@ -87,9 +113,10 @@
     /*width: 100%;*/
     height: 80%;
     list-style: none;
-    overflow-x: scroll;
-    overflow-y: hidden;
-    white-space: nowrap;
+    /*overflow-x: scroll;*/
+    /*overflow-y: hidden;*/
+    /*white-space: nowrap;*/
+    -webkit-overflow-scrolling: touch;
 }
 #player-panel ul li {
     position: relative;
@@ -188,3 +215,53 @@
     display: -ms-flexbox;
     display:         flex;
 }
+
+/* customer scroll bar */
+
+/*::-webkit-scrollbar {*/
+    /*width: 12px;*/
+/*}*/
+
+/*::-webkit-scrollbar-track {*/
+    /*-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);*/
+    /*border-radius: 10px;*/
+/*}*/
+
+/*::-webkit-scrollbar-thumb {*/
+    /*border-radius: 10px;*/
+    /*-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);*/
+/*}*/
+
+/*::-webkit-scrollbar-button {*/
+    /*display: block;*/
+    /*background: #444;*/
+/*}*/
+
+/* --------------- */
+/*::-webkit-scrollbar {*/
+    /*-webkit-appearance: none;*/
+/*}*/
+
+/*::-webkit-scrollbar:vertical {*/
+    /*width: 12px;*/
+/*}*/
+
+/*::-webkit-scrollbar:horizontal {*/
+    /*height: 12px;*/
+/*}*/
+
+/*::-webkit-scrollbar-thumb {*/
+    /*background-color: rgba(0, 0, 0, .5);*/
+    /*border-radius: 10px;*/
+    /*border: 2px solid #ffffff;*/
+/*}*/
+
+/*::-webkit-scrollbar-track {*/
+    /*border-radius: 10px;*/
+    /*background-color: #ffffff;*/
+/*}*/
+
+/*::-webkit-scrollbar-button {*/
+/*display: block;*/
+/*background: #444;*/
+/*}*/

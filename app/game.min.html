@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<!-- build:[manifest] game.appcache -->
-<html lang="en" ng-app="myApp" ng-strict-di>
-<!-- /build -->
+<html lang="en" ng-app="myApp" ng-strict-di manifest="game.appcache">
 
 <head>
     <meta charset="utf-8">
@@ -10,25 +8,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Rummikub</title>
 
-    <!-- build:js http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js -->
-    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js"></script>
-    <!-- /build -->
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js"></script>
 
-    <!-- build:js dist/everything.min.js -->
-    <script src="js/services/gameLogicService.js"></script>
-    <script src="js/controllers/gameCtrl.js"></script>
-    <!-- /build -->
+    <script src="dist/everything.min.js"></script>
     <!--<script src="js/app.js"></script>-->
     <!--<script src="js/filters/filters.js"></script>-->
     <!--<script src="js/controllers/gameAlertCtrl.js"></script>-->
     <!--<script src="lib/bootstrap/ui-bootstrap-tpls-0.12.1.js"></script>-->
 
-    <!-- build:js http://yoav-zibin.github.io/emulator/dist/gameServices.min.js -->
-    <script src="http://yoav-zibin.github.io/emulator/alphaBetaService.js"></script>
-    <script src="http://yoav-zibin.github.io/emulator/gameService.js"></script>
-    <script src="http://yoav-zibin.github.io/emulator/messageService.js"></script>
-    <script src="http://yoav-zibin.github.io/emulator/stateService.js"></script>
-    <!-- /build -->
+    <script src="http://yoav-zibin.github.io/emulator/dist/gameServices.min.js"></script>
 
     <script src="http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js"></script>
 

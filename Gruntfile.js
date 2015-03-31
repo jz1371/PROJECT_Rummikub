@@ -57,7 +57,7 @@ module.exports = function(grunt) {
             },
             dist: {
                 // Order is important! gameLogic.js must be first because it defines myApp angular module.
-                src: ['app/js/services/gameLogic*.js', 'app/js/controllers/gameCtrl.js', 'app/js/services/aiService.js'],
+                src: ['app/js/services/gameLogicService.js', 'app/js/controllers/gameCtrl.js', 'app/js/services/aiService.js'],
                 dest: 'app/dist/everything.js',
             },
         },
@@ -74,24 +74,29 @@ module.exports = function(grunt) {
         processhtml: {
             dist: {
                 files: {
-                    'app/dist/game.min.html': ['app/game.html']
+                    'app/game.min.html': ['app/game.html']
                 }
             }
         },
         manifest: {
             generate: {
                 options: {
-                    basePath: '.',
+                    basePath: 'app',
                     cache: [
                         'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/gameServices.min.js',
-                        'http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.2.6.1.min.js',
-                        'languages/en.js',
+                        'http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js',
                         'http://yoav-zibin.github.io/emulator/main.css',
-                        'app/dist/everything.min.js',
-                        'app/css/*.css'
+                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',
+                        'dist/everything.min.js',
+                        'css/app.css',
+                        'css/tile.css',
+                        'css/responsive.css',
+                        'css/main.css',
+                        'img/game-background.jpg',
+                        'img/joker-red.png'
                     ],
-                    network: ['app/dist/everything.min.js.map', 'app/dist/everything.js'],
+                    network: ['dist/everything.min.js.map', 'dist/everything.js'],
                     timestamp: true
                 },
                 dest: 'app/game.appcache',

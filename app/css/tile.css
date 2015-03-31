@@ -9,7 +9,9 @@
     border-style: inset;
     border-width: 1px;
     background-color: rgba(240, 240, 240, 0.09);
+
 }
+
 
 /* define content inside tile-wrapper */
 .tile-wrapper > div {
@@ -33,6 +35,23 @@
     border-width: 0 2px;
     background-color: rgba(172, 172, 172, 0.58);
 }
+
+/*#hand-panel .tile-wrapper:hover{*/
+    /*background-color:blue;*/
+    /*margin-top: -15px;*/
+/*px}*/
+
+#hand-panel .tile-wrapper{
+    /*height: 100px;*/
+    /*width: 100px;*/
+    /*border: 5px solid #ccc;*/
+    /*float: left;*/
+    /*margin: 15px;*/
+    /*-webkit-transition: margin 0.5s ease-out;*/
+    /*-moz-transition: margin 0.5s ease-out;*/
+    /*-o-transition: margin 0.5s ease-out;*/
+}
+
 
 
 .tile-score {

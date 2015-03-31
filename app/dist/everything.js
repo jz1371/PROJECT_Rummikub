@@ -15,29 +15,45 @@
     /**
      **************************************************************************************
      *
-     * I. The game state is represented by the following elements:
+     * I. Elements in game state.
      *
-     * 1. for each player: 
-     *    player:  {
-     *               "initial" : true/false,       // whether initialled meld
-     *               "tiles"   : [ array of indices of tiles player holds in hand ],
-     *             }
+     * 1. board: 2D array.
+     *      Each element is tileIndex ([0, 105]), -1 means no tile at that position. 
+     *      1.1  game board   (6 x 18)
+     *      1.2  player board (nplayers x tiles in each player's hand)
+     *     
+     *      e.g. 2-players initial scenario:
+     *      row 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17  col
+     *      [ [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  0  ----------
+     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  1      |
+     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  2  game board    
+     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  3      |
+     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  4      |
+     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  5  -----------   
+     *        [ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],                6 // 1st player's hand     
+     *        [14,15,16,17,18,19,20,21,22,23,24,25,26]              ]  7 // 2nd player's hand 
      *
-     * 2. board: 2D array of tile indices of size 6 rows and 20 columns.
+     * 2. deltas: 1D array, recording the move history in current turn.
+     *      Each element is like: {tileIndex:*, from: {row: * ,col: * }, to: {row: * ,col: *} }
      *
-     * 3. tilesSentToBoardThisTurn: array of tiles, which are sent to board in current turn.
+     * 3. type:  'INIT' / "MOVE" / "PICK" / "MELD" / "UNDO"
+     * 
+     * 4. trace: {nplayers: , intial: [], nexttile:  * }
      *
-     * 4. tiles: array of 'tile".
-     *    non-joker tile: {color: (RED/BLUE/ORANGE/BLACK), score: (1/2/3/.../13) }
-     *    joker tile    : {color: joker", score: 0}
-     *
-     * 5. nplayers: number of players in current game.
-     *
-     * 6. nexttile: index of first invisible tile in tile pool.
-     *
-     * 7. type: "PICK" / "MELD" / "SEND" / "RETRIEVE" / "REPLACE" / "UNDO"
+     * 5. tiles: array of tile, each tile is {tileIndex: {score: , color: }}
      * 
      *---------------------------------------------------------------------------------- 
+     *
+     * II Moves in game process.
+     *  
+     *  0 - setTurn : {setTurn : {turnIndex: 0}},
+     *  0 - endMatch: {endMatch: {endMatchScores: [90, -90]}}
+     *  1 - setType : {set: {key: 'type', value: "PICK"}}
+     *  2 - setBoard: {set: {key: 'board', value: [[..]]}}
+     *  3 - setDelta: {set: {key: 'deltas', value: [...]}}
+     *  4 - setTrace: {set: {key: 'trace', value: {}}
+     * *5 - setVisibility: {setVisibility: {key: 'tile28', visibleToPlayerIndices: [1]}},
+     *  
      *
      * II. Operations: the operation player chooses for current move.
      *
@@ -53,8 +69,7 @@
      *
      **************************************************************************************
      */
-    angular.module('myApp', []).factory('gameLogicService', function() {
-
+    angular.module('myApp',[]).factory('gameLogicService', function() {
 
         /**
          * Checks whether given move is Ok or not.
@@ -78,45 +93,33 @@
             return true;
         }
 
-        /**
-         * Creates move based on move type.
-         *
-         * @param stateBefore
-         * @param playerIndex
-         * @param actualMove
-         * @returns {expectedMove} [Array of operations]
-         */
         function createMove(stateBefore, playerIndex, actualMove) {
             var moveType = actualMove[1].set.value;
             if (moveType !== "INIT") {
-                check ( !isGameOver(stateBefore),
-                    "Game is over, you cannot move any more"
+                check( !isGameOver(stateBefore),
+                    "Game is over, you cannot move any move"
                 );
             }
             var expectedMove;
+            //var board = stateBefore.board;
+            //var deltas = stateBefore.deltas;
+            //var trace = stateBefore.trace;
+
             switch (moveType) {
                 case "INIT":
-                    var nPlayers = actualMove[2].set.value;
+                    var nPlayers = actualMove[2].set.value.nplayers;
                     expectedMove = getInitialMove(playerIndex, nPlayers);
                     break;
-                case "PICK":
-                    expectedMove = getPickFromPoolMove(stateBefore, playerIndex);
+                case 'MOVE':
+                    var deltas = actualMove[3].set.value;
+                    var delta = deltas[deltas.length - 1];
+                    expectedMove = getMoveMove(playerIndex, stateBefore, delta);
                     break;
-                case "SEND":
-                    var to   = actualMove[2].set.value;
-                    expectedMove = getSendToBoardMove(stateBefore, playerIndex, to);
-                    break;
-                case "RETRIEVE":
-                    var from = actualMove[2].set.value;
-                    expectedMove = getRetrieveFromBoardMove(stateBefore, playerIndex, from);
-                    break;
-                case "REPLACE":
-                    var replace_from = actualMove[3].set.value;
-                    var replace_to   = actualMove[4].set.value;
-                    expectedMove = getReplaceMove(stateBefore, playerIndex, replace_from, replace_to);
+                case 'PICK':
+                    expectedMove = getPickMove(playerIndex, stateBefore);
                     break;
                 case "MELD":
-                    expectedMove = getMeldMove(stateBefore, playerIndex);
+                    expectedMove = getMeldMove(playerIndex, stateBefore);
                     break;
                 default:
                     throw new Error("Unexpected move");
@@ -142,14 +145,20 @@
                 "INIT: nPlayers = " + nPlayers + " is given, but only 2 - 4 players are allowed."
             );
 
+            // whether player has made initial meld
+            var initial = [];
+            for (var i = 0; i < nPlayers; i++) {
+                initial.push(false);
+            }
+
             // 3. construct the move
             var nTilesPerPlayerInitially = 14;
             var move = [
                 {setTurn: {turnIndex: 0}},
                 {set: {key: 'type', value: "INIT"}},
-                {set: {key: 'nplayers', value: nPlayers}},
-                {set: {key: 'tilesSentToBoardThisTurn', value: []}},
-                {set: {key: 'board', value: getGameBoard(undefined)}},
+                {set: {key: 'trace', value: {nplayers: nPlayers, initial: initial, nexttile: nPlayers * 14}}},
+                {set: {key: 'board', value: getInitialBoard(nPlayers)}},
+                {set: {key: 'deltas', value: []}}
             ];
 
             // 3.1. initialize game tiles and shuffle keys
@@ -158,22 +167,6 @@
             for (var tileIndex = 0; tileIndex< 106; tileIndex++) {
                 tiles[tileIndex] = {set: {key: "tile" + tileIndex, value: getTileByIndex(tileIndex)}};
                 shuffleKeys[tileIndex] = 'tile' + tileIndex;
-            }
-
-            // 3.2. initialize game players
-            var players = [];
-            for (var i = 0; i < nPlayers; i++) {
-                // each player gets 14 tiles initially
-                var playerTile = [];
-                for (var j = 0; j < nTilesPerPlayerInitially; j++) {
-                    playerTile[j] = i * nTilesPerPlayerInitially + j;
-                }
-                var player = {
-                    set: {
-                        key: 'player' + i,
-                        value: {initial: false, tiles: playerTile}
-                }};
-                players.push(player);
             }
 
             // 3.3. initialize tile visibility
@@ -188,282 +181,178 @@
 
             move = move.concat(tiles);
             move.push({shuffle: {keys: shuffleKeys}});
-            move = move.concat(players);
             move = move.concat(visibility);
-            move.push({set: {key: 'nexttile', value: nPlayers * 14}});
-
             return move;
         }
 
-        /**
-         * Picks one tile from tile pool, and adds it to player's hand,
-         * finishes this turn and shifts game turn to next player.
-         *
-         * @param stateBeforeMove (object)
-         * @param playerIndex (int)
-         * @returns {*[]}
-         */
-        function getPickFromPoolMove(stateBeforeMove, playerIndex) {
+        function getMoveMove(playerIndex, stateBefore, delta) {
 
-            // 1. make sure valid player.
-            var player = getPlayer(stateBeforeMove, playerIndex);
-
-            // 2. make sure player did not sent any tile to board during this turn.
-            check (stateBeforeMove.tilesSentToBoardThisTurn.length === 0,
-                "PICK: you cannot pick, since you sent tile to board."
-            );
-
-            // 3. player is able to replace tiles throughout the board, but before picking,
-            //    he should restore the 'able-to-meld' state and retrieve all tiles he sent to board in this turn.
-            check (isMeldOk(stateBeforeMove, stateBeforeMove.board),
-                "PICK: you should not mess up the board, if you want to pick"
-            );
-
-            // 4. make sure picking next available tile based on last turn
-            var tileToPick = stateBeforeMove.nexttile;
-            check (tileToPick < 106,
-                "Pick: picking tile" + tileToPick + ", but tile index should be [0, 106]"
-            );
-
-            // 5. construct move operations.
-            var playerAfter = angular.copy(player);
-            playerAfter.tiles.push(tileToPick);
-
-            var pickMove = [
-                {setTurn: {turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBeforeMove.nplayers)}},
-                {set: {key: 'type', value: "PICK"}},
-                {setVisibility: {key: 'tile' + tileToPick, visibleToPlayerIndices: [playerIndex]}},
-                {set: {key: 'player' + playerIndex, value: playerAfter} },
-                {set: {key: 'nexttile', value: tileToPick + 1}},
-            ];
-
-            return pickMove;
-        }
-
-        /**
-         * Sends one tile from player's hand to board.
-         *
-         * @param stateBefore
-         * @param playerIndex (int)
-         * @param to (object) {tile:(int), row:(int), col:(int)}
-         * @returns {*[]}
-         */
-        function getSendToBoardMove(stateBefore, playerIndex, to) {
-
-            // 1. get game board.
-            var board = getGameBoard(stateBefore.board);
-
-            // 2. make sure correct player index.
-            var player = getPlayer(stateBefore, playerIndex);
-
-            // 3. make sure tile to send belongs to player
-            var tileToSend = to.tile;
-            check (tileToSend !== undefined,
-                "Send: sending undefined tile"
-            );
-            check( player.tiles.indexOf(tileToSend) !== -1,
-                "Send: sending tile" + tileToSend +
-                ", but you should send your own tile: [" + player.tiles + "]"
-            );
-
-            // 4. make sure sending tile to an empty position within the board.
-            var row = to.row;
-            var col = to.col;
-            checkPositionWithinBoard(board, row, col);
-
-            var toIndex = board[row][col];
-            check( toIndex === -1,
-                "Send: board["+ row + ", " + col +
-                "] is already occupied with tile" + board[row][col] +
-                ", you cannot send to this non-empty position in board."
-            );
-
-            // 5. construct move operations.
-            var boardAfter = angular.copy(board);
-            boardAfter[row][col] = tileToSend;
-            var playerAfter = angular.copy(player);
-            playerAfter.tiles.splice(playerAfter.tiles.indexOf(tileToSend), 1);
-            var tilesAfter = angular.copy(stateBefore.tilesSentToBoardThisTurn);
-            tilesAfter.push(tileToSend);
-
-            var sendMove = [
-                {setTurn: {turnIndex: playerIndex}},     // 'send' move will not change game turn.
-                {set: {key: 'type' , value: "SEND"}},
-                {set: {key: 'todelta', value: to}},
-                {set: {key: 'player' + playerIndex, value: playerAfter}},
-                {set: {key: 'tilesSentToBoardThisTurn', value: tilesAfter}},
-                {set: {key: 'board', value: boardAfter}},
-                {setVisibility: {key: 'tile' + tileToSend, visibleToPlayerIndices: getRestPlayers(playerIndex, stateBefore.nplayers)}}
-            ];
-
-            return sendMove;
-        }
-
-        /**
-         * Retrieves one tile from board back to player, and the tile should have been
-         * sent to board during current turn.
-         *
-         * @param stateBefore
-         * @param playerIndex
-         * @param from (object) {row:(int), col(int)}
-         * @returns {*[]}
-         */
-        function getRetrieveFromBoardMove(stateBefore, playerIndex, from) {
-
-            // 1. get game board.
-            var board = getGameBoard(stateBefore.board);
-
-            // 2. make sure correct player index.
-            var player = getPlayer(stateBefore, playerIndex);
-
-            // 3. make sure retrieving an existing tile in board
-            var row = from.row;
-            var col = from.col;
-            checkPositionWithinBoard(board, row, col);
-            var tileToRetrieve = board[row][col];
-            check (tileToRetrieve !== -1,
-                "RETRIEVE: no tile in board[" + row + "," + col + "]"
-            );
-
-            // 4. make sure tile retrieving was sent by player in this turn
-            var index = stateBefore.tilesSentToBoardThisTurn.indexOf(tileToRetrieve);
-            check ( -1 !== index,
-                "RETRIEVE: retrieving tile" + tileToRetrieve +
-                ", but it is not your hand:[" + stateBefore.tilesSentToBoardThisTurn + "]."
-            );
-
-            // 5. construct move operations.
-            var boardAfter = angular.copy(board);
-            boardAfter[row][col] = -1;
-            var playerAfter = angular.copy(player);
-            playerAfter.tiles.push(tileToRetrieve);
-            var tilesAfter = angular.copy(stateBefore.tilesSentToBoardThisTurn);
-            tilesAfter.splice(index, 1);
-
-            var retrieveMove = [
-                {setTurn: {turnIndex: playerIndex}},     // 'retrieve' move will not change game turn.
-                {set: {key: 'type' , value: "RETRIEVE"}},
-                {set: {key: 'fromdelta', value: from}},
-                {set: {key: 'player' + playerIndex, value: playerAfter}},
-                {set: {key: 'tilesSentToBoardThisTurn', value: tilesAfter}},
-                {set: {key: 'board', value: boardAfter}},
-                {setVisibility: {key: 'tile' + tileToRetrieve, visibleToPlayerIndices: [playerIndex]}}
-            ];
-
-            return retrieveMove;
-        }
-
-        /**
-         * Replaces one tile in the board to another position in the board.
-         * If player has not initially melded, player can only replace tile belonging to him.
-         *
-         * @param stateBefore
-         * @param playerIndex
-         * @param from (object) {row:(int),col:(int)}
-         * @param to (object) {row:(int),col:(int)}
-         * @returns {*[]}
-         */
-        function getReplaceMove(stateBefore, playerIndex, from, to) {
-            // 1. get game board and initialize if undefined
-            var board = getGameBoard(stateBefore.board);
-
-            // 2. check from's position is within board and not empty.
-            checkPositionWithinBoard(board, from.row, from.col);
-            var fromIndex = board[from.row][from.col];
-            check( fromIndex !== -1,
-                "Replace: no tile in board[" + from.row + "," + from.col + "] "
-            );
-
-            // 3. check to's position is within board and is empty.
-            checkPositionWithinBoard(board, to.row, to.col);
-            var toIndex = board[to.row][to.col];
-            check( toIndex === -1,
-                "Replace: board[ " + to.row + "," + to.col + "] has been occupied with tile" + toIndex
-            );
-
-            // 4. get game player, make sure it is a valid player.
-            //var player = getPlayer(stateBefore, playerIndex);
-
-            // 5. construct move
-            var boardAfter = angular.copy(board);
-            boardAfter[to.row][to.col] = fromIndex;
-            boardAfter[from.row][from.col] = -1;
-
-            var replaceMove = [
-                {setTurn: {turnIndex: playerIndex}},
-                {set: {key: 'type', value: "REPLACE"}},
-                {set: {key: 'board', value: boardAfter}},
-                {set: {key: 'fromdelta', value: from}},
-                {set: {key: 'todelta', value: to}},
-            ];
-
-            return replaceMove;
-        }
-
-        /**
-         * Melds current turn and shift turn to next player.
-         *
-         * @param stateBefore (object)
-         * @param playerIndex (int) index of player who is playing.
-         * @returns {Array}
-         */
-        function getMeldMove(stateBefore, playerIndex) {
-            // 0. check player has sent as least one tile from hand to board during this turn.
-            check (stateBefore.tilesSentToBoardThisTurn.length !== 0,
-                "MELD: you cannot meld since no tiles sent to board in this turn"
-            );
+            var tileToMove = delta.tileIndex;
+            var from = delta.from;
+            var to = delta.to;
 
             // 1. get game board
-            var board = getGameBoard(stateBefore.board);
+            var board = stateBefore.board;
+            var deltas = stateBefore.deltas;
 
-            // 2. get valid player
-            var player = getPlayer(stateBefore, playerIndex);
 
-            // 3. check all sets in board are valid sets (runs or groups)
-            var setsInBoard = [];
-            // get all 'sets' in board by scanning each row of board
-            for (var i = 0; i < board.length; i++) {
-                setsInBoard = setsInBoard.concat(parseRowToSets(board[i]));
+            var playerRow = getPlayerRow(playerIndex);
+
+            // 2.1 check from's position is within board, not empty and consistent as declared in delta
+            checkPositionWithinBoard(board, from.row, from.col);
+
+            check(board[from.row][from.col] === tileToMove,
+                "[MOVE] tile" + tileToMove + " is not at board[" + from.row + "][" + from.col + "]");
+
+            check(tileToMove !== -1,
+                "[MOVE] no tile at board[" + from.row + "][" + from.col + "]" );
+
+            // 2.2 check to's position is within board and is empty
+            checkPositionWithinBoard(board, to.row, to.col);
+
+            check(board[to.row][to.col] === -1,
+                "[MOVE] board[" + to.row + "][" + to.col + "] has been occupied by tile" + board[to.row][to.col] );
+
+            // 2.3 player cannot move one tile from other player's hand
+            check( from.row >=0 && from.row < getGameBoardRows() ||   // from game board
+                from.row === playerRow,
+                "[MOVE] you cannot move tiles from other player's hand" );
+
+            // 2.4 player cannot move one tile to other player's hand
+            check( to.row >=0 && to.row < getGameBoardRows() ||     // to game board
+                to.row ===  playerRow,
+                "[MOVE] you cannot move tiles to other player's hand" );
+
+            // 3. player can only move his own tile if has not finished initial meld
+            if (stateBefore.trace.initial[playerIndex] === false) {
+                // if player has not yet finished initial meld, he can only move from his hand
+                check(from.row === playerRow || isTileSentToBoardInCurrentTurnByPlayer(tileToMove, playerIndex, deltas),
+                    "[MOVE] cannot move other player's tiles on board, since you have not finished initial meld" );
             }
-            for (var ii = 0; ii < setsInBoard.length; ii++) {
-                var sets = getSetsOfTilesByIndex(setsInBoard[ii], stateBefore);
-                var position = findPosition(board, setsInBoard[ii][0]);
-                check (isRuns(sets) || isGroups(sets),
-                    "Meld: board contains invalid sets from (" +
-                    (position.row + 1) + "," + (position.col + 1) + ") to (" +
-                    (position.row + 1) + "," + (position.col + sets.length) + ")"
-                );
+
+            // null means every player can see
+            var visibility = null;
+
+            // 4. can only send tile which was sent to game board in current turn
+            // back to player hand
+            if (to.row === playerRow) {
+                check( from.row === playerRow  ||   // move tiles in hand
+                    isTileSentToBoardInCurrentTurnByPlayer(tileToMove, playerIndex, deltas), // retrieve own tile from board
+                "[MOVE] cannot retrieve tile" + tileToMove+ " back to hand because" +
+                    "it is not sent by board by you in current turn" );
+                // after back to hand, only player himself can see that tile
+                visibility = [playerIndex];
             }
 
-            // 4. finish initial meld?
-            // for player does not finish initial meld, intial meld needs score at least 30.
-            if (player.initial ===  false) {
-                var score = getInitialMeldScore(stateBefore, setsInBoard, stateBefore.tilesSentToBoardThisTurn);
-                check (score >= 30,
-                    "Meld: score is " + score + ", but initial meld needs at least 30 score (excluding 'joker' tile)"
-                );
-            }
+            // 5. construct move operations.
+            var boardAfter = angular.copy(board);
+            boardAfter[from.row][from.col] = -1;
+            boardAfter[to.row][to.col] = tileToMove;
 
-            // 5. check winner
+            var deltasAfter = angular.copy(deltas);
+            deltasAfter.push(delta);
+
+            return [
+                {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
+                {set: {key: 'type', value: "MOVE"}},
+                {set: {key: 'board', value: boardAfter}},
+                {set: {key: 'deltas', value: deltasAfter}},
+                {setVisibility: {key: 'tile' + tileToMove, visibleToPlayerIndices: visibility}}
+            ];
+        }
+
+        function getPickMove(playerIndex, stateBefore) {
+
+            var playerRow = getGameBoardRows() + playerIndex;
+
+            // 1. make sure player did not sent any tile to board during this turn.
+            var tilesSentToBoardThisTurn = getTilesSentToBoardThisTurn(stateBefore.deltas, playerRow);
+            check(tilesSentToBoardThisTurn.length === 0,
+                "[PICK] you cannot pick, since you sent tile to board."
+            );
+
+            // 2. player is able to replace tiles throughout the board,
+            //    but before picking, he should restore the 'able-to-meld' state
+            //    and retrieve all tiles he sent to board in this turn.
+            check(isMeldOk(stateBefore, stateBefore.board, playerIndex, true),
+                "[PICK] you should not mess up the board, if you want to pick" );
+
+            // 3. make sure picking next available tile based on last turn
+            var tileToPick = stateBefore.trace.nexttile;
+            check(tileToPick >= 0 && tileToPick < 106,
+                "[PICK] no more tiles  left for picking");
+
+            // 4. construct move operations.
+            var boardAfter = angular.copy(stateBefore.board);
+            boardAfter[playerRow].push(tileToPick);
+
+            var traceAfter = angular.copy(stateBefore.trace);
+            traceAfter.nexttile = tileToPick + 1;
+
+            return [
+                {setTurn: {turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBefore.trace.nplayers)}},
+                {set: {key: 'type', value: "PICK"}},
+                {set: {key: 'board', value: boardAfter}},
+                {set: {key: 'trace', value: traceAfter}},
+                {setVisibility: {key: 'tile' + tileToPick, visibleToPlayerIndices: [playerIndex]}}
+            ];
+
+        }
+
+        function getMeldMove(playerIndex, stateBefore) {
+            var board = stateBefore.board;
+            var playerRow = getPlayerRow(playerIndex);
+            var deltas = stateBefore.deltas;
+
+            // 0. check player has sent as least one tile from hand to board during this turn.
+            var tilesSentToBoardThisTurn = getTilesSentToBoardThisTurn(deltas, playerRow);
+            console.log("SIZE; " + tilesSentToBoardThisTurn.length);
+            check ( tilesSentToBoardThisTurn.length !== 0,
+                "[MELD] you cannot meld since no tiles sent to board in this turn"
+            );
+
+
+            // 1. check all sets in board are valid sets (runs or groups)
+            check (isMeldOk(stateBefore, board, playerIndex ,stateBefore.trace.initial[playerIndex]),
+                "[MELD] meld is not ok" );
+
+            // 2. check winner
             var firstOperation;
-            var hasPlayerWon = player.tiles.length === 0 && stateBefore.tilesSentToBoardThisTurn.length !== 0;
+            var hasPlayerWon = board[playerRow].length === 0;
+            if (hasPlayerWon === false) {
+                hasPlayerWon = true;
+                for (var i = 0; i < board[playerRow].length; i++) {
+                    if (board[playerRow][i] !== -1) {
+                        hasPlayerWon = false;
+                        break;
+                    }
+                }
+            }
+            // player has no tile left in hand, or only has -1 tile in hand, he wins
             if ( hasPlayerWon ) {
                 firstOperation = {endMatch: {endMatchScores: getEndScores(playerIndex, stateBefore)}};
             } else {
-                firstOperation = {setTurn: {turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBefore.nplayers)}};
+                firstOperation = {setTurn: {
+                    turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBefore.trace.nplayers)}};
             }
 
-            var playerAfter = angular.copy(player);
-            playerAfter.initial = true;
-
-            var meldMove = [
+            // 3. construct move
+            var boardAfter = angular.copy(stateBefore.board);
+            // clear all empty slots for player's hand
+            for (var col = boardAfter[playerRow].length; col >= 0; col-- ) {
+                if (boardAfter[playerRow][col] === -1) {
+                    boardAfter[playerRow].splice(col, 1);
+                }
+            }
+            var traceAfter = angular.copy(stateBefore.trace);
+            traceAfter.initial[playerIndex] = true;
+            return [
                 firstOperation,
                 {set: {key: 'type', value: "MELD"}},
-                {set: {key: 'player' + playerIndex, value: playerAfter}},
-                {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                {set: {key: 'board', value: boardAfter}},
+                {set: {key: 'deltas', value: []}},     // meld move will clear delta history
+                {set: {key: 'trace', value: traceAfter}}
             ];
-
-            return meldMove;
 
         }
 
@@ -473,16 +362,15 @@
         //}
 
         /**
-         * Gets all possible moves for the given game state and player index.
          *
          * @param stateBefore
-         * @param turnIndexBeforeMove
-         * @returns {Array} [[possible moves1], [possible moves2],...]
+         * @param playerIndex
+         * @returns {Array}
          */
         function getPossibleMoves(stateBefore,  playerIndex) {
             var possibleMoves = [];
             try {
-                possibleMoves.push(getPickFromPoolMove(stateBefore, playerIndex));
+                possibleMoves.push(getPickMove(stateBefore, playerIndex));
             } catch (e) {
 
             }
@@ -496,7 +384,7 @@
             //
             //        // possible "PICK" move
             //        try {
-            //            possibleMoves.push(getPickFromPoolMove(stateBefore, playerIndex));
+            //            possibleMoves.push(getPickMove(stateBefore, playerIndex));
             //        } catch (e)  {}
             //
             //        // possible "SEND" moves
@@ -576,16 +464,9 @@
             }
         }
 
-        /**
-         * gets player profile from state.
-         *
-         * @param state
-         * @param playerIndex
-         * @returns {*}
-         */
-        function getPlayer(state, playerIndex) {
-            checkPlayerIndex(playerIndex, state.nplayers);
-            return state["player" + playerIndex];
+        function checkPlayerIndex(playerIndex, nPlayers) {
+            check( playerIndex >= 0 && playerIndex < nPlayers,
+                "checkPlayerIndex, [playerIndex:  " + playerIndex + ", nPlayers: " + nPlayers);
         }
 
         /**
@@ -606,50 +487,45 @@
             return index;
         }
 
-        function checkPlayerIndex(playerIndex, nPlayers) {
-            check( playerIndex >= 0 && playerIndex < nPlayers,
-                "checkPlayerIndex, [playerIndex:  " + playerIndex + ", nPlayers: " + nPlayers);
-        }
-
-        /**
-         * gets current game board, making sure it has initialized.
-         * 
-         * @param board
-         * @returns {*}
-         */
-        function getGameBoard(board) {
-            if (board === undefined) {
-                board = getInitialBoard();
-            }
-            return board;
-        }
-
         /**
          * initializes game board.
-         * 
-         * @returns {*[]}
+         *
+         * @param nPlayers
+         * @returns {Array}
          */
-        function getInitialBoard() {
-            var board = [];
-            for (var i = 0; i < getBoardRows(); i++) {
-                board.push([]);
-                for (var j = 0; j < getBoardCols(); j++) {
-                    board[i].push(-1);
+        function getInitialBoard(nPlayers) {
+            var board = [
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+            ];
+            var tileIndex = 0;
+            var tilesInHandInitially = 14;
+            // push 14 tiles for each player
+            for (var i = 0; i < nPlayers; i++) {
+                var row = [];
+                for (var j = 0; j < tilesInHandInitially; j++) {
+                    row.push(tileIndex);
+                    tileIndex++;
                 }
+                board.push(row);
             }
             return board;
         }
 
-        function getRestPlayers(playerIndex, nPlayers) {
-            var arr = [];
-            for (var i = 0; i < nPlayers; i++) {
-                arr.push(i);
-            }
-            //arr.remove(playerIndex);
-            arr.splice(arr.indexOf(playerIndex), 1);
-
-            return arr;
-        }
+        //function getRestPlayers(playerIndex, nPlayers) {
+        //    var arr = [];
+        //    for (var i = 0; i < nPlayers; i++) {
+        //        arr.push(i);
+        //    }
+        //    //arr.remove(playerIndex);
+        //    arr.splice(arr.indexOf(playerIndex), 1);
+        //
+        //    return arr;
+        //}
 
         /**
          * checks given (row, col) is within board's boundary,
@@ -664,7 +540,7 @@
                 "checkPositionWithinBoard: (row, col) = (" + row + "," +  col + ") is undefined"
             );
             var rows = board.length;
-            var cols = board[0].length;
+            var cols = board[row].length;
             check( row >= 0 && row < rows && col >= 0 && col < cols,
                 "checkPositionWithinBoard: position out Of board, [row: " + row + ", col: " + col + "]"
             );
@@ -710,26 +586,26 @@
          */
         function parseRowToSets(row) {
             var result = [];
-            var sets = [];
+            var tileSet = [];
             for (var i = 0; i < row.length; i++) {
                 var tileIndex = row[i];
                 if (tileIndex === -1) {
                     // current set ends
-                    if (sets.length !== 0) {
-                        result.push(sets);
-                        sets = [];
+                    if (tileSet.length !== 0) {
+                        result.push(tileSet);
+                        tileSet = [];
                     }
                 } else {
                     check(tileIndex >= 0 && tileIndex < 106,
                         "tileIndex: " + tileIndex
                     );
-                    sets.push(tileIndex);
+                    tileSet.push(tileIndex);
                 }
             }
-            if (sets.length !== 0) {
-                result.push(sets);
+            // in case last tileSet ends at last element of row
+            if (tileSet.length !== 0) {
+                result.push(tileSet);
             }
-
             return result;
         }
 
@@ -818,38 +694,6 @@
             return true;
         }
 
-        /**
-         * gets the score for player's initial meld.
-         * In initial meld, only sets contain no tiles that from opponents can be calculated,
-         * and joker's score is 0.
-         *
-         * @param state
-         * @param setsInBoard
-         * @param tilesLastTurn (array) of tile indices that player holding in last turn.
-         * @returns {number}
-         */
-        function getInitialMeldScore(state, setsInBoard, tilesSentThisTurn) {
-            var score = 0;
-            for (var i = 0; i < setsInBoard.length; i++) {
-                var tilesAllFromPlayer = true;
-                var setScore = 0;
-                for (var j = 0; j < setsInBoard[i].length; j++) {
-                    var tileIndex = setsInBoard[i][j];
-                    setScore += state["tile" + tileIndex].score;
-                    if (tilesSentThisTurn.indexOf(tileIndex) === -1) {
-                        // this tile is from opponent
-                        tilesAllFromPlayer = false;
-                        break;
-                    }
-                }
-                // only add score of sets in which all tiles are from the player who is playing.
-                if (tilesAllFromPlayer) {
-                    score += setScore;
-                }
-            }
-            return score;
-        }
-
         function getSetsOfTilesByIndex(setsOfTileIndices, state) {
             var result = [];
             for (var i = 0; i < setsOfTileIndices.length; i++) {
@@ -900,39 +744,18 @@
         }
 
         /**
-         * return all empty positions in board and all occupied positions in board.
-         *
-         * @param board
-         * @returns {{empty: Array, occupied: Array}}
-         */
-        //function checkPossiblePositions(board) {
-        //    var empty = [];
-        //    var occupied = [];
-        //    var rows = board.length;
-        //    var cols = board[0].length;
-        //    for (var i = 0; i < rows; i++) {
-        //        for (var j = 0; j < cols; j++) {
-        //            if (board[i][j] === -1) {
-        //                empty.push({row: i, col: j});
-        //            } else {
-        //                occupied.push({row: i, col: j});
-        //            }
-        //        }
-        //    }
-        //    return {empty: empty, occupied: occupied};
-        //}
-
-        /**
-         * check whether current board can meld
+         * check whether current board can meld.
          *
          * @param stateBefore
          * @param board
+         * @param playerIndex
+         * @param initial
          * @returns {boolean}
          */
-        function isMeldOk(stateBefore, board) {
+        function isMeldOk(stateBefore, board, playerIndex, initial) {
             var setsInBoard = [];
-            // get all 'sets' in board by scanning each row of board
-            for (var i = 0; i < board.length; i++) {
+            // get all 'sets' in game board by scanning each row of board
+            for (var i = 0; i < getGameBoardRows(); i++) {
                 setsInBoard = setsInBoard.concat(parseRowToSets(board[i]));
             }
             for (var ii = 0; ii < setsInBoard.length; ii++) {
@@ -942,8 +765,47 @@
                     return false;
                 }
             }
+            if (initial === false) {
+                var tilesSentToBoardThisTurn = getTilesSentToBoardThisTurn(stateBefore.deltas, getPlayerRow(playerIndex));
+                var score = getInitialMeldScore(stateBefore, setsInBoard, tilesSentToBoardThisTurn);
+                check(score >= 30,
+                    "[MELD]: you must score at least 30 (without joker tile) for your initial meld" );
+            }
             return true;
         }
+
+        /**
+         * gets the score for player's initial meld.
+         * In initial meld, only sets contain no tiles that from opponents can be calculated,
+         * and joker's score is 0.
+         *
+         * @param state
+         * @param setsInBoard
+         * @param tilesLastTurn (array) of tile indices that player holding in last turn.
+         * @returns {number}
+         */
+        function getInitialMeldScore(state, setsInBoard, tilesSentThisTurn) {
+            var score = 0;
+            for (var i = 0; i < setsInBoard.length; i++) {
+                var tilesAllFromPlayer = true;
+                var setScore = 0;
+                for (var j = 0; j < setsInBoard[i].length; j++) {
+                    var tileIndex = setsInBoard[i][j];
+                    setScore += state["tile" + tileIndex].score;
+                    if (tilesSentThisTurn.indexOf(tileIndex) === -1) {
+                        // this tile is from opponent
+                        tilesAllFromPlayer = false;
+                        break;
+                    }
+                }
+                // only add score of sets in which all tiles are from the player who is playing.
+                if (tilesAllFromPlayer) {
+                    score += setScore;
+                }
+            }
+            return score;
+        }
+
 
         /**
          * check wether game is over.
@@ -952,21 +814,22 @@
          * @returns {boolean}
          */
         function isGameOver(state) {
-            return getWinner(state) !== -1 || isTie(state);
+            return getWinner(state.board, state.deltas) !== -1 || isTie(state);
         }
 
         /**
+         *
          * get index of winning player. returns -1 if no player wins.
          * After game is on, player with no tiles left in hand is the winner.
-         *
-         * @param state
+         * @param board
          * @returns {number}
          */
-        function getWinner(state) {
+        function getWinner(board, deltas) {
             var hasLoser = false;
             var winner = -1;
-            for (var i = 0; i < state.nplayers; i++) {
-                if ( state["player" + i].tiles.length === 0 && state.tilesSentToBoardThisTurn.length === 0) {
+            // check each player's hand
+            for (var i = getGameBoardRows(); i < board.length; i++) {
+                if (board[i].length === 0 && deltas.length === 0) {
                     winner = i;
                 } else {
                     if (hasLoser === false) {
@@ -974,156 +837,390 @@
                     }
                 }
             }
-            // in case game is not initialized
             return hasLoser ? winner : -1;
-        }
-
-        function findPosition(board, tileIndex) {
-            var position = {};
-            for (var row = 0; row < board.length; row++) {
-                for (var col = 0; col < board[0].length; col++) {
-                    if (board[row][col] === tileIndex) {
-                        position.row = row;
-                        position.col = col;
-                        break;
-                    }
-                }
-            }
-            return position;
-        }
-
-        function getBoardRows() {
-            return 6;
-        }
-
-        function getBoardCols() {
-            return 18;
         }
 
         /**
          * check if game is tied. Game is tied when tile pool is empty
-         * and no player can make valid move any more.
-         *
+         * or no player can make valid move any more.
          * @returns {boolean}
          */
         function isTie(state) {
-            if (state !== undefined) {
-                console.log("initialed game");
+            var isTied = state.trace.nexttile >= 106;
+            //if (isTied === false) {
+            //}
+            return isTied;
+        }
+
+        /**
+         * return true if tileIndex is sent from player's hand to game board in current turn.
+         * @param tileIndex
+         * @param playerIndex
+         * @param deltas
+         * @returns {boolean}
+         */
+        function isTileSentToBoardInCurrentTurnByPlayer(tileIndex, playerIndex, deltas) {
+            var playerRow = getPlayerRow(playerIndex);
+            for (var i = 0 ; i < deltas.length; i++) {
+                if (deltas[i].tileIndex === tileIndex &&
+                    deltas[i].from.row === playerRow ) {
+                    return true;
+                }
             }
             return false;
         }
 
+        /**
+         * get the row in board that belongs to given player's hand
+         * @param playerIndex
+         * @returns {*}
+         */
+        function getPlayerRow(playerIndex) {
+            return getGameBoardRows() + playerIndex;
+        }
+
+        function getGameBoardRows() {
+            return 6;
+        }
+
+        function getTilesSentToBoardThisTurn(deltas, playerRow) {
+            var result = [];
+            var count = 0;
+            for (var i = 0; i < deltas.length; i++) {
+                var tileIndex = deltas[i].tileIndex;
+                var from = deltas[i].from;
+                var to = deltas[i].to;
+                if (from.row === playerRow && to.row !== playerRow) {
+                    count++;
+                    result.push(tileIndex);
+                } else if (from.row !== playerRow && to.row === playerRow) {
+                    count--;
+                    var index = result.indexOf(tileIndex);
+                    result.splice(index, 1);
+                }
+            }
+            check(result.length === count, "get tiles sent wrong");
+            return result;
+        }
+
+        //function getGameBoardCols() {
+        //    return 18;
+        //}
+
         /* ======= Return functions ======= */
         return {
             isMoveOk: isMoveOk,
-            getInitialMove: getInitialMove,
+            createMove: createMove,
             getTileByIndex: getTileByIndex,
             getPossibleMoves: getPossibleMoves,
-            createMove: createMove,
 
-            getPickMove: getPickFromPoolMove,
-            getMeldMove: getMeldMove,
-            getSendMove: getSendToBoardMove,
-            getRetrieveMove: getRetrieveFromBoardMove,
-            getReplaceMove: getReplaceMove
+            createInitialMove: getInitialMove,
+            createPickMove: getPickMove,
+            createMeldMove: getMeldMove,
+            createMoveMove: getMoveMove
 
-            //setBoardRows: getBoardRows,
-            //setBoardCols: getBoardCols
         };
 
     });
 }());
 ;/**
  * File: app/js/controllers/gameCtrl.js
- * @author:
- * @date:
+ * ------------------------------------
+ * @author: Jingxin Zhu
+ * @date:   2015.03.10
  */
 
 (function() {
+
     'use strict';
+
+    /**
+     **************************************************************************************
+     * I. Elements in $scope
+     *
+     **************************************************************************************
+     */
     angular.module('myApp').controller('GameCtrl',
     ['$scope', '$log', '$window', '$animate', '$timeout', 'stateService', 'gameService', 'gameLogicService',
     function($scope, $log, $window,  $animate, $timeout, stateService ,gameService, gameLogicService ) {
 
-        //console.log("height: " + window.innerWidth);
-        //resizeGameAreaService.setWidthToHeight(0.6);
+        var allowDragAndDrop = true;
+
+        // to allow manipulating game state in e2e tests
+        window.e2e_test_stateService = stateService;
+
+
+        var debugMode = true;
+
+        var gameBoardRows = 6;
+        var gameBoardCols = 18;
+
         $scope.rows = 6;
         $scope.cols = 18;
 
-        window.e2e_test_stateService = stateService; // to allow us to load any state in our e2e tests.
+        var animationEnded = false;
+        //var canMakeMove = false;
+        var isComputerTurn = false;
+        //var state = null;
+        var turnIndex = null;
+
+        var draggingLines = document.getElementById("draggingLines");
+        var horizontalDraggingLine = document.getElementById("horizontalDraggingLine");
+        var verticalDraggingLine = document.getElementById("verticalDraggingLine");
+
+        var myDrag = document.getElementById("MyDrag");
+
+        var gameArea = document.getElementById("gameArea");
+        var draggingStartedRowCol = null; // The {row: YY, col: XX} where dragging started.
+        var draggingPiece = null;
+        var nextZIndex = 200;
+
+        var boardPanel = document.getElementById("board-panel");
+        var handPanel = document.getElementById("hand-panel");
+
+        function isWithinElement(x, y, element) {
+            var offset = element.getBoundingClientRect();
+            return x >= offset.left && x < offset.right &&
+                y >= offset.top && y <= offset.bottom;
+        }
+
+        function handleDragEvent(type, clientX, clientY) {
+            if (!$scope.isYourTurn) {
+                return;
+            }
+
+            if (!isWithinElement(clientX, clientY, gameArea)) {
+                if (debugMode) {
+                    draggingLines.style.display = "none";
+                }
+                return;
+            } else {
+                var pos = getDraggingTilePosition(clientX, clientY);
+                if (type === "touchstart" ) {
+                    // drag started
+                    if (pos &&  $scope.board[pos.row][pos.col] !== -1) {
+                        // starting from game board or player hand and is a valid tile
+                        var row = pos.row;
+                        var col = pos.col;
+                        draggingStartedRowCol = {row: row, col: col};
+                        draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+                        if (draggingPiece) {
+                            draggingPiece.style['z-index'] = ++nextZIndex;
+                        }
+                    }
+                }
+                if (!draggingPiece) {
+                    return;
+                }
+                if (type === "touchend") {
+                    // drag end
+                    if (pos) {
+                        var from = draggingStartedRowCol;
+                        var to = {row: pos.row, col: pos.col};
+                        dragDone(from, to);
+                    }
+                } else {
+                    // Drag continue
+                    if (pos) {
+                        var container = getTileContainerSize(pos);
+                        $scope.$apply(function () {
+                            var tileIndex = $scope.board[draggingStartedRowCol.row][draggingStartedRowCol.col];
+                            var tile = $scope.state['tile' + tileIndex];
+                            $scope.tileIndex = tileIndex;
+                            $scope.drag_color = tile.color;
+                            $scope.drag_score = tile.score;
+                            $scope.tile = tile;
+                        });
+
+                        draggingLines.style.display = "inline";
+                        myDrag.style.display = "inline";
+                        myDrag.style.width = container.width + "px";
+                        myDrag.style.left = container.left + "px";
+                        myDrag.style.paddingBottom= container.height + "px";
+                        myDrag.style.top = container.top + "px";
+
+                        var centerXY = {x: container.width / 2 + container.left, y: container.top + container.height / 2};
+                        setDraggingLines(centerXY);
+
+                    }
+                }
+            }
+
+            if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
+                draggingLines.style.display = "none";
+                myDrag.style.display = "none";
+
+                draggingStartedRowCol = null;
+                draggingPiece = null;
+            }
+        }
+
+        function getTileContainerSize(pos) {
+            if (pos) {
+                var row = pos.row;
+                var col = pos.col;
+                if ( row >= 0 && row < gameBoardRows ||        // from game baord
+                    row === gameBoardRows + $scope.turnIndex &&   // from player's hand
+                    col >= 0 && col < $scope.board[row].length )
+                {
+                    var container = document.getElementById("MyPiece" + row + "x" + col).parentElement.getBoundingClientRect();
+                    return container;
+                } else {
+                    return undefined;
+                }
+
+            } else {
+                return undefined;
+            }
+
+        }
+
+        function setDraggingLines(centerXY) {
+            if (centerXY !== undefined) {
+                verticalDraggingLine.setAttribute("x1", centerXY.x);
+                verticalDraggingLine.setAttribute("x2", centerXY.x);
+                horizontalDraggingLine.setAttribute("y1", centerXY.y);
+                horizontalDraggingLine.setAttribute("y2", centerXY.y);
+            }
+        }
+
+        function getDraggingTilePosition(clientX, clientY) {
+            var x = clientX - boardPanel.parentElement.offsetLeft;
+            var y = clientY - boardPanel.offsetTop;
+            var row = -1;
+            var col = -1;
+            if (x > 0 && y > 0 && x < boardPanel.clientWidth && y < boardPanel.clientHeight) {
+                // dragging in board panel
+                $log.info("width: " + boardPanel.clientWidth);
+                $log.info("x: " + x);
+                row = Math.floor(gameBoardRows * y / boardPanel.clientHeight);
+                col = Math.floor(gameBoardCols * x / boardPanel.clientWidth);
+                $log.info("row: " + row);
+                $log.info("col: " + col);
+            } else {
+                var windowOffset = handPanel.getBoundingClientRect();
+                x = clientX - windowOffset.left;
+                y = clientY - windowOffset.top;
+                if (x > 0 && y > 0 && x < handPanel.clientWidth && y < handPanel.clientHeight) {
+                    //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
+                    row = gameBoardRows + $scope.turnIndex;
+
+                    //TODO: better way to find length?
+                    var liElement = document.getElementsByTagName("LI");
+                    var width = liElement[0].clientWidth * liElement.length;
+                    col = Math.floor( $scope.board[row].length  * x / width);
+                    $log.info("x: " + x);
+                    $log.info("row: " + row);
+                    $log.info("col: " + col);
+                }
+            }
+            return row !== -1 ? {row: row, col: col} : null ;
+        }
+
+        function dragDone(from, to) {
+            $scope.$apply(function () {
+                try {
+                    $scope.boardCellClicked(from.row, from.col);
+                    $scope.boardCellClicked(to.row, to.col);
+                    var msg = "Dragged to " + to.row + "x" + to.col;
+                    $log.info(msg);
+                    $scope.msg = msg;
+                }catch(e) {
+                    // illegal move, restore
+                    $log.info(e.message);
+                    /* return immediately! */
+                    $scope.debug = e.message;
+                    return;
+                }
+            });
+        }
+
 
         function sendComputerMove() {
             var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
             gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
-            console.log("here");
             $scope.debug = "computer picks one tile";
             $scope.turnInfo = "Your turn";
         }
 
+        $scope.shouldSlowlyAppear = function () {
+            return $scope.activeTile !== undefined;
+        };
+
+        /**
+         *
+         * @param params (object) {yourPlayerIndex: (int),
+         *                         stateAfterMove: *,
+         *                         turnIndexAfterMove: *,
+         *                         playersInfo: [{playerId: (int)},{}]}
+         */
         function updateUI(params) {
 
+            animationEnded = false;
+
             // initialize move
-            if (isEmptyObj(params.stateAfterMove)) {
+            //if (isEmptyObj(params.stateAfterMove)) {
+            if (isEmptyObj(params.stateAfterMove) && !params.stateBeforeMove &&
+                params.turnIndexBeforeMove ===0 &&  params.turnIndexAfterMove === 0) {
                 var playerIndex = 0;
                 var nPlayers = 2;
-                var move = gameLogicService.getInitialMove(playerIndex, nPlayers);
-                gameService.makeMove(move);
+                //var nPlayers = params.playersInfo.length;
+                try {
+                    var move = gameLogicService.createInitialMove(playerIndex, nPlayers);
+                    /* let player0 initializes the game. */
+                    params.yourPlayerIndex = 0;
+                    gameService.makeMove(move);
+                } catch (e) {
+
+                }
                 return;
             }
 
-            $scope.state = params.stateAfterMove;
+
+
+
+            $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
+            params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn
+            turnIndex = params.turnIndexAfterMove;
+
+            $scope.yourPlayerIndex = params.yourPlayerIndex;
             $scope.turnIndex = params.turnIndexAfterMove;
+            $scope.state = params.stateAfterMove;
             $scope.board = params.stateAfterMove.board;
-            var opponentIndex = 1 - $scope.turnIndex;
-            $scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
-            $scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
-            $scope.isYourTurn = params.yourPlayerIndex === params.turnIndexAfterMove;
-            $scope.nexttile = params.stateAfterMove.nexttile;
+            $scope.nexttile = params.stateAfterMove.trace.nexttile;
+            $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
+
+            if ($scope.isYourTurn) {
+                //var opponentIndex = 1 - $scope.turnIndex;
+                //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
+                //$scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
+            }
 
             // Is it the computer's turn?
-            if ($scope.isYourTurn &&
-                params.playersInfo[params.yourPlayerIndex].playerId === '') {
+            isComputerTurn = $scope.isYourTurn &&
+            params.playersInfo[params.yourPlayerIndex].playerId  === '';
+            if(isComputerTurn) {
                 $scope.isYourTurn = false; // to make sure the UI won't send another move.
                 // Waiting 0.5 seconds to let the move animation finish; if we call aiService
                 // then the animation is paused until the javascript finishes.
                 $timeout(sendComputerMove, 500);
             }
-
         }
 
-        //window.e2e_test_stateService = stateService; // to allow us to load any state in our e2e tests.
-
-        /* Select one tile from player's hand */
-        $scope.tileClicked= function(tileIndex) {
-            if ($scope.isYourTurn) {
-                if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
-                    // if one tile inside board is activated then we are expecting a 'retrieve' move
-                    var from = $scope.from;
-                    try {
-                        var move = gameLogicService.getRetrieveMove($scope.state, $scope.turnIndex, from);
-                        gameService.makeMove(move);
-                    } catch (e) {
-                    }
-                    clearActiveTile();
-                } else {
-                    $scope.activeTile = tileIndex;
-                    $scope.activeOrigin = "curPlayer";
-                    $scope.debug = "picking Tile" + tileIndex + " (" +  getTileByIndex(tileIndex).color + "," + getTileByIndex(tileIndex).score + ")";
-                }
-            }
-        };
-
-        $scope.boardCellClicked = function (row, col) {
+        $scope.boardCellClicked = function(row, col) {
             $log.info(["Clicked on cell:", row, col]);
             $scope.debug = "click board cell: (" + row + "," + col + ")";
-            if ( !$scope.isYourTurn ) {
-                return false;
+            if ( $scope.isYourTurn === false ) {
+                return;
+            }
+            if (row === -1 || col === -1) {
+                return;
             }
             try {
                 if ($scope.activeTile === undefined) {
+                    // no tile has been activated
                     if ($scope.board[row][col] !== -1) {
-                        // clicking an position occupied by tile
-                        $scope.activeOrigin = 'board';
+                        // clicking a tile to activate it
                         $scope.activeTile = $scope.board[row][col];
                         $scope.from = {row: row, col: col};
                         $scope.debug = "picking Tile" + $scope.activeTile + " (" +
@@ -1132,59 +1229,63 @@
                         " from: (" + row + "," + col + ")";
                     }
                 } else {
-                    var to = {};
-                    var move;
-                    if ($scope.activeOrigin === 'board') {
-                        // one tile on board has been activated before, so we are expecting a 'replace' move
-                        var from = $scope.from;
-                        to = {row: row, col: col};
-
-                        // may 'replace' itself
-                        if (angular.equals(from, to)) {
-                            return false;
-                        }
-
-                        move = gameLogicService.getReplaceMove($scope.state, $scope.turnIndex, from, to);
+                    $scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
+                    // some tile has been activated before clicking
+                    if ($scope.board[row][col] === -1) {
+                        // clicking an empty position to send tile to
+                        $scope.to = {row: row, col: col};
+                        var delta = {tileIndex: $scope.activeTile, from: $scope.from, to: $scope.to};
+                        $scope.debug = "index: " + delta.tileIndex;
+                        var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                         gameService.makeMove(move);
-
-                    } else if ($scope.activeOrigin === 'curPlayer') {
-                        // one tile in player's hand has been activated, so we are expecting a 'send' move
-                        to = {tile: $scope.activeTile, row: row, col: col};
-                        move = gameLogicService.getSendMove($scope.state, $scope.turnIndex, to);
-                        $scope.isYourTurn = false; // to prevent making another move
-                        gameService.makeMove(move);
-                        //$log.info("tile: " + $scope.board[row][col]);
-                        $scope.debug = "here";
                     }
-                    $scope.debug = "Tile" + $scope.activeTile + " (" +
-                    getTileByIndex($scope.activeTile).color +
-                    "," + getTileByIndex($scope.activeTile).score +
-                    ") to: (" + row + "," + col + ")";
                     clearActiveTile();
                 }
-
+                // In case the board is not updated
+                if (!$scope.$$phase) {
+                    $scope.$apply();
+                }
             } catch (e) {
-                //$log.info(["Cell is already full in position:", row, col]);
                 clearActiveTile();
+                $scope.debug = e.message;
+                $log.info(e);
                 return false;
             }
         };
 
+        /**
+         * click current player area to retrieve tile from board back to hand
+         */
         $scope.curPlayerAreaClicked = function() {
-            $scope.debug = $scope.activeOrigin + " , " + $scope.activeTile + "," + $scope.from;
-            //$scope.debug = "adaf";
-            if ($scope.activeTile !== undefined && $scope.activeOrigin === 'board' && $scope.from !== undefined) {
+            if (!$scope.isYourTurn) {
+                return;
+            }
+            if ($scope.activeTile !== undefined &&
+                $scope.from !== undefined &&
+                $scope.from.row >= 0 && $scope.from.row < $scope.rows) {
+
                 // if one tile inside board is activated then we are expecting a 'retrieve' move
                 var from = $scope.from;
                 try {
-                    var move = gameLogicService.getRetrieveMove($scope.state, $scope.turnIndex, from);
+                    var to = {row: $scope.rows + $scope.turnIndex, col: findFirstEmptyColumnInHand($scope.playerHand)};
+                    var delta = {tileIndex: $scope.activeTile, from: from, to: to};
+                    var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                     gameService.makeMove(move);
                 } catch (e) {
+                    $scope.debug = e.message;
                 }
                 clearActiveTile();
             }
-            //$scope.debug = "here also";
         };
+
+        function findFirstEmptyColumnInHand(playerHand) {
+            for (var i = 0; i < playerHand.length; i++) {
+                if (playerHand[i] === -1) {
+                    return i;
+                }
+            }
+            return -1;
+        }
 
         $scope.shouldShowTileOnBoard = function (row, col) {
             // -1 stands for empty position on board
@@ -1201,27 +1302,42 @@
             return tile !== undefined && tile.color === 'joker';
         };
 
+        $scope.getTileColor = function(tileIndex) {
+            var tile = getTileByIndex(tileIndex);
+            return tile !== undefined ? tile.color : "";
+        };
+
+        $scope.getTileScore = function(tileIndex) {
+            var tile = getTileByIndex(tileIndex);
+            return tile !== undefined ? tile.score : "";
+        };
+
         $scope.pickBtnClicked = function() {
             if ($scope.isYourTurn) {
                 console.log("next: " + $scope.nexttile);
                 try {
-                    var move = gameLogicService.getPickMove($scope.state, $scope.turnIndex);
+                    var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
                     gameService.makeMove(move);
                     $scope.debug = "pick one tile";
                 } catch (e) {
-                    $scope.debug = "cannot pick when tiles sent to board";
+                    $scope.debug = e.message;
+                    $log.info(e);
                 }
             }
         };
 
         $scope.meldBtnClicked = function() {
-            try {
-                var move = gameLogicService.getMeldMove($scope.state, $scope.turnIndex);
-                gameService.makeMove(move);
-            } catch (e) {
-                $scope.debug = "cannot meld";
-                $window.alert(e);
+            if ($scope.isYourTurn) {
+                try {
+                    var move = gameLogicService.createMeldMove($scope.turnIndex, $scope.state);
+                    gameService.makeMove(move);
+                } catch (e) {
+                    $scope.debug = e.message;
+                    $log.info(e);
+                    //$window.alert(e);
+                }
             }
+
         };
 
         $scope.getTileDataValue = function(tileIndex) {
@@ -1234,26 +1350,13 @@
         };
 
         $scope.canDrag = function (tileIndex) {
-            if ($scope.isYourTurn &&  getTileByIndex(tileIndex) !== undefined) {
-                return true;
-            }
-            return false;
+            return !!($scope.isYourTurn && getTileByIndex(tileIndex) !== undefined);
         };
 
-        $scope.getTileScore = function(tileIndex) {
-            var tile = getTileByIndex(tileIndex);
-            if (tile !== undefined) {
-                return tile.score;
-            } else {
-                return "";
-            }
-        };
 
         //TODO:
         //function sortTiles() {
         //}
-
-
 
         /* ================= Helper Functions =================== */
         function isEmptyObj(obj) {
@@ -1290,6 +1393,10 @@
          * @returns {*} {score: int, color: string}
          */
         function getTileByIndex(tileIndex) {
+            // In case the board is not updated
+            if (!$scope.$$phase) {
+                $scope.$apply();
+            }
             if (tileIndex !== undefined && $scope.state['tile' + tileIndex] !== undefined) {
                 return $scope.state['tile' + tileIndex];
             }
@@ -1302,12 +1409,75 @@
             $scope.activeTile = undefined;
             $scope.activeOrigin = undefined;
             $scope.from = undefined;
+            $scope.to = undefined;
+        }
+
+        //$scope.start = 0;
+        //$scope.getRangeNumber = function(from) {
+        //
+        //    if (!$scope.$$phase) {
+        //        $scope.$apply();
+        //    }
+        //
+        //    var result = [];
+        //    var start = from >= 0 ? from : 0;
+        //    for (var i = start; i < 14; i++) {
+        //        result.push(i);
+        //    }
+        //    return result;
+        //};
+
+        //$scope.tileRange = [0,1,2,3,4,5,6];
+        //var range = 6;
+        //
+        //$scope.previous = function() {
+        //    var start = $scope.tileRange[0] - range;
+        //    if (start >= 0) {
+        //        var result = [];
+        //        for (var i = 0; i < range; i++) {
+        //            result.push(start + i);
+        //        }
+        //        $scope.tileRange = result;
+        //    }
+        //};
+        //$scope.nextPage = function() {
+        //    if ($scope.tileRange.length < range) {
+        //        //  no more tiles to show
+        //        return;
+        //    }
+        //    var start = $scope.tileRange[0] + range;
+        //    var result = [];
+        //    for (var i = 0; i < range; i++) {
+        //        if ((start + i) >= $scope.board[6 + $scope.turnIndex].length) {
+        //            break;
+        //        }
+        //        result.push(start + i);
+        //    }
+        //    $scope.tileRange = result;
+        //};
+
+        $scope.getHandTilesRange = function() {
+            if ($scope.board === undefined) {
+                return [];
+            }
+            var len = $scope.board[6 + $scope.turnIndex].length;
+            var result = [];
+            for (var i = 0; i < len; i++) {
+                result.push(i);
+            }
+            return result;
+        };
+
+        // to allow drag-n-drop move
+        if (allowDragAndDrop) {
+            window.handleDragEvent = handleDragEvent;
         }
 
         gameService.setGame( {
             gameDeveloperEmail: "jz1371@nyu.edu",
             minNumberOfPlayers: 2,
-            maxNumberOfPlayers: 4,
+            //maxNumberOfPlayers: 4, // if bug in stateService fixed
+            maxNumberOfPlayers: 2,
             isMoveOk: gameLogicService.isMoveOk,
             updateUI: updateUI
         });

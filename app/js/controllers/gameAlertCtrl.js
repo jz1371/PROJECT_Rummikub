@@ -1,6 +1,6 @@
-'use strict';
-
 angular.module('myApp').controller('ModalDemoCtrl', ['$scope','$modal','$log',function ($scope, $modal, $log) {
+
+    'use strict';
 
     $scope.items = ['item1', 'item2', 'item3'];
 
@@ -33,6 +33,7 @@ angular.module('myApp').controller('ModalDemoCtrl', ['$scope','$modal','$log',fu
 
 angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance','items', function ($scope, $modalInstance, items) {
 
+    'use strict';
     $scope.items = items;
     $scope.selected = {
         item: $scope.items[0]
@@ -48,12 +49,9 @@ angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance
 }]);
 
 angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scope) {
+    'use strict';
     $scope.myInterval = 5000;
     var slides = $scope.slides = [];
-    //slides = [
-    //    {image: "../img/valid-runs.png", text: "here"},
-    //    {image: 'http://placekitten.com/' + 600 + '/300', text: "slide2"}
-    //];
     $scope.addSlide = function() {
         var newWidth = 600 + slides.length + 1;
         slides.push({
@@ -66,9 +64,8 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
         $scope.addSlide();
     }
     slides.push({
-        //image: 'http://placekitten.com/' + (600 + slides.length + 1) + '/300',
         image: 'img/joker-red.png',
         text: ['More','Extra','Lots of','Surplus'][slides.length % 4] + ' ' +
         ['Cats', 'Kittys', 'Felines', 'Cutes'][slides.length % 4]
-    })
+    });
 }]);

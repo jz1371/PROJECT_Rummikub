@@ -69,7 +69,7 @@
      *
      **************************************************************************************
      */
-    angular.module('myApp').factory('gameLogicService', function() {
+    angular.module('myApp',[]).factory('gameLogicService', function() {
 
         /**
          * Checks whether given move is Ok or not.
@@ -214,13 +214,13 @@
                 "[MOVE] board[" + to.row + "][" + to.col + "] has been occupied by tile" + board[to.row][to.col] );
 
             // 2.3 player cannot move one tile from other player's hand
-            check( (from.row >=0 && from.row < getGameBoardRows())    // from game board
-                || from.row === playerRow,
+            check( from.row >=0 && from.row < getGameBoardRows() ||   // from game board
+                from.row === playerRow,
                 "[MOVE] you cannot move tiles from other player's hand" );
 
             // 2.4 player cannot move one tile to other player's hand
-            check( (to.row >=0 && to.row < getGameBoardRows())      // to game board
-                || to.row ===  playerRow,
+            check( to.row >=0 && to.row < getGameBoardRows() ||     // to game board
+                to.row ===  playerRow,
                 "[MOVE] you cannot move tiles to other player's hand" );
 
             // 3. player can only move his own tile if has not finished initial meld
@@ -846,21 +846,10 @@
          * @returns {boolean}
          */
         function isTie(state) {
-            var isTie = state.trace.nexttile >= 106;
-            if (isTie === false) {
-                //var boardFull = true;
-                //var board = state.board;
-                //for (var i = 0; i < getGameBoardRows(); i++) {
-                //    for (var j = 0; j < getGameBoardCols(); j++) {
-                //        if (board[i][j] !== -1) {
-                //            boardFull = false;
-                //            break;
-                //        }
-                //    }
-                //}
-                //isTie = boardFull;
-            }
-            return isTie;
+            var isTied = state.trace.nexttile >= 106;
+            //if (isTied === false) {
+            //}
+            return isTied;
         }
 
         /**
@@ -873,8 +862,8 @@
         function isTileSentToBoardInCurrentTurnByPlayer(tileIndex, playerIndex, deltas) {
             var playerRow = getPlayerRow(playerIndex);
             for (var i = 0 ; i < deltas.length; i++) {
-                if (deltas[i].tileIndex === tileIndex
-                && deltas[i].from.row === playerRow ) {
+                if (deltas[i].tileIndex === tileIndex &&
+                    deltas[i].from.row === playerRow ) {
                     return true;
                 }
             }

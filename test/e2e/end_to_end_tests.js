@@ -672,10 +672,14 @@ describe('myApp', function(){
      * @returns {*}
      */
     function clone(obj) {
-        if (null == obj || "object" != typeof obj) return obj;
+        if (null == obj || "object" !== typeof obj) {
+            return obj;
+        }
         var copy = obj.constructor();
         for (var attr in obj) {
-            if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+            if (obj.hasOwnProperty(attr)) {
+                copy[attr] = obj[attr];
+            }
         }
         return copy;
     }
@@ -740,12 +744,12 @@ describe('myApp', function(){
      * @returns {*[]}
      */
     function setBoard(tilesArray, board) {
-        var board = board !== undefined ? board : getEmptyBoard();
+        var gameBoard = board !== undefined ? board : getEmptyBoard();
         var newBoard = [];
         for (var i = 0; i < rowsInBoard; i++) {
             newBoard.push([]);
             for (var j = 0; j < colsInRow; j++) {
-                newBoard[i].push(board[i][j]);
+                newBoard[i].push(gameBoard[i][j]);
             }
         }
         for (var ii = 0; ii < tilesArray.length; ii++) {
@@ -894,8 +898,8 @@ describe('myApp', function(){
      * @param state state before setting
      * @returns {*} state after setting
      */
-    function updateGameState(setting, state) {
-        var state = state !== undefined ? clone(state) : getInitialState();
+    function updateGameState(setting, stateBefore) {
+        var state = stateBefore !== undefined ? clone(stateBefore) : getInitialState();
         for (var i = 0; i < setting.length; i++) {
             var key = setting[i].key;
             var value = setting[i].value;

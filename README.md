@@ -30,4 +30,9 @@
    cd test
     ../node_modules/protractor/bin/protractor protractor.conf.js
    ```
+
+7. [HW7]
+   * Drag and drop on game board
+   * some animations
+   * create appcache
   
