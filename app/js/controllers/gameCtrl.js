@@ -107,14 +107,21 @@
                             $scope.tile = tile;
                         });
 
+                        //gameAreaLeft = document.getElementById("board").offsetLeft;
+
                         draggingLines.style.display = "inline";
                         myDrag.style.display = "inline";
                         myDrag.style.width = container.width + "px";
-                        myDrag.style.left = container.left + "px";
+
+                        var gameAreaLeft = container.left - gameArea.offsetLeft;
+                        myDrag.style.left = gameAreaLeft + "px";
+                        console.log("drag left: " + myDrag.style.left);
+                        console.log("game left: " + gameAreaLeft);
                         myDrag.style.paddingBottom= container.height + "px";
                         myDrag.style.top = container.top + "px";
 
-                        var centerXY = {x: container.width / 2 + container.left, y: container.top + container.height / 2};
+                        var centerXY = {x: container.width / 2 + gameAreaLeft - 15, y: container.top + container.height / 2};
+                        console.log("center: " + "here" );
                         setDraggingLines(centerXY);
 
                     }
@@ -159,15 +166,30 @@
             }
         }
 
+        /**
+         *
+         * @param clientX the absolute x position in window
+         * @param clientY the absolute y position in window
+         * @returns {{row: number, col: number}}
+         */
         function getDraggingTilePosition(clientX, clientY) {
+
+            //if (isWithinElement(clientX, clientY, boardPanel)) {
+            //    $log.info("board");
+            //} else if (isWithinElement(clientX, clientY, handPanel)) {
+            //    // clicking tile in hand
+            //    var leftEdge = document.getElementById("hand").getBoundingClientRect().left;
+            //    $log.info("hand left: " + leftEdge);
+            //}
+
             var x = clientX - boardPanel.parentElement.offsetLeft;
             var y = clientY - boardPanel.offsetTop;
             var row = -1;
             var col = -1;
             if (x > 0 && y > 0 && x < boardPanel.clientWidth && y < boardPanel.clientHeight) {
                 // dragging in board panel
-                $log.info("width: " + boardPanel.clientWidth);
-                $log.info("x: " + x);
+                //$log.info("width: " + boardPanel.clientWidth);
+                //$log.info("x: " + x);
                 row = Math.floor(gameBoardRows * y / boardPanel.clientHeight);
                 col = Math.floor(gameBoardCols * x / boardPanel.clientWidth);
                 $log.info("row: " + row);
@@ -179,11 +201,12 @@
                 if (x > 0 && y > 0 && x < handPanel.clientWidth && y < handPanel.clientHeight) {
                     //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
                     row = gameBoardRows + $scope.turnIndex;
+                    col = Math.floor($scope.board[row].length * x / handPanel.clientWidth);
 
                     //TODO: better way to find length?
-                    var liElement = document.getElementsByTagName("LI");
-                    var width = liElement[0].clientWidth * liElement.length;
-                    col = Math.floor( $scope.board[row].length  * x / width);
+                    //var liElement = document.getElementsByTagName("LI");
+                    //var width = liElement[0].clientWidth * liElement.length;
+                    //col = Math.floor( $scope.board[row].length  * x / width);
                     $log.info("x: " + x);
                     $log.info("row: " + row);
                     $log.info("col: " + col);
@@ -209,7 +232,6 @@
                 }
             });
         }
-
 
         function sendComputerMove() {
             var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
@@ -246,13 +268,10 @@
                     params.yourPlayerIndex = 0;
                     gameService.makeMove(move);
                 } catch (e) {
-
+                    $log.info(e.message);
                 }
                 return;
             }
-
-
-
 
             $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
             params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn

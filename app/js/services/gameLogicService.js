@@ -69,7 +69,7 @@
      *
      **************************************************************************************
      */
-    angular.module('myApp',[]).factory('gameLogicService', function() {
+    angular.module('myApp').factory('gameLogicService', function() {
 
         /**
          * Checks whether given move is Ok or not.

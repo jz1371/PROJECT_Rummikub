@@ -9,12 +9,10 @@
     <title>Rummikub</title>
 
     <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-touch.min.js"></script>
 
     <script src="dist/everything.min.js"></script>
-    <!--<script src="js/app.js"></script>-->
-    <!--<script src="js/filters/filters.js"></script>-->
-    <!--<script src="js/controllers/gameAlertCtrl.js"></script>-->
-    <!--<script src="lib/bootstrap/ui-bootstrap-tpls-0.12.1.js"></script>-->
+
 
     <script src="http://yoav-zibin.github.io/emulator/dist/gameServices.min.js"></script>
 
@@ -28,168 +26,164 @@
     <link rel="stylesheet" type="text/css" href="css/responsive.css">
 </head>
 
-<body ng-cloak ng-controller="GameCtrl">
-
-<div id="gameArea" class="container-fluid">
-
-    <svg id="draggingLines" width="100%" height="100%"
-         style="display:none; position:absolute; z-index: 30;">
-        <line id="horizontalDraggingLine"
-              x1="0" y1="12.5%"
-              x2="100%" y2="12.5%"
-              stroke="red"
-              stroke-width="1%"/>
-        <line id="verticalDraggingLine"
-              y1="0" x1="12.5%"
-              y2="100%" x2="12.5%"
-              stroke="red"
-              stroke-width="1%"/>
-    </svg>
-
-    <div class="tile-wrapper"
-         id="MyDrag" style="display: none; position: absolute;width: 0; padding-bottom: 0;z-index: 106;background-color: yellow;">
-        <div class="tile">
-            <div ng-if="notJoker(tileIndex)" data-value="{{tile.color}}">
-                {{tile.score}}
+<body ng-cloak ng-controller="GameCtrl" class="container-fluid">
+<div class="row">
+    <div id="menu-panel" class="col-xs-1">
+        <div class="row">
+            <div class="info col-xs-12">
+                <div ng-repeat="i in [] | range: state.trace.nplayers" class="text-info">
+                    <p ng-if="i == turnIndex" class="text-info">
+                        <strong>Me</strong><br>{{board[6 + i].length}}
+                    </p>
+                    <p ng-if="i != turnIndex" class="text-warning">
+                        <strong>P{{i}}</strong><br>{{board[6 + i].length}}
+                    </p>
+                </div>
             </div>
-            <div ng-if="isJoker(tileIndex)">
-                <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
+
+            <div class="col-xs-12">
+                <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">pick</button>
+            </div>
+
+            <div class="col-xs-12">
+                <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">meld</button>
+            </div>
+
+            <div class="col-xs-12" ng-controller="ModalDemoCtrl">
+            <div ng-include="'template/help.html'"></div>
+            <button class="btn btn-primary btn-circle" ng-click="open()">Help</button>
+            </div>
+
+            <div class="col-xs-12">
+                <p id="tiles-left" style="font-size: 2vw">{{106 - state.trace.nexttile}}</p>
+                <p style="font-size: 2vw">tiles left</p>
+            </div>
+
+        </div>
+    </div><!-- /.menu-panel -->
+
+
+    <div id="gameArea" class="col-xs-11">
+        <div class="tile-wrapper"
+             id="MyDrag" style="display: none; position: absolute;width: 0; padding-bottom: 0;z-index: 106;background-color: yellow;">
+            <div class="tile">
+                <div ng-if="notJoker(tileIndex)" data-value="{{tile.color}}">
+                    {{tile.score}}
+                </div>
+                <div ng-if="isJoker(tileIndex)">
+                    <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
+                </div>
             </div>
         </div>
-    </div>
+        <svg id="draggingLines" width="100%" height="100%"
+             style="display:none; position:absolute; z-index: 30;">
+            <line id="horizontalDraggingLine"
+                  x1="0" y1="12.5%"
+                  x2="100%" y2="12.5%"
+                  stroke="red"
+                  stroke-width="1%"/>
+            <line id="verticalDraggingLine"
+                  y1="0" x1="12.5%"
+                  y2="100%" x2="12.5%"
+                  stroke="red"
+                  stroke-width="1%"/>
+        </svg>
 
-    <div class="row">
-        <div id="menu-panel" class="col-xs-1">
-            <div class="row">
-                <div class="info col-xs-12">
-                    <div ng-repeat="i in [0,1,2,3] | limitTo: state.trace.nplayers" class="text-info">
-                        <p ng-if="i == turnIndex" class="text-info">
-                            <strong>Me</strong><br>{{board[6 + i].length}}
-                        </p>
-                        <p ng-if="i != turnIndex" class="text-warning">
-                            <strong>P{{i}}</strong><br>{{board[6 + i].length}}
-                        </p>
-                    </div>
-                </div>
 
-                <div class="col-xs-12">
-                    <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">pick</button>
-                </div>
+        <div id="board-panel" class="row">
+            <div id="board" class="col-xs-12">
 
-                <div class="col-xs-12">
-                    <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">meld</button>
-                </div>
+                <!--<div class="row" ng-repeat="row in [] | range: rows" style="">-->
+                <div class="row" ng-repeat="row in [0,1,2,3,4,5]" style="">
+                    <!--<div class="col-xs-18" ng-repeat="col in [] | range: cols"-->
+                    <div class="col-xs-18" ng-repeat="col in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]"
+                         id="{{'e2e_test_board_div_' + row + 'x' + col}}"
+                         ng-click="boardCellClicked(row, col)">
 
-                <!--<div class="col-xs-12" ng-controller="ModalDemoCtrl">-->
-                    <!--<div ng-include="'template/help.html'"></div>-->
-                    <!--<button class="btn btn-primary btn-circle" ng-click="open()">Help</button>-->
-                <!--</div>-->
+                        <div class="tile-wrapper"
+                             id="MyPiece{{row}}x{{col}}"
+                             style="">
+                            <!--id="{{'e2e_test_board_tile_' + board[row][col] + '_' + row + 'x' + col}}"-->
+                            <div class="tile slowlyAppear"
+                                 style=""
+                                 ng-class="{slowlyAppear: shouldSlowlyAppear(row, col)}"
+                                 ng-show="shouldShowTileOnBoard(row, col)">
 
-                <div class="col-xs-12">
-                    <p id="tiles-left" style="font-size: 2vw">{{106 - state.trace.nexttile}}</p>
-                    <p style="font-size: 2vw">tiles left</p>
-                </div>
-
-            </div>
-        </div><!-- /.menu-panel -->
-
-        <div class="col-xs-11">
-
-            <div id="board-panel" class="row">
-                <div id="board" class="col-xs-12">
-
-                    <!--<div class="row" ng-repeat="row in [] | range: rows" style="">-->
-                    <div class="row" ng-repeat="row in [0,1,2,3,4,5]" style="">
-                        <!--<div class="col-xs-18" ng-repeat="col in [] | range: cols"-->
-                        <div class="col-xs-18" ng-repeat="col in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]"
-                             id="{{'e2e_test_board_div_' + row + 'x' + col}}"
-                             ng-click="boardCellClicked(row, col)">
-
-                            <div class="tile-wrapper"
-                                 id="MyPiece{{row}}x{{col}}"
-                                 style="">
-                                <!--id="{{'e2e_test_board_tile_' + board[row][col] + '_' + row + 'x' + col}}"-->
-                                <div class="tile slowlyAppear"
-                                     style=""
-                                     ng-class="{slowlyAppear: shouldSlowlyAppear(row, col)}"
-                                     ng-show="shouldShowTileOnBoard(row, col)">
-
-                                    <div ng-if="notJoker(board[row][col])" ng-init="tile = getTileByIndex(board[row][col])" data-value="{{tile.color}}">
-                                        {{tile.score}}
-                                    </div>
-
-                                    <div ng-if="isJoker(board[row][col])">
-                                        <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
-                                    </div>
+                                <div ng-if="notJoker(board[row][col])" ng-init="tile = getTileByIndex(board[row][col])" data-value="{{tile.color}}">
+                                    {{tile.score}}
                                 </div>
-                            </div><!-- /.tile-wrapper -->
 
-                        </div><!-- /.col-xs-18 -->
-                    </div>
-                </div>
-            </div><!-- /#board-panel -->
-
-            <div id="info-panel" class="row" ng-if="true">
-                info: {{debug}}
-            </div>
-
-            <div id="player-panel" class="row row-eq-height" style="border: groove;" ng-click="curPlayerAreaClicked()">
-
-                <!--<div class="col-xs-1">-->
-                <!--<button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="previous()">left</button>-->
-                <!--</div>-->
-
-                <div class="col-xs-10" id="hand-panel">
-
-                    <ul ng-repeat="row in [rows + yourPlayerIndex]">
-                        <!--<li ng-repeat="col in [] | range: playerHand.length"-->
-                        <li ng-repeat="col in getHandTilesRange()"
-                            ng-click="boardCellClicked(rows + turnIndex, col)"
-                            style="width: {{100 / playerHand.length}}%;"
-                            id="{{'e2e_test_hand_div_' + col}}">
-
-                            <div class="tile-wrapper"
-                                 id="MyPiece{{row}}x{{col}}"
-                                 name="{{'e2e_test_hand_tile_' + board[row][col] + '_' + row + 'x' + col}}"
-                                 style="">
-                                <div class="tile slowlyAppear"
-                                     ng-init="tile = getTileByIndex(board[row][col])"
-                                     ng-class="{slowlyAppear: shouldSlowlyAppear(row, col)}"
-                                     ng-show="shouldShowTileOnBoard(row, col)">
-
-                                    <div ng-if="notJoker(board[row][col])" data-value="{{getTileColor(board[row][col])}}">
-                                        <p style="font-size:14px; font-size: 2.5vw">{{getTileScore(board[row][col])}}</p>
-                                    </div>
-
-                                    <div ng-if="isJoker(board[row][col])">
-                                        <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
-                                    </div>
-
-
+                                <div ng-if="isJoker(board[row][col])">
+                                    <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
                                 </div>
                             </div>
+                        </div><!-- /.tile-wrapper -->
 
-                        </li>
-                    </ul>
+                    </div><!-- /.col-xs-18 -->
                 </div>
+            </div>
+        </div><!-- /#board-panel -->
 
-                <!--<div class="col-xs-1">-->
-                <!--<button id="pickbtn" type="button" class="btn btn-info btn-small btn-circle" ng-click="nextPage()">right</button>-->
-                <!--</div>-->
+        <div id="info-panel" class="row" ng-if="true">
+            info: {{debug}}
+        </div>
 
+        <div id="player-panel" class="row row-eq-height" style="border: groove;" ng-click="curPlayerAreaClicked()">
+
+            <!--<div class="col-xs-1">-->
+            <!--<button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="previous()">left</button>-->
+            <!--</div>-->
+
+            <div class="col-xs-10" id="hand-panel">
+
+                <ul id="hand" ng-repeat="row in [rows + yourPlayerIndex]">
+                    <!--<li ng-repeat="col in [] | range: playerHand.length"-->
+                    <li ng-repeat="col in getHandTilesRange()"
+                        ng-click="boardCellClicked(rows + turnIndex, col)"
+                        style="width: {{100 / playerHand.length}}%;"
+                        id="{{'e2e_test_hand_div_' + col}}">
+
+                        <div class="tile-wrapper"
+                             id="MyPiece{{row}}x{{col}}"
+                             name="{{'e2e_test_hand_tile_' + board[row][col] + '_' + row + 'x' + col}}"
+                             style="">
+                            <div class="tile slowlyAppear"
+                                 ng-init="tile = getTileByIndex(board[row][col])"
+                                 ng-class="{slowlyAppear: shouldSlowlyAppear(row, col)}"
+                                 ng-show="shouldShowTileOnBoard(row, col)">
+
+                                <div ng-if="notJoker(board[row][col])" data-value="{{getTileColor(board[row][col])}}">
+                                    <p style="font-size:14px; font-size: 2.5vw">{{getTileScore(board[row][col])}}</p>
+                                </div>
+
+                                <div ng-if="isJoker(board[row][col])">
+                                    <img src="img/joker-red.png" alt="joker tile" class="center-block img-responsive">
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </li>
+                </ul>
             </div>
 
-        </div><!-- /.col-xs-11 -->
-    </div><!-- /.row -->
+            <!--<div class="col-xs-1">-->
+            <!--<button id="pickbtn" type="button" class="btn btn-info btn-small btn-circle" ng-click="nextPage()">right</button>-->
+            <!--</div>-->
+
+        </div>
+
+    </div><!-- /.col-xs-11 -->
+</div><!-- /.row -->
 
 
 
-</div><!-- /#gameArea -->
 
 <!--<div ng-include="'template/help.html'"></div>-->
 <!--<div ng-include="'template/error.html'"></div>-->
 
-<!--<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-touch.min.js"></script>-->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js"></script>
+
 <!--<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-animate.min.js"></script>-->
 </body>
 

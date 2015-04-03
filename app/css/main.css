@@ -1,4 +1,4 @@
-#gameArea {
+body {
     background-image: url('../img/game-background.jpg');
     background-size: 100% 100%;
     font-size: 3vw;
@@ -128,73 +128,73 @@
 
 
 
-@media (min-width: 240px) {
+/*@media (min-width: 240px) {*/
 
-    .container {
-        padding-left: 2px;
-        padding-right: 2px;
-    }
+    /*.container {*/
+        /*padding-left: 2px;*/
+        /*padding-right: 2px;*/
+    /*}*/
 
     /* case not rotate: a little optimization for small device */
-    .col-xs-11 {
-        padding-top: 8vh;
-        padding-left: 5px;
-        padding-right: 5px;
-    }
+    /*.col-xs-11 {*/
+        /*padding-top: 8vh;*/
+        /*padding-left: 5px;*/
+        /*padding-right: 5px;*/
+    /*}*/
 
-    .col-xs-18 {
-        padding-left: 0px;
-        padding-right: 1px;
-    }
+    /*.col-xs-18 {*/
+        /*padding-left: 0px;*/
+        /*padding-right: 1px;*/
+    /*}*/
 
-    #player-panel {
-        margin-top: 15%;
-    }
+    /*#player-panel {*/
+        /*margin-top: 15%;*/
+    /*}*/
 
-    #player-panel .col-xs-1 {
-        padding-left: 0px;
-        padding-right: 0px;
-    }
+    /*#player-panel .col-xs-1 {*/
+        /*padding-left: 0px;*/
+        /*padding-right: 0px;*/
+    /*}*/
 
-}
+/*}*/
 
-@media (min-width: 480px) {
-    .col-xs-11 {
-        padding-top: 1vh;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
+/*@media (min-width: 480px) {*/
+    /*.col-xs-11 {*/
+        /*padding-top: 1vh;*/
+        /*padding-left: 15px;*/
+        /*padding-right: 15px;*/
+    /*}*/
 
-    #board-panel {
-        padding: 0 1px;
-    }
+    /*#board-panel {*/
+        /*padding: 0 1px;*/
+    /*}*/
 
-    .col-xs-18 {
-        padding-left: 1px;
-        padding-right: 1px;
-    }
+    /*.col-xs-18 {*/
+        /*padding-left: 1px;*/
+        /*padding-right: 1px;*/
+    /*}*/
 
-    #player-panel {
-        margin-top: 0%;
-    }
+    /*#player-panel {*/
+        /*margin-top: 0%;*/
+    /*}*/
 
-    #player-panel .col-xs-1 {
-        padding-left: 1px;
-        padding-right: 1px;
-    }
-}
+    /*#player-panel .col-xs-1 {*/
+        /*padding-left: 1px;*/
+        /*padding-right: 1px;*/
+    /*}*/
+/*}*/
 
-@media (min-width: 600px) {
-    .col-xs-11 {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
+/*@media (min-width: 600px) {*/
+    /*.col-xs-11 {*/
+        /*padding-left: 15px;*/
+        /*padding-right: 15px;*/
+    /*}*/
 
-    .col-xs-18 {
-        padding-left: 2px;
-        padding-right: 2px;
-    }
-}
+    /*.col-xs-18 {*/
+        /*padding-left: 2px;*/
+        /*padding-right: 2px;*/
+    /*}*/
+/*}*/
 
 /* center the image of carousel inside modal */
 .carousel-inner > .item > img, h6{

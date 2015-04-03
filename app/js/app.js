@@ -18,4 +18,4 @@
 //  $routeProvider.otherwise({redirectTo: '/view2'});
 //}]);
 
-//var myApp = angular.module('myApp',['ngTouch', 'ui.bootstrap']);
+angular.module('myApp',['ngTouch', 'ui.bootstrap']);

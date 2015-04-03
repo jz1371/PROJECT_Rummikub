@@ -56,8 +56,8 @@ module.exports = function(grunt) {
                 separator: ';',
             },
             dist: {
-                // Order is important! gameLogic.js must be first because it defines myApp angular module.
-                src: ['app/js/services/gameLogicService.js', 'app/js/controllers/gameCtrl.js', 'app/js/services/aiService.js'],
+                // Order is important! app.js should be the first to initialize angular app
+                src: ['app/js/app.js','app/js/*/*.js'],
                 dest: 'app/dist/everything.js',
             },
         },
@@ -67,7 +67,7 @@ module.exports = function(grunt) {
             },
             my_target: {
                 files: {
-                    'app/dist/everything.min.js': ['app/dist/everything.js']
+                    'app/dist/everything.min.js': ['app/dist/everything.js'],
                 }
             }
         },
@@ -84,17 +84,20 @@ module.exports = function(grunt) {
                     basePath: 'app',
                     cache: [
                         'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js',
+                        'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-touch.min.js',
+                        'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/gameServices.min.js',
                         'http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js',
-                        'http://yoav-zibin.github.io/emulator/main.css',
-                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',
                         'dist/everything.min.js',
+                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',
+                        'http://yoav-zibin.github.io/emulator/main.css',
                         'css/app.css',
                         'css/tile.css',
                         'css/responsive.css',
                         'css/main.css',
                         'img/game-background.jpg',
-                        'img/joker-red.png'
+                        'img/joker-red.png',
+                        'template/help.html'
                     ],
                     network: ['dist/everything.min.js.map', 'dist/everything.js'],
                     timestamp: true
@@ -146,5 +149,7 @@ module.exports = function(grunt) {
         'concat', 'uglify',
         'processhtml', 'manifest',
         'http-server', 'protractor']);
+
+    grunt.registerTask('factory',['concat', 'uglify','processhtml','manifest']);
 
 };
