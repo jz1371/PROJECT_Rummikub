@@ -97,6 +97,11 @@ module.exports = function(grunt) {
                         'css/main.css',
                         'img/game-background.jpg',
                         'img/joker-red.png',
+                        'img/valid.png',
+                        'img/valid-runs.png',
+                        'img/valid-groups.png',
+                        'img/valid-joker.png',
+                        'img/valid-run2.png',
                         'template/help.html'
                     ],
                     network: ['dist/everything.min.js.map', 'dist/everything.js'],
