@@ -27,6 +27,7 @@
 
 
         var debugMode = true;
+        var gameEnd = false;
 
         var gameBoardRows = 6;
         var gameBoardCols = 18;
@@ -116,13 +117,13 @@
 
                         var gameAreaLeft = container.left - gameArea.offsetLeft;
                         myDrag.style.left = gameAreaLeft + "px";
-                        console.log("drag left: " + myDrag.style.left);
-                        console.log("game left: " + gameAreaLeft);
+                        //console.log("drag left: " + myDrag.style.left);
+                        //console.log("game left: " + gameAreaLeft);
                         myDrag.style.paddingBottom= container.height + "px";
                         myDrag.style.top = container.top + "px";
 
                         var centerXY = {x: container.width / 2 + gameAreaLeft - 15, y: container.top + container.height / 2};
-                        console.log("center: " + "here" );
+                        //console.log("center: " + "here" );
                         setDraggingLines(centerXY);
 
                     }
@@ -208,7 +209,7 @@
                     //var liElement = document.getElementsByTagName("LI");
                     //var width = liElement[0].clientWidth * liElement.length;
                     //col = Math.floor( $scope.board[row].length  * x / width);
-                    $log.info("x: " + x);
+                    //$log.info("x: " + x);
                     $log.info("row: " + row);
                     $log.info("col: " + col);
                 }
@@ -279,6 +280,7 @@
             params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn
             turnIndex = params.turnIndexAfterMove;
 
+            gameEnd = params.turnindexAfterMove === -1;
             $scope.yourPlayerIndex = params.yourPlayerIndex;
             $scope.turnIndex = params.turnIndexAfterMove;
             $scope.state = params.stateAfterMove;
@@ -410,16 +412,20 @@
             return tile !== undefined ? tile.score : "";
         };
 
+
+        /** ****************************************
+         *********      Button Controls    *********
+         *******************************************/
         $scope.pickBtnClicked = function() {
             if ($scope.isYourTurn) {
-                console.log("next: " + $scope.nexttile);
                 try {
                     var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
                     gameService.makeMove(move);
+                    // reset sort
+                    $scope.sortType = "sort";
                     $scope.debug = "pick one tile";
                 } catch (e) {
                     $scope.debug = e.message;
-                    $log.info(e);
                 }
             }
         };
@@ -429,14 +435,66 @@
                 try {
                     var move = gameLogicService.createMeldMove($scope.turnIndex, $scope.state);
                     gameService.makeMove(move);
+                    // reset sort
+                    $scope.sortType = "sort";
                 } catch (e) {
                     $scope.debug = e.message;
-                    $log.info(e);
-                    //$window.alert(e);
                 }
             }
+        };
+
+        $scope.undoBtnClicked = function () {
+            if ($scope.isYourTurn) {
+                try {
+                    var deltas = $scope.state.deltas;
+                    var length = deltas.length;
+                    for (var i = length - 1; i >= 0; i--) {
+                        var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
+                        gameService.makeMove(undo);
+                    }
+                    $scope.sortType = "sort";
+                } catch (e) {
+                }
+            }
+        };
+
+        $scope.sortType = "sort";
+        $scope.setSortTypeBtnClicked = function () {
+            if (gameEnd) {
+                return;
+            }
+            var type = $scope.sortType;
+            var playerRow = getCurrentPlayerRow();
+            var playerHand = $scope.board[playerRow];
+            var nextType;
+            switch (type) {
+                case "set":
+                    gameLogicService.findAllSetInHand(playerHand, $scope.state);
+                    //playerHand.sort(sortBy);
+                    //$scope.state.board[playerRow] = playerHand;
+                    nextType = "123";
+                    break;
+                case "sort":
+                case undefined:
+                case "123":
+                    playerHand.sort(gameLogicService.sortBy("score", $scope.state));
+                    //$scope.state.board[playerRow] = playerHand;
+                    nextType = "color";
+                    break;
+                case "color":
+                    playerHand.sort(gameLogicService.sortBy("color", $scope.state));
+                    //$scope.state.board[playerRow] = playerHand;
+                    nextType = "set";
+                    break;
+                default:
+                    nextType = "123";
+            }
+            $scope.sortType = nextType;
 
         };
+
+
+
 
         $scope.getTileDataValue = function(tileIndex) {
             var dataValue = "";
@@ -565,6 +623,11 @@
             }
             return result;
         };
+
+
+        function getCurrentPlayerRow () {
+            return gameBoardRows + $scope.turnIndex;
+        }
 
         // to allow drag-n-drop move
         if (allowDragAndDrop) {

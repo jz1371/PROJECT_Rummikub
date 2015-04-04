@@ -64,6 +64,14 @@
                 <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">meld</button>
             </div>
 
+            <div class="col-xs-12">
+                <button id="sortbtn" type="button" class="btn btn-default btn-circle" ng-click="setSortTypeBtnClicked()">{{sortType || "sort"}}</button>
+            </div>
+
+            <div class="col-xs-12">
+                <button id="undobtn" type="button" class="btn btn-success btn-circle" ng-click="undoBtnClicked()">undo</button>
+            </div>
+
             <div class="col-xs-12" ng-controller="ModalDemoCtrl">
             <div ng-include="'template/help.html'"></div>
             <button class="btn btn-primary btn-circle" ng-click="open()">Help</button>
@@ -149,7 +157,6 @@
             <!--</div>-->
 
             <div class="col-xs-10" id="hand-panel">
-
                 <ul id="hand" ng-repeat="row in [rows + yourPlayerIndex]">
                     <!--<li ng-repeat="col in [] | range: playerHand.length"-->
                     <li ng-repeat="col in getHandTilesRange()"

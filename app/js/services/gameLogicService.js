@@ -110,16 +110,19 @@
                     var nPlayers = actualMove[2].set.value.nplayers;
                     expectedMove = getInitialMove(playerIndex, nPlayers);
                     break;
-                case 'MOVE':
+                case "MOVE":
                     var deltas = actualMove[3].set.value;
                     var delta = deltas[deltas.length - 1];
                     expectedMove = getMoveMove(playerIndex, stateBefore, delta);
                     break;
-                case 'PICK':
+                case "PICK":
                     expectedMove = getPickMove(playerIndex, stateBefore);
                     break;
                 case "MELD":
                     expectedMove = getMeldMove(playerIndex, stateBefore);
+                    break;
+                case "UNDO":
+                    expectedMove = getSingleUndoMove(playerIndex, stateBefore);
                     break;
                 default:
                     throw new Error("Unexpected move");
@@ -185,8 +188,14 @@
             return move;
         }
 
-        function getMoveMove(playerIndex, stateBefore, delta) {
-
+        /**
+         *
+         * @param playerIndex
+         * @param stateBefore
+         * @param delta
+         * @returns {*[]}
+         */
+        function getMoveMove(playerIndex, stateBefore, delta, undo) {
             var tileToMove = delta.tileIndex;
             var from = delta.from;
             var to = delta.to;
@@ -194,7 +203,6 @@
             // 1. get game board
             var board = stateBefore.board;
             var deltas = stateBefore.deltas;
-
 
             var playerRow = getPlayerRow(playerIndex);
 
@@ -250,17 +258,29 @@
             boardAfter[to.row][to.col] = tileToMove;
 
             var deltasAfter = angular.copy(deltas);
-            deltasAfter.push(delta);
+            var moveTypeAfter = "MOVE";
+            if (undo !== undefined && undo === true) {
+                deltasAfter.splice(deltasAfter.length - 1, 1);
+                moveTypeAfter = "UNDO";
+            } else {
+                deltasAfter.push(delta);
+            }
 
             return [
                 {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
-                {set: {key: 'type', value: "MOVE"}},
+                {set: {key: 'type', value: moveTypeAfter}},
                 {set: {key: 'board', value: boardAfter}},
                 {set: {key: 'deltas', value: deltasAfter}},
                 {setVisibility: {key: 'tile' + tileToMove, visibleToPlayerIndices: visibility}}
             ];
         }
 
+        /**
+         *
+         * @param playerIndex
+         * @param stateBefore
+         * @returns {*[]}
+         */
         function getPickMove(playerIndex, stateBefore) {
 
             var playerRow = getGameBoardRows() + playerIndex;
@@ -293,12 +313,18 @@
                 {setTurn: {turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBefore.trace.nplayers)}},
                 {set: {key: 'type', value: "PICK"}},
                 {set: {key: 'board', value: boardAfter}},
+                {set: {key: 'deltas', value: []}},     // pick move will clear delta history
                 {set: {key: 'trace', value: traceAfter}},
                 {setVisibility: {key: 'tile' + tileToPick, visibleToPlayerIndices: [playerIndex]}}
             ];
-
         }
 
+        /**
+         *
+         * @param playerIndex
+         * @param stateBefore
+         * @returns {*[]}
+         */
         function getMeldMove(playerIndex, stateBefore) {
             var board = stateBefore.board;
             var playerRow = getPlayerRow(playerIndex);
@@ -306,7 +332,6 @@
 
             // 0. check player has sent as least one tile from hand to board during this turn.
             var tilesSentToBoardThisTurn = getTilesSentToBoardThisTurn(deltas, playerRow);
-            console.log("SIZE; " + tilesSentToBoardThisTurn.length);
             check ( tilesSentToBoardThisTurn.length !== 0,
                 "[MELD] you cannot meld since no tiles sent to board in this turn"
             );
@@ -357,9 +382,20 @@
         }
 
         //TODO: for better user experience
-        //function getUndoMove() {
-        //    return [];
-        //}
+        /**
+         * Undo moves by player in current turn
+         * @param playerIndex
+         * @param stateBefore
+         */
+        function getSingleUndoMove(playerIndex, stateBefore) {
+            var deltas = stateBefore.deltas;
+            var delta = deltas[deltas.length - 1];
+            // reverse the last delta, and then make that move
+            var deltaUndo = {tileIndex: delta.tileIndex , from: delta.to, to: delta.from};
+            var moveUndo = getMoveMove(playerIndex, stateBefore, deltaUndo, true);
+            moveUndo[1].set.value = "UNDO";
+            return moveUndo;
+        }
 
         /**
          *
@@ -372,13 +408,19 @@
             try {
                 // "PICK" is possible
                 possibleMoves.push(getPickMove(playerIndex, stateBefore));
+
+                // can meld from player's own hand?
+
+
             } catch (e) {
 
             }
             return possibleMoves;
         }
 
-        /* ===============   Helper Functions    =============== */
+        /** ******************************************************
+         ************        Helper Functions    *****************
+         *********************************************************/
 
         /**
          * checks if given condition is satisfied. Throw error if not satisfied.
@@ -443,17 +485,6 @@
             }
             return board;
         }
-
-        //function getRestPlayers(playerIndex, nPlayers) {
-        //    var arr = [];
-        //    for (var i = 0; i < nPlayers; i++) {
-        //        arr.push(i);
-        //    }
-        //    //arr.remove(playerIndex);
-        //    arr.splice(arr.indexOf(playerIndex), 1);
-        //
-        //    return arr;
-        //}
 
         /**
          * checks given (row, col) is within board's boundary,
@@ -811,6 +842,16 @@
             return 6;
         }
 
+        //function getGameBoardCols() {
+        //    return 18;
+        //}
+
+        /**
+         *
+         * @param deltas
+         * @param playerRow
+         * @returns {Array} [tileIndex] sent to board by current player in this turn
+         */
         function getTilesSentToBoardThisTurn(deltas, playerRow) {
             var result = [];
             var count = 0;
@@ -831,20 +872,50 @@
             return result;
         }
 
-        //function getGameBoardCols() {
-        //    return 18;
-        //}
+        function findAllSetInHand(playerHand, state) {
+            // try to find all groups in hand
+            var hand = angular.copy(playerHand);
+            var sortByScore = sortBy("score", state);
+            hand.sort(sortByScore);
+            console.log("ser: " + hand);
 
-        /* ======= Return functions ======= */
+        }
+
+        /**
+         *
+         * @param type
+         * @returns {Function}
+         */
+        function sortBy(type, state) {
+            return function (tileIndexA, tileIndexB) {
+                var tileA = state["tile" + tileIndexA];
+                var tileB =  state["tile" + tileIndexB];
+                if (tileA !== undefined && tileB !== undefined) {
+                    if (type === "score") {
+                        return tileA.score - tileB.score;
+                    } else if (type === "color") {
+                        return (tileA.color > tileB.color) ? 1 : (tileA.color < tileB.color) ? -1 : (tileA.score - tileB.score);
+                    }
+                }
+                return 1;
+            }
+        }
+
+        /** *********************************
+         * ======= Return functions ========
+         ***********************************/
         return {
             isMoveOk: isMoveOk,
             createMove: createMove,
             getTileByIndex: getTileByIndex,
             getPossibleMoves: getPossibleMoves,
+            findAllSetInHand: findAllSetInHand,
+            sortBy: sortBy,
 
             createInitialMove: getInitialMove,
             createPickMove: getPickMove,
             createMeldMove: getMeldMove,
+            createSingleUndoMove: getSingleUndoMove,
             createMoveMove: getMoveMove
 
         };
