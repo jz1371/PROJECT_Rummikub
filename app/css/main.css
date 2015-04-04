@@ -1,13 +1,22 @@
-body {
+#game {
     background-image: url('../img/game-background.jpg');
     background-size: 100% 100%;
     font-size: 3vw;
 
-    /* adding below to fix background image bug for mobile browsers */
+    /*adding below to fix background image bug for mobile browsers*/
     -o-background-size: cover;
     -moz-background-size: cover;
     -webkit-background-size:cover;
 }
+
+/*body {*/
+    /*background-image: url('../img/game-background.jpg');*/
+    /*background-size: 100% 100%;*/
+    /*font-size: 3vw;*/
+    /*-webkit-background-size: cover;*/
+    /*-moz-background-size: cover;*/
+    /*-o-background-size: cover;*/
+/*}*/
 
 
 .slowlyAppear {

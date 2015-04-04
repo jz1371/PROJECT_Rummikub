@@ -25,7 +25,6 @@
     <script src="js/controllers/gameCtrl.js"></script>
     <!-- /build -->
 
-
     <!-- build:js http://yoav-zibin.github.io/emulator/dist/gameServices.min.js -->
     <script src="http://yoav-zibin.github.io/emulator/alphaBetaService.js"></script>
     <script src="http://yoav-zibin.github.io/emulator/gameService.js"></script>
@@ -35,16 +34,15 @@
 
     <script src="http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js"></script>
 
-    <link rel="stylesheet" href="http://yoav-zibin.github.io/emulator/main.css">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-
+    <link rel="stylesheet" href="http://yoav-zibin.github.io/emulator/main.css">
     <link rel="stylesheet" type="text/css" href="css/main.css">
     <link rel="stylesheet" type="text/css" href="css/tile.css">
     <link rel="stylesheet" type="text/css" href="css/responsive.css">
 </head>
 
 <body ng-cloak ng-controller="GameCtrl" class="container-fluid">
-<div class="row">
+<div id="game" class="row">
     <div id="menu-panel" class="col-xs-1">
         <div class="row">
             <div class="info col-xs-12">
@@ -110,10 +108,9 @@
         <div id="board-panel" class="row">
             <div id="board" class="col-xs-12">
 
-                <!--<div class="row" ng-repeat="row in [] | range: rows" style="">-->
-                <div class="row" ng-repeat="row in [0,1,2,3,4,5]" style="">
+                <div class="row" ng-repeat="row in [] | range: rows" style="">
                     <!--<div class="col-xs-18" ng-repeat="col in [] | range: cols"-->
-                    <div class="col-xs-18" ng-repeat="col in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]"
+                    <div class="col-xs-18" ng-repeat="col in [] | range: cols" style=""
                          id="{{'e2e_test_board_div_' + row + 'x' + col}}"
                          ng-click="boardCellClicked(row, col)">
 

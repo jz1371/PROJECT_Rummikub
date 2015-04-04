@@ -3,6 +3,7 @@
  * ------------------------------------
  * @author: Jingxin Zhu
  * @date:   2015.03.10
+ * ------------------------------------
  */
 
 (function() {
@@ -234,10 +235,11 @@
         }
 
         function sendComputerMove() {
-            var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
-            gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
-            $scope.debug = "computer picks one tile";
-            $scope.turnInfo = "Your turn";
+            gameService.makeMove(gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex)[0]);
+            //var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
+            //gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
+            //$scope.debug = "computer picks one tile";
+            //$scope.turnInfo = "Your turn";
         }
 
         $scope.shouldSlowlyAppear = function () {
@@ -298,7 +300,9 @@
                 // Waiting 0.5 seconds to let the move animation finish; if we call aiService
                 // then the animation is paused until the javascript finishes.
                 $timeout(sendComputerMove, 500);
+                $scope.debug = "Computer makes pick move";
             }
+
         }
 
         $scope.boardCellClicked = function(row, col) {

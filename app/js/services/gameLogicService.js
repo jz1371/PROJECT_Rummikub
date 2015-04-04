@@ -370,83 +370,11 @@
         function getPossibleMoves(stateBefore,  playerIndex) {
             var possibleMoves = [];
             try {
-                possibleMoves.push(getPickMove(stateBefore, playerIndex));
+                // "PICK" is possible
+                possibleMoves.push(getPickMove(playerIndex, stateBefore));
             } catch (e) {
 
             }
-            //try {
-            // if (stateBefore.tilesSentToBoardThisTurn.length === 0) {
-            //        // case 2: move can be: ("PICK" | "SEND" | "REPLACE")
-            //        //         It is new turn for player, player can choose either "PICK" move or
-            //        //         move towards "MELD", (i.e. "SEND"|"REPLACE"|"RETRIEVE"). Because this will
-            //        //         will be the 1st move in new turn, player has not sent any tile to board,
-            //        //         so "RETRIEVE" move is not possible.
-            //
-            //        // possible "PICK" move
-            //        try {
-            //            possibleMoves.push(getPickMove(stateBefore, playerIndex));
-            //        } catch (e)  {}
-            //
-            //        // possible "SEND" moves
-            //        var positions = checkPossiblePositions(stateBefore.board);
-            //        var tos = positions["empty"];
-            //        var tilesInPlayerHand = stateBefore["player" + playerIndex].tiles;
-            //        for (var i = 0; i < tilesInPlayerHand.length; i++) {
-            //            for (var j = 0; j < tos.length; j++) {
-            //                var to = {tile: tilesInPlayerHand[i], row: tos[j].row, col: tos[j].col};
-            //                try {
-            //                    possibleMoves.push(getSendToBoardMove(stateBefore, playerIndex, to));
-            //                } catch (e) {}
-            //            }
-            //        }
-            //
-            //        // possible "REPLACE" moves
-            //        var froms = positions["occupied"];
-            //        for (var i = 0; i < froms.length; i++) {
-            //            for (var j = 0; j < tos.length; j++) {
-            //                var from = froms[i];
-            //                var to = tos[j];
-            //                try {
-            //                    possibleMoves.push(getReplaceMove(stateBefore, playerIndex, from, to));
-            //                } catch (e) {}
-            //            }
-            //        }
-            //    } else {
-            //        // case 3: move can be ("SEND" | "REPLACE" | "RETRIEVE" | "MELD")
-            //        //         Player is still in turn towards meld.
-            //
-            //        // possible "SEND" move
-            //        try {
-            //            possibleMoves.push(getSendToBoardMove(stateBefore, playerIndex, to));
-            //        } catch (e) {}
-            //
-            //        // possible "REPLACE" moves
-            //        var positions = checkPossiblePositions(stateBefore.board);
-            //        var froms = positions["occupied"];
-            //        var tos = positions["empty"];
-            //        for (var i = 0; i < froms.length; i++) {
-            //            for (var j = 0; j < tos.length; j++) {
-            //                try {
-            //                    possibleMoves.push(getReplaceMove(stateBefore, playerIndex, froms[i], tos[j]));
-            //                } catch (e) {}
-            //            }
-            //        }
-            //
-            //        // possible "RETRIEVE" moves
-            //        for (var i = 0; i < froms.length; i++) {
-            //            try {
-            //                possibleMoves.push(getRetrieveFromBoardMove(stateBefore, playerIndex, froms[i]));
-            //            } catch (e) {}
-            //        }
-            //
-            //        // possible "MELD" move
-            //        try {
-            //            possibleMoves.push(getMeldMove(stateBefore, playerIndex));
-            //        } catch (e) {}
-            //    }
-            //} catch (e) {
-            //    console.log("move is not ok");
-            //}
             return possibleMoves;
         }
 
