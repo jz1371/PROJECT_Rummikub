@@ -119,6 +119,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
 
         var debugMode = true;
+        var gameEnd = false;
 
         var gameBoardRows = 6;
         var gameBoardCols = 18;
@@ -145,6 +146,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
         var boardPanel = document.getElementById("board-panel");
         var handPanel = document.getElementById("hand-panel");
+        var hand = document.getElementById("hand-ul");
 
         function isWithinElement(x, y, element) {
             var offset = element.getBoundingClientRect();
@@ -208,13 +210,13 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
                         var gameAreaLeft = container.left - gameArea.offsetLeft;
                         myDrag.style.left = gameAreaLeft + "px";
-                        console.log("drag left: " + myDrag.style.left);
-                        console.log("game left: " + gameAreaLeft);
+                        //console.log("drag left: " + myDrag.style.left);
+                        //console.log("game left: " + gameAreaLeft);
                         myDrag.style.paddingBottom= container.height + "px";
                         myDrag.style.top = container.top + "px";
 
                         var centerXY = {x: container.width / 2 + gameAreaLeft - 15, y: container.top + container.height / 2};
-                        console.log("center: " + "here" );
+                        //console.log("center: " + "here" );
                         setDraggingLines(centerXY);
 
                     }
@@ -295,12 +297,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                     //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
                     row = gameBoardRows + $scope.turnIndex;
                     col = Math.floor($scope.board[row].length * x / handPanel.clientWidth);
-
-                    //TODO: better way to find length?
-                    //var liElement = document.getElementsByTagName("LI");
-                    //var width = liElement[0].clientWidth * liElement.length;
-                    //col = Math.floor( $scope.board[row].length  * x / width);
-                    $log.info("x: " + x);
                     $log.info("row: " + row);
                     $log.info("col: " + col);
                 }
@@ -327,7 +323,10 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
         }
 
         function sendComputerMove() {
-            gameService.makeMove(gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex)[0]);
+            //gameService.makeMove(gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex)[0]);
+
+            gameService.makeMove(gameLogicService.createPickMove($scope.turnIndex, $scope.state));
+
             //var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
             //gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
             //$scope.debug = "computer picks one tile";
@@ -371,12 +370,23 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn
             turnIndex = params.turnIndexAfterMove;
 
+            gameEnd = params.turnindexAfterMove === -1;
             $scope.yourPlayerIndex = params.yourPlayerIndex;
             $scope.turnIndex = params.turnIndexAfterMove;
             $scope.state = params.stateAfterMove;
             $scope.board = params.stateAfterMove.board;
             $scope.nexttile = params.stateAfterMove.trace.nexttile;
             $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
+
+            // disable sort feature when empty slots left in board
+            // because sort will reset player hand
+            $scope.sortDisabled = false;
+            for (var i = 0; i < $scope.playerHand.length; i++) {
+                if ($scope.playerHand[i] === -1) {
+                    $scope.sortDisabled = true;
+                    break;
+                }
+            }
 
             if ($scope.isYourTurn) {
                 //var opponentIndex = 1 - $scope.turnIndex;
@@ -502,16 +512,20 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return tile !== undefined ? tile.score : "";
         };
 
+
+        /** ****************************************
+         *********      Button Controls    *********
+         *******************************************/
         $scope.pickBtnClicked = function() {
             if ($scope.isYourTurn) {
-                console.log("next: " + $scope.nexttile);
                 try {
                     var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
                     gameService.makeMove(move);
+                    // reset sort
+                    $scope.sortType = "sort";
                     $scope.debug = "pick one tile";
                 } catch (e) {
                     $scope.debug = e.message;
-                    $log.info(e);
                 }
             }
         };
@@ -521,13 +535,75 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                 try {
                     var move = gameLogicService.createMeldMove($scope.turnIndex, $scope.state);
                     gameService.makeMove(move);
+                    // reset sort
+                    $scope.sortType = "sort";
                 } catch (e) {
                     $scope.debug = e.message;
-                    $log.info(e);
-                    //$window.alert(e);
                 }
             }
+        };
 
+        $scope.undoBtnClicked = function () {
+            if ($scope.isYourTurn) {
+                try {
+                    var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
+                    gameService.makeMove(undo);
+                    //var deltas = $scope.state.deltas;
+                    //var length = deltas.length;
+                    //for (var i = length - 1; i >= 0; i--) {
+                    //    var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
+                    //    gameService.makeMove(undo);
+                    //    // disable sort function during undo process
+                    //    $scope.sortDisabled= true;
+                    //}
+                    $scope.sortType = "sort";
+                } catch (e) {
+                }
+            }
+        };
+
+        $scope.undoAllBtnClicked = function () {
+            if ($scope.isYourTurn) {
+                try {
+                    //var undos = gameLogicService.createUndoAllMove($scope.turnIndex, $scope.state);
+                    //gameService.makeMove(undos);
+                    //$scope.sortType = "sort";
+                } catch (e) {
+                }
+            }
+        };
+
+        $scope.sortType = "sort";
+        $scope.setSortTypeBtnClicked = function () {
+            if (gameEnd) {
+                return;
+            }
+            var type = $scope.sortType;
+            var playerRow = getCurrentPlayerRow();
+            var playerHand = $scope.board[playerRow];
+            var nextType;
+            try {
+                switch (type) {
+                    case "set":
+                        nextType = "123";
+                        break;
+                    case "sort":
+                    case "123":
+                        type = "score";
+                        nextType = "color";
+                        break;
+                    case "color":
+                        nextType = "set";
+                        break;
+                    default:
+                        nextType = "123";
+                }
+                var move = gameLogicService.createSortMove($scope.turnIndex, $scope.state, type);
+                gameService.makeMove(move);
+                $scope.sortType = nextType;
+            } catch (e) {
+                $log.info(e);
+            }
         };
 
         $scope.getTileDataValue = function(tileIndex) {
@@ -658,6 +734,11 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return result;
         };
 
+
+        function getCurrentPlayerRow () {
+            return gameBoardRows + $scope.turnIndex;
+        }
+
         // to allow drag-n-drop move
         if (allowDragAndDrop) {
             window.handleDragEvent = handleDragEvent;
@@ -770,7 +851,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
      *      | --- "RETRIEVE", retrieve one tile (sent to board in current turn) from board back to player.
      *      | --- "REPLACE" , replace one tile in board to another position in board.
      *
-     *    "UNDO", undo operations in this turn.
+     *    "UNDO", undo last move in all moves in this turn.
      *
      *
      **************************************************************************************
@@ -793,7 +874,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                     return false;
                 }
             } catch (e) {
-                console.log(e.message);
+                console.log(e.stack);
                 return false;
             }
             return true;
@@ -807,25 +888,31 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                 );
             }
             var expectedMove;
-            //var board = stateBefore.board;
-            //var deltas = stateBefore.deltas;
-            //var trace = stateBefore.trace;
-
             switch (moveType) {
                 case "INIT":
                     var nPlayers = actualMove[2].set.value.nplayers;
                     expectedMove = getInitialMove(playerIndex, nPlayers);
                     break;
-                case 'MOVE':
+                case "MOVE":
                     var deltas = actualMove[3].set.value;
                     var delta = deltas[deltas.length - 1];
                     expectedMove = getMoveMove(playerIndex, stateBefore, delta);
                     break;
-                case 'PICK':
+                case "PICK":
                     expectedMove = getPickMove(playerIndex, stateBefore);
                     break;
                 case "MELD":
                     expectedMove = getMeldMove(playerIndex, stateBefore);
+                    break;
+                case "SORT":
+                    var sortType = actualMove[2].set.value;
+                    expectedMove = getSortMove(playerIndex, stateBefore, sortType);
+                    break;
+                case "UNDO":
+                    expectedMove = getSingleUndoMove(playerIndex, stateBefore);
+                    break;
+                case "UNDOALL":
+                    expectedMove = getUndoAllMove(playerIndex, stateBefore);
                     break;
                 default:
                     throw new Error("Unexpected move");
@@ -891,8 +978,14 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return move;
         }
 
-        function getMoveMove(playerIndex, stateBefore, delta) {
-
+        /**
+         *
+         * @param playerIndex
+         * @param stateBefore
+         * @param delta
+         * @returns {*[]}
+         */
+        function getMoveMove(playerIndex, stateBefore, delta, undo) {
             var tileToMove = delta.tileIndex;
             var from = delta.from;
             var to = delta.to;
@@ -900,7 +993,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             // 1. get game board
             var board = stateBefore.board;
             var deltas = stateBefore.deltas;
-
 
             var playerRow = getPlayerRow(playerIndex);
 
@@ -956,17 +1048,29 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             boardAfter[to.row][to.col] = tileToMove;
 
             var deltasAfter = angular.copy(deltas);
-            deltasAfter.push(delta);
+            var moveTypeAfter = "MOVE";
+            if (undo !== undefined && undo === true) {
+                deltasAfter.splice(deltasAfter.length - 1, 1);
+                moveTypeAfter = "UNDO";
+            } else {
+                deltasAfter.push(delta);
+            }
 
             return [
                 {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
-                {set: {key: 'type', value: "MOVE"}},
+                {set: {key: 'type', value: moveTypeAfter}},
                 {set: {key: 'board', value: boardAfter}},
                 {set: {key: 'deltas', value: deltasAfter}},
                 {setVisibility: {key: 'tile' + tileToMove, visibleToPlayerIndices: visibility}}
             ];
         }
 
+        /**
+         *
+         * @param playerIndex
+         * @param stateBefore
+         * @returns {*[]}
+         */
         function getPickMove(playerIndex, stateBefore) {
 
             var playerRow = getGameBoardRows() + playerIndex;
@@ -999,12 +1103,18 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                 {setTurn: {turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBefore.trace.nplayers)}},
                 {set: {key: 'type', value: "PICK"}},
                 {set: {key: 'board', value: boardAfter}},
+                //{set: {key: 'deltas', value: []}},     // pick move will clear delta history
                 {set: {key: 'trace', value: traceAfter}},
                 {setVisibility: {key: 'tile' + tileToPick, visibleToPlayerIndices: [playerIndex]}}
             ];
-
         }
 
+        /**
+         *
+         * @param playerIndex
+         * @param stateBefore
+         * @returns {*[]}
+         */
         function getMeldMove(playerIndex, stateBefore) {
             var board = stateBefore.board;
             var playerRow = getPlayerRow(playerIndex);
@@ -1012,7 +1122,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
             // 0. check player has sent as least one tile from hand to board during this turn.
             var tilesSentToBoardThisTurn = getTilesSentToBoardThisTurn(deltas, playerRow);
-            console.log("SIZE; " + tilesSentToBoardThisTurn.length);
             check ( tilesSentToBoardThisTurn.length !== 0,
                 "[MELD] you cannot meld since no tiles sent to board in this turn"
             );
@@ -1062,10 +1171,62 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
         }
 
-        //TODO: for better user experience
-        //function getUndoMove() {
-        //    return [];
-        //}
+        function getSortMove(playerIndex, stateBefore, sortType) {
+            var boardAfter = angular.copy(stateBefore.board);
+            var playerHand = boardAfter[getPlayerRow(playerIndex)];
+            switch (sortType) {
+                case "score":
+                case "color":
+                    playerHand.sort(sortBy(sortType, stateBefore), stateBefore);
+                    break;
+                case "set":
+                    boardAfter[getPlayerRow(playerIndex)] = findAllSetInHand(playerHand, stateBefore);
+                    break;
+                default :
+                    throw new error("Unexpected sort type: " + sortType);
+            }
+            return [
+                {setTurn: {turnIndex: playerIndex}},
+                {set: {key: 'type', value: "SORT"}},
+                {set: {key: 'sorttype', value: sortType}},
+                {set: {key: 'board', value: boardAfter}}
+            ];
+        }
+
+        /**
+         * Undo last move by player in current turn
+         * @param playerIndex
+         * @param stateBefore
+         */
+        function getSingleUndoMove(playerIndex, stateBefore) {
+            var deltas = stateBefore.deltas;
+            var delta = deltas[deltas.length - 1];
+            // reverse the last delta, and then make that move
+            var deltaUndo = {tileIndex: delta.tileIndex , from: delta.to, to: delta.from};
+            var moveUndo = getMoveMove(playerIndex, stateBefore, deltaUndo, true);
+            moveUndo[1].set.value = "UNDO";
+            return moveUndo;
+        }
+
+
+        //TODO:
+        function getUndoAllMove(playerIndex, stateBefore) {
+            var deltas = stateBefore.deltas;
+            for (var i = deltas.length - 1; i >= 0; i--) {
+                var delta = deltas[i];
+                // reverse the last delta, and then make that move
+                var deltaUndo = {tileIndex: delta.tileIndex , from: delta.to, to: delta.from};
+                var moveUndo = getMoveMove(playerIndex, stateBefore, deltaUndo, true);
+            }
+            moveUndo[1].set.value = "UNDOALL";
+            return [
+                {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
+                {set: {key: 'type', value: "UNDOALL"}},
+                {set: {key: 'board', value: boardAfter}},
+                {set: {key: 'deltas', value: deltasAfter}},
+                {setVisibility: {key: 'tile' + tileToMove, visibleToPlayerIndices: visibility}}
+            ];
+        }
 
         /**
          *
@@ -1078,13 +1239,19 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             try {
                 // "PICK" is possible
                 possibleMoves.push(getPickMove(playerIndex, stateBefore));
+
+                // can meld from player's own hand?
+
+
             } catch (e) {
 
             }
             return possibleMoves;
         }
 
-        /* ===============   Helper Functions    =============== */
+        /** ******************************************************
+         ************        Helper Functions    *****************
+         *********************************************************/
 
         /**
          * checks if given condition is satisfied. Throw error if not satisfied.
@@ -1149,17 +1316,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             }
             return board;
         }
-
-        //function getRestPlayers(playerIndex, nPlayers) {
-        //    var arr = [];
-        //    for (var i = 0; i < nPlayers; i++) {
-        //        arr.push(i);
-        //    }
-        //    //arr.remove(playerIndex);
-        //    arr.splice(arr.indexOf(playerIndex), 1);
-        //
-        //    return arr;
-        //}
 
         /**
          * checks given (row, col) is within board's boundary,
@@ -1517,6 +1673,16 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return 6;
         }
 
+        //function getGameBoardCols() {
+        //    return 18;
+        //}
+
+        /**
+         *
+         * @param deltas
+         * @param playerRow
+         * @returns {Array} [tileIndex] sent to board by current player in this turn
+         */
         function getTilesSentToBoardThisTurn(deltas, playerRow) {
             var result = [];
             var count = 0;
@@ -1537,21 +1703,202 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return result;
         }
 
-        //function getGameBoardCols() {
-        //    return 18;
-        //}
+        function findAllSetInHand(playerHand, state) {
+            if (playerHand.length === 0) {
+                return;
+            }
+            // try to find all groups in hand
+            var hand = angular.copy(playerHand);
 
-        /* ======= Return functions ======= */
+            // 1. find all groups in hand
+            var groups = findAllGroups(hand, state);
+            var handAfter = [];
+            for (var i = 0; i < groups.length; i++) {
+                console.log("group: " + groups[i]);
+                // append all valid groups
+                handAfter = handAfter.concat(groups[i]);
+            }
+            // 2. get the rest tiles in hand
+            var restTiles = [];
+            for (var i = 0; i < hand.length; i++) {
+                if (handAfter.indexOf(hand[i]) === -1) {
+                    restTiles.push(hand[i]);
+                }
+            }
+
+            // 3. find all runs from the rest tiles in hand
+            var runs = findAllRuns(restTiles, state);
+            for (var i = 0; i < runs.length; i++) {
+                console.log("run: " + runs[i]);
+                handAfter = handAfter.concat(runs[i]);
+            }
+            for (var i = 0 ; i < restTiles.length; i++) {
+                if (handAfter.indexOf(restTiles[i]) === -1) {
+                    handAfter.push(restTiles[i]);
+                }
+            }
+            return handAfter;
+        }
+
+        function findAllRuns(tiles, state) {
+            if (tiles.length === 0) {
+                return [];
+            }
+            tiles.sort(sortBy("color", state));
+            var runs = [];
+            var fast = getTileColorByIndex(tiles[0], state);
+            var sameColor = [];
+            for (var i = 0; i < tiles.length; i++) {
+                var tileIndex = tiles[i];
+                var color = getTileColorByIndex(tileIndex, state);
+                if (color === fast ) {
+                    sameColor.push(tileIndex);
+                }
+                if (color !== fast || i === tiles.length - 1) {
+                    var validRuns = findRun(sameColor, state);
+                    if (validRuns.length > 0) {
+                        runs = runs.concat(validRuns);
+                    }
+                    fast = color;
+                    sameColor = [tileIndex];
+                }
+            }
+            return runs;
+        }
+
+        function findRun(runCandidate, state) {
+            //console.log("same: " + runCandidate);
+            var validRuns = [];
+            if (runCandidate.length === 0) {
+                return validRuns;
+            }
+            var scoreExpect = getTileScoreByIndex(runCandidate[0], state);
+            var consecutive = [];
+            for (var i = 0; i < runCandidate.length; i++) {
+                var tileIndex = runCandidate[i];
+                var score = getTileScoreByIndex(tileIndex, state);
+                if (scoreExpect === score) {
+                    consecutive.push(tileIndex);
+                    scoreExpect += 1;
+                } else {
+                    if (consecutive.length >= 3) {
+                        validRuns.push(consecutive);
+                    }
+                    consecutive = [tileIndex];
+                    scoreExpect = score + 1;
+                }
+            }
+            if (consecutive.length >= 3) {
+                validRuns.push(consecutive);
+            }
+            return validRuns;
+        }
+
+        function findAllGroups(tiles, state) {
+            if (tiles.length === 0) {
+                return [];
+            }
+            tiles.sort(sortBy("score", state));
+            var groups = [];
+            var fast = getTileScoreByIndex(tiles[0], state);
+            var group = [];
+            for (var i = 0; i < tiles.length; i++) {
+                var tileIndex = tiles[i];
+                var score = getTileScoreByIndex(tileIndex, state);
+                if (score === fast) {
+                    group.push(tileIndex);
+                }
+                if (score !== fast || i === tiles.length - 1) {
+                    //meet new number and current group
+                    var validGroups = findGroup(group,state);
+                    if (validGroups.length > 0) {
+                        groups = groups.concat(validGroups);
+                    }
+                    fast = score;
+                    group = [tileIndex];
+                }
+            }
+            return groups;
+        }
+
+        /**
+         *
+         * @param groupCandidate
+         * @param state
+         * @returns {Array}
+         */
+        function findGroup(groupCandidate, state) {
+            var validGroups = [];
+            if (groupCandidate.length === 0) {
+                return validGroups;
+            }
+            var colors = [];
+            var group = [];
+            for (var i = 0; i < groupCandidate.length; i++) {
+                var tileIndex = groupCandidate[i];
+                var color = getTileColorByIndex(tileIndex, state);
+                if (colors.indexOf(color) === -1) {
+                    // new color
+                    colors.push(color);
+                    group.push(tileIndex);
+                }
+            }
+            if (group.length >= 3) {
+                validGroups.push(group);
+            }
+            return validGroups;
+        }
+
+        function getTileScoreByIndex(tileIndex, state) {
+            check (state["tile" + tileIndex] !== undefined, "undefined tile: tile" + tileIndex);
+            return state["tile" + tileIndex].score;
+        }
+
+        function getTileColorByIndex(tileIndex, state) {
+            check (state["tile" + tileIndex] !== undefined, "undefined tile: tile" + tileIndex);
+            return state["tile" + tileIndex].color;
+        }
+
+
+        /**
+         * usage:
+         *   playerHand.sort(sortBy("score", $scope.state));
+         * @param type
+         * @returns {Function}
+         */
+        function sortBy(type, state) {
+            return function (tileIndexA, tileIndexB) {
+                var tileA = state["tile" + tileIndexA];
+                var tileB =  state["tile" + tileIndexB];
+                if (tileA !== undefined && tileB !== undefined) {
+                    if (type === "score") {
+                        return tileA.score - tileB.score;
+                    } else if (type === "color") {
+                        return (tileA.color > tileB.color) ? 1 : (tileA.color < tileB.color) ? -1 : (tileA.score - tileB.score);
+                    }
+                }
+                return 1;
+            }
+        }
+
+        /** *********************************
+         * ======= Return functions ========
+         ***********************************/
         return {
             isMoveOk: isMoveOk,
             createMove: createMove,
             getTileByIndex: getTileByIndex,
             getPossibleMoves: getPossibleMoves,
+            findAllSetInHand: findAllSetInHand,
+            sortBy: sortBy,
 
             createInitialMove: getInitialMove,
             createPickMove: getPickMove,
             createMeldMove: getMeldMove,
-            createMoveMove: getMoveMove
+            createSingleUndoMove: getSingleUndoMove,
+            createUndoAllMove: getUndoAllMove,
+            createMoveMove: getMoveMove,
+            createSortMove: getSortMove
 
         };
 

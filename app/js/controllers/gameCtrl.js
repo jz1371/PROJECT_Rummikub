@@ -286,6 +286,16 @@
             $scope.nexttile = params.stateAfterMove.trace.nexttile;
             $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
 
+            // disable sort feature when empty slots left in board
+            // because sort will reset player hand
+            $scope.sortDisabled = false;
+            for (var i = 0; i < $scope.playerHand.length; i++) {
+                if ($scope.playerHand[i] === -1) {
+                    $scope.sortDisabled = true;
+                    break;
+                }
+            }
+
             if ($scope.isYourTurn) {
                 //var opponentIndex = 1 - $scope.turnIndex;
                 //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
@@ -444,15 +454,16 @@
         $scope.undoBtnClicked = function () {
             if ($scope.isYourTurn) {
                 try {
-                    var deltas = $scope.state.deltas;
-                    var length = deltas.length;
-                    for (var i = length - 1; i >= 0; i--) {
-                        var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
-                        gameService.makeMove(undo);
-                        // disable sort function during undo process
-                        $scope.sortDisabled= true;
-                    }
-                    $scope.sortDisabled = false;
+                    var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
+                    gameService.makeMove(undo);
+                    //var deltas = $scope.state.deltas;
+                    //var length = deltas.length;
+                    //for (var i = length - 1; i >= 0; i--) {
+                    //    var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
+                    //    gameService.makeMove(undo);
+                    //    // disable sort function during undo process
+                    //    $scope.sortDisabled= true;
+                    //}
                     $scope.sortType = "sort";
                 } catch (e) {
                 }
@@ -501,7 +512,6 @@
             } catch (e) {
                 $log.info(e);
             }
-
         };
 
         $scope.getTileDataValue = function(tileIndex) {
