@@ -64,7 +64,7 @@
      *      | --- "RETRIEVE", retrieve one tile (sent to board in current turn) from board back to player.
      *      | --- "REPLACE" , replace one tile in board to another position in board.
      *
-     *    "UNDO", undo operations in this turn.
+     *    "UNDO", undo last move in all moves in this turn.
      *
      *
      **************************************************************************************
@@ -87,7 +87,7 @@
                     return false;
                 }
             } catch (e) {
-                console.log(e.message);
+                console.log(e.stack);
                 return false;
             }
             return true;
@@ -101,10 +101,6 @@
                 );
             }
             var expectedMove;
-            //var board = stateBefore.board;
-            //var deltas = stateBefore.deltas;
-            //var trace = stateBefore.trace;
-
             switch (moveType) {
                 case "INIT":
                     var nPlayers = actualMove[2].set.value.nplayers;
@@ -121,8 +117,15 @@
                 case "MELD":
                     expectedMove = getMeldMove(playerIndex, stateBefore);
                     break;
+                case "SORT":
+                    var sortType = actualMove[2].set.value;
+                    expectedMove = getSortMove(playerIndex, stateBefore, sortType);
+                    break;
                 case "UNDO":
                     expectedMove = getSingleUndoMove(playerIndex, stateBefore);
+                    break;
+                case "UNDOALL":
+                    expectedMove = getUndoAllMove(playerIndex, stateBefore);
                     break;
                 default:
                     throw new Error("Unexpected move");
@@ -313,7 +316,7 @@
                 {setTurn: {turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBefore.trace.nplayers)}},
                 {set: {key: 'type', value: "PICK"}},
                 {set: {key: 'board', value: boardAfter}},
-                {set: {key: 'deltas', value: []}},     // pick move will clear delta history
+                //{set: {key: 'deltas', value: []}},     // pick move will clear delta history
                 {set: {key: 'trace', value: traceAfter}},
                 {setVisibility: {key: 'tile' + tileToPick, visibleToPlayerIndices: [playerIndex]}}
             ];
@@ -381,9 +384,30 @@
 
         }
 
-        //TODO: for better user experience
+        function getSortMove(playerIndex, stateBefore, sortType) {
+            var boardAfter = angular.copy(stateBefore.board);
+            var playerHand = boardAfter[getPlayerRow(playerIndex)];
+            switch (sortType) {
+                case "score":
+                case "color":
+                    playerHand.sort(sortBy(sortType, stateBefore), stateBefore);
+                    break;
+                case "set":
+                    boardAfter[getPlayerRow(playerIndex)] = findAllSetInHand(playerHand, stateBefore);
+                    break;
+                default :
+                    throw new error("Unexpected sort type: " + sortType);
+            }
+            return [
+                {setTurn: {turnIndex: playerIndex}},
+                {set: {key: 'type', value: "SORT"}},
+                {set: {key: 'sorttype', value: sortType}},
+                {set: {key: 'board', value: boardAfter}}
+            ];
+        }
+
         /**
-         * Undo moves by player in current turn
+         * Undo last move by player in current turn
          * @param playerIndex
          * @param stateBefore
          */
@@ -395,6 +419,26 @@
             var moveUndo = getMoveMove(playerIndex, stateBefore, deltaUndo, true);
             moveUndo[1].set.value = "UNDO";
             return moveUndo;
+        }
+
+
+        //TODO:
+        function getUndoAllMove(playerIndex, stateBefore) {
+            var deltas = stateBefore.deltas;
+            for (var i = deltas.length - 1; i >= 0; i--) {
+                var delta = deltas[i];
+                // reverse the last delta, and then make that move
+                var deltaUndo = {tileIndex: delta.tileIndex , from: delta.to, to: delta.from};
+                var moveUndo = getMoveMove(playerIndex, stateBefore, deltaUndo, true);
+            }
+            moveUndo[1].set.value = "UNDOALL";
+            return [
+                {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
+                {set: {key: 'type', value: "UNDOALL"}},
+                {set: {key: 'board', value: boardAfter}},
+                {set: {key: 'deltas', value: deltasAfter}},
+                {setVisibility: {key: 'tile' + tileToMove, visibleToPlayerIndices: visibility}}
+            ];
         }
 
         /**
@@ -873,16 +917,165 @@
         }
 
         function findAllSetInHand(playerHand, state) {
+            if (playerHand.length === 0) {
+                return;
+            }
             // try to find all groups in hand
             var hand = angular.copy(playerHand);
-            var sortByScore = sortBy("score", state);
-            hand.sort(sortByScore);
-            console.log("ser: " + hand);
 
+            // 1. find all groups in hand
+            var groups = findAllGroups(hand, state);
+            var handAfter = [];
+            for (var i = 0; i < groups.length; i++) {
+                console.log("group: " + groups[i]);
+                // append all valid groups
+                handAfter = handAfter.concat(groups[i]);
+            }
+            // 2. get the rest tiles in hand
+            var restTiles = [];
+            for (var i = 0; i < hand.length; i++) {
+                if (handAfter.indexOf(hand[i]) === -1) {
+                    restTiles.push(hand[i]);
+                }
+            }
+
+            // 3. find all runs from the rest tiles in hand
+            var runs = findAllRuns(restTiles, state);
+            for (var i = 0; i < runs.length; i++) {
+                console.log("run: " + runs[i]);
+                handAfter = handAfter.concat(runs[i]);
+            }
+            for (var i = 0 ; i < restTiles.length; i++) {
+                if (handAfter.indexOf(restTiles[i]) === -1) {
+                    handAfter.push(restTiles[i]);
+                }
+            }
+            return handAfter;
+        }
+
+        function findAllRuns(tiles, state) {
+            if (tiles.length === 0) {
+                return [];
+            }
+            tiles.sort(sortBy("color", state));
+            var runs = [];
+            var fast = getTileColorByIndex(tiles[0], state);
+            var sameColor = [];
+            for (var i = 0; i < tiles.length; i++) {
+                var tileIndex = tiles[i];
+                var color = getTileColorByIndex(tileIndex, state);
+                if (color === fast ) {
+                    sameColor.push(tileIndex);
+                }
+                if (color !== fast || i === tiles.length - 1) {
+                    var validRuns = findRun(sameColor, state);
+                    if (validRuns.length > 0) {
+                        runs = runs.concat(validRuns);
+                    }
+                    fast = color;
+                    sameColor = [tileIndex];
+                }
+            }
+            return runs;
+        }
+
+        function findRun(runCandidate, state) {
+            //console.log("same: " + runCandidate);
+            var validRuns = [];
+            if (runCandidate.length === 0) {
+                return validRuns;
+            }
+            var scoreExpect = getTileScoreByIndex(runCandidate[0], state);
+            var consecutive = [];
+            for (var i = 0; i < runCandidate.length; i++) {
+                var tileIndex = runCandidate[i];
+                var score = getTileScoreByIndex(tileIndex, state);
+                if (scoreExpect === score) {
+                    consecutive.push(tileIndex);
+                    scoreExpect += 1;
+                } else {
+                    if (consecutive.length >= 3) {
+                        validRuns.push(consecutive);
+                    }
+                    consecutive = [tileIndex];
+                    scoreExpect = score + 1;
+                }
+            }
+            if (consecutive.length >= 3) {
+                validRuns.push(consecutive);
+            }
+            return validRuns;
+        }
+
+        function findAllGroups(tiles, state) {
+            if (tiles.length === 0) {
+                return [];
+            }
+            tiles.sort(sortBy("score", state));
+            var groups = [];
+            var fast = getTileScoreByIndex(tiles[0], state);
+            var group = [];
+            for (var i = 0; i < tiles.length; i++) {
+                var tileIndex = tiles[i];
+                var score = getTileScoreByIndex(tileIndex, state);
+                if (score === fast) {
+                    group.push(tileIndex);
+                }
+                if (score !== fast || i === tiles.length - 1) {
+                    //meet new number and current group
+                    var validGroups = findGroup(group,state);
+                    if (validGroups.length > 0) {
+                        groups = groups.concat(validGroups);
+                    }
+                    fast = score;
+                    group = [tileIndex];
+                }
+            }
+            return groups;
         }
 
         /**
          *
+         * @param groupCandidate
+         * @param state
+         * @returns {Array}
+         */
+        function findGroup(groupCandidate, state) {
+            var validGroups = [];
+            if (groupCandidate.length === 0) {
+                return validGroups;
+            }
+            var colors = [];
+            var group = [];
+            for (var i = 0; i < groupCandidate.length; i++) {
+                var tileIndex = groupCandidate[i];
+                var color = getTileColorByIndex(tileIndex, state);
+                if (colors.indexOf(color) === -1) {
+                    // new color
+                    colors.push(color);
+                    group.push(tileIndex);
+                }
+            }
+            if (group.length >= 3) {
+                validGroups.push(group);
+            }
+            return validGroups;
+        }
+
+        function getTileScoreByIndex(tileIndex, state) {
+            check (state["tile" + tileIndex] !== undefined, "undefined tile: tile" + tileIndex);
+            return state["tile" + tileIndex].score;
+        }
+
+        function getTileColorByIndex(tileIndex, state) {
+            check (state["tile" + tileIndex] !== undefined, "undefined tile: tile" + tileIndex);
+            return state["tile" + tileIndex].color;
+        }
+
+
+        /**
+         * usage:
+         *   playerHand.sort(sortBy("score", $scope.state));
          * @param type
          * @returns {Function}
          */
@@ -916,7 +1109,9 @@
             createPickMove: getPickMove,
             createMeldMove: getMeldMove,
             createSingleUndoMove: getSingleUndoMove,
-            createMoveMove: getMoveMove
+            createUndoAllMove: getUndoAllMove,
+            createMoveMove: getMoveMove,
+            createSortMove: getSortMove
 
         };
 

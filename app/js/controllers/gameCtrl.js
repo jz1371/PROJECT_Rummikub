@@ -54,6 +54,7 @@
 
         var boardPanel = document.getElementById("board-panel");
         var handPanel = document.getElementById("hand-panel");
+        var hand = document.getElementById("hand-ul");
 
         function isWithinElement(x, y, element) {
             var offset = element.getBoundingClientRect();
@@ -204,12 +205,6 @@
                     //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
                     row = gameBoardRows + $scope.turnIndex;
                     col = Math.floor($scope.board[row].length * x / handPanel.clientWidth);
-
-                    //TODO: better way to find length?
-                    //var liElement = document.getElementsByTagName("LI");
-                    //var width = liElement[0].clientWidth * liElement.length;
-                    //col = Math.floor( $scope.board[row].length  * x / width);
-                    //$log.info("x: " + x);
                     $log.info("row: " + row);
                     $log.info("col: " + col);
                 }
@@ -236,7 +231,10 @@
         }
 
         function sendComputerMove() {
-            gameService.makeMove(gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex)[0]);
+            //gameService.makeMove(gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex)[0]);
+
+            gameService.makeMove(gameLogicService.createPickMove($scope.turnIndex, $scope.state));
+
             //var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
             //gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
             //$scope.debug = "computer picks one tile";
@@ -451,8 +449,22 @@
                     for (var i = length - 1; i >= 0; i--) {
                         var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
                         gameService.makeMove(undo);
+                        // disable sort function during undo process
+                        $scope.sortDisabled= true;
                     }
+                    $scope.sortDisabled = false;
                     $scope.sortType = "sort";
+                } catch (e) {
+                }
+            }
+        };
+
+        $scope.undoAllBtnClicked = function () {
+            if ($scope.isYourTurn) {
+                try {
+                    //var undos = gameLogicService.createUndoAllMove($scope.turnIndex, $scope.state);
+                    //gameService.makeMove(undos);
+                    //$scope.sortType = "sort";
                 } catch (e) {
                 }
             }
@@ -467,34 +479,30 @@
             var playerRow = getCurrentPlayerRow();
             var playerHand = $scope.board[playerRow];
             var nextType;
-            switch (type) {
-                case "set":
-                    gameLogicService.findAllSetInHand(playerHand, $scope.state);
-                    //playerHand.sort(sortBy);
-                    //$scope.state.board[playerRow] = playerHand;
-                    nextType = "123";
-                    break;
-                case "sort":
-                case undefined:
-                case "123":
-                    playerHand.sort(gameLogicService.sortBy("score", $scope.state));
-                    //$scope.state.board[playerRow] = playerHand;
-                    nextType = "color";
-                    break;
-                case "color":
-                    playerHand.sort(gameLogicService.sortBy("color", $scope.state));
-                    //$scope.state.board[playerRow] = playerHand;
-                    nextType = "set";
-                    break;
-                default:
-                    nextType = "123";
+            try {
+                switch (type) {
+                    case "set":
+                        nextType = "123";
+                        break;
+                    case "sort":
+                    case "123":
+                        type = "score";
+                        nextType = "color";
+                        break;
+                    case "color":
+                        nextType = "set";
+                        break;
+                    default:
+                        nextType = "123";
+                }
+                var move = gameLogicService.createSortMove($scope.turnIndex, $scope.state, type);
+                gameService.makeMove(move);
+                $scope.sortType = nextType;
+            } catch (e) {
+                $log.info(e);
             }
-            $scope.sortType = nextType;
 
         };
-
-
-
 
         $scope.getTileDataValue = function(tileIndex) {
             var dataValue = "";
