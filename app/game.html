@@ -20,6 +20,7 @@
     <!-- build:js dist/everything.min.js -->
     <script src="js/app.js"></script>
     <script src="js/services/gameLogicService.js"></script>
+    <script src="js/services/gameAIService.js"></script>
     <script src="js/filters/filters.js"></script>
     <script src="js/controllers/gameAlertCtrl.js"></script>
     <script src="js/controllers/gameCtrl.js"></script>
@@ -72,9 +73,11 @@
                 <button id="undobtn" type="button" class="btn btn-success btn-circle" ng-click="undoBtnClicked()">undo</button>
             </div>
 
-            <!--<div class="col-xs-12">-->
-                <!--<button id="undoallbtn" type="button" class="btn btn-danger btn-circle" ng-click="undoAllBtnClicked()">undo all</button>-->
-            <!--</div>-->
+            <div class="col-xs-12">
+                <button id="undoallbtn" type="button" class="btn btn-danger btn-circle" ng-click="undoAllBtnClicked()">
+                    <p style="font-size: 1vw;"> undo all </p>
+                </button>
+            </div>
 
             <div class="col-xs-12" ng-controller="ModalDemoCtrl">
             <div ng-include="'template/help.html'"></div>
