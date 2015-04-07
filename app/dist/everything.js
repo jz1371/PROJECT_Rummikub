@@ -108,652 +108,715 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
      *
      **************************************************************************************
      */
-    angular.module('myApp').controller('GameCtrl',
-    ['$scope', '$log', '$window', '$animate', '$timeout', 'stateService', 'gameService', 'gameLogicService',
-    function($scope, $log, $window,  $animate, $timeout, stateService ,gameService, gameLogicService ) {
+    angular.module('myApp').controller('GameCtrl', [
+        '$scope', '$log', '$window', '$animate', '$timeout',
+        'stateService', 'gameService', 'gameLogicService', 'gameAIService',
+        function($scope, $log, $window,  $animate, $timeout,
+                 stateService ,gameService, gameLogicService, gameAIService) {
 
-        var allowDragAndDrop = true;
+            var allowDragAndDrop = true;
 
-        // to allow manipulating game state in e2e tests
-        window.e2e_test_stateService = stateService;
+            // to allow manipulating game state in e2e tests
+            window.e2e_test_stateService = stateService;
 
 
-        var debugMode = true;
-        var gameEnd = false;
+            var debugMode = true;
+            var gameEnd = false;
 
-        var gameBoardRows = 6;
-        var gameBoardCols = 18;
+            var gameBoardRows = 6;
+            var gameBoardCols = 18;
 
-        $scope.rows = 6;
-        $scope.cols = 18;
+            $scope.rows = 6;
+            $scope.cols = 18;
 
-        var animationEnded = false;
-        //var canMakeMove = false;
-        var isComputerTurn = false;
-        //var state = null;
-        var turnIndex = null;
+            var animationEnded = false;
+            //var canMakeMove = false;
+            var isComputerTurn = false;
+            //var state = null;
+            var turnIndex = null;
 
-        var draggingLines = document.getElementById("draggingLines");
-        var horizontalDraggingLine = document.getElementById("horizontalDraggingLine");
-        var verticalDraggingLine = document.getElementById("verticalDraggingLine");
+            var draggingLines = document.getElementById("draggingLines");
+            var horizontalDraggingLine = document.getElementById("horizontalDraggingLine");
+            var verticalDraggingLine = document.getElementById("verticalDraggingLine");
 
-        var myDrag = document.getElementById("MyDrag");
+            var myDrag = document.getElementById("MyDrag");
 
-        var gameArea = document.getElementById("gameArea");
-        var draggingStartedRowCol = null; // The {row: YY, col: XX} where dragging started.
-        var draggingPiece = null;
-        var nextZIndex = 200;
+            var gameArea = document.getElementById("gameArea");
+            var draggingStartedRowCol = null; // The {row: YY, col: XX} where dragging started.
+            var draggingPiece = null;
+            var nextZIndex = 200;
 
-        var boardPanel = document.getElementById("board-panel");
-        var handPanel = document.getElementById("hand-panel");
-        var hand = document.getElementById("hand-ul");
+            var boardPanel = document.getElementById("board-panel");
+            var handPanel = document.getElementById("hand-panel");
+            //var hand = document.getElementById("hand-ul");
 
-        function isWithinElement(x, y, element) {
-            var offset = element.getBoundingClientRect();
-            return x >= offset.left && x < offset.right &&
-                y >= offset.top && y <= offset.bottom;
-        }
+            var clickRow = -1;
+            var clickCol = -1;
 
-        function handleDragEvent(type, clientX, clientY) {
-            if (!$scope.isYourTurn) {
-                return;
+            //var computerMoves = [];
+
+            var undoAllInProcess = false;
+
+            function isWithinElement(x, y, element) {
+                var offset = element.getBoundingClientRect();
+                return x >= offset.left && x < offset.right &&
+                    y >= offset.top && y <= offset.bottom;
             }
 
-            if (!isWithinElement(clientX, clientY, gameArea)) {
-                if (debugMode) {
-                    draggingLines.style.display = "none";
+            function handleDragEvent(type, clientX, clientY) {
+                if (!$scope.isYourTurn) {
+                    return;
                 }
-                return;
-            } else {
-                var pos = getDraggingTilePosition(clientX, clientY);
-                if (type === "touchstart" ) {
-                    // drag started
-                    if (pos &&  $scope.board[pos.row][pos.col] !== -1) {
-                        // starting from game board or player hand and is a valid tile
-                        var row = pos.row;
-                        var col = pos.col;
-                        draggingStartedRowCol = {row: row, col: col};
-                        draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
-                        if (draggingPiece) {
-                            draggingPiece.style['z-index'] = ++nextZIndex;
+
+                if (!isWithinElement(clientX, clientY, gameArea)) {
+                    if (debugMode) {
+                        draggingLines.style.display = "none";
+                    }
+                    return;
+                } else {
+                    var pos = getDraggingTilePosition(clientX, clientY);
+                    if (type === "touchstart" ) {
+
+                        console.log("active: " + $scope.activeTile);
+
+
+                        // drag started
+                        if (pos &&  $scope.board[pos.row][pos.col] !== -1) {
+                            // starting from game board or player hand and is a valid tile
+                            var row = pos.row;
+                            var col = pos.col;
+                            draggingStartedRowCol = {row: row, col: col};
+                            draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+                            if (draggingPiece) {
+                                draggingPiece.style['z-index'] = ++nextZIndex;
+                            }
+                        }
+                    }
+                    if (!draggingPiece) {
+                        return;
+                    }
+                    if (type === "touchend") {
+                        // drag end
+                        if (pos) {
+                            var from = draggingStartedRowCol;
+                            var to = {row: pos.row, col: pos.col};
+                            dragDone(from, to);
+                        }
+                    } else {
+                        // Drag continue
+                        if (pos) {
+                            var container = getTileContainerSize(pos);
+                            $scope.$apply(function () {
+                                var tileIndex = $scope.board[draggingStartedRowCol.row][draggingStartedRowCol.col];
+                                var tile = $scope.state['tile' + tileIndex];
+                                $scope.tileIndex = tileIndex;
+                                $scope.drag_color = tile.color;
+                                $scope.drag_score = tile.score;
+                                $scope.tile = tile;
+                            });
+
+                            //gameAreaLeft = document.getElementById("board").offsetLeft;
+
+                            draggingLines.style.display = "inline";
+                            myDrag.style.display = "inline";
+                            myDrag.style.width = container.width + "px";
+
+                            var gameAreaLeft = container.left - gameArea.offsetLeft;
+                            myDrag.style.left = gameAreaLeft + "px";
+                            //console.log("drag left: " + myDrag.style.left);
+                            //console.log("game left: " + gameAreaLeft);
+                            myDrag.style.paddingBottom= container.height + "px";
+                            myDrag.style.top = container.top + "px";
+
+                            var centerXY = {x: container.width / 2 + gameAreaLeft - 15, y: container.top + container.height / 2};
+                            var tile = document.getElementById("MyPiece6x0");
+                            console.log("tile: " + JSON.stringify(tile.getBoundingClientRect(), null));
+                            var handUl = document.getElementById("hand-panel");
+                            console.log("parent: " + JSON.stringify(handUl.getBoundingClientRect(), null));
+                            console.log("center: " + printObject(centerXY));
+                            console.log("container: " + printObject(container));
+                            console.log("point: " + clientX + ", " + clientY);
+                            console.log("gameArea" + printObject(gameAreaLeft));
+                            //console.log("center: " + "here" );
+                            setDraggingLines(centerXY);
+
                         }
                     }
                 }
-                if (!draggingPiece) {
-                    return;
-                }
-                if (type === "touchend") {
-                    // drag end
-                    if (pos) {
-                        var from = draggingStartedRowCol;
-                        var to = {row: pos.row, col: pos.col};
-                        dragDone(from, to);
-                    }
-                } else {
-                    // Drag continue
-                    if (pos) {
-                        var container = getTileContainerSize(pos);
-                        $scope.$apply(function () {
-                            var tileIndex = $scope.board[draggingStartedRowCol.row][draggingStartedRowCol.col];
-                            var tile = $scope.state['tile' + tileIndex];
-                            $scope.tileIndex = tileIndex;
-                            $scope.drag_color = tile.color;
-                            $scope.drag_score = tile.score;
-                            $scope.tile = tile;
-                        });
 
-                        //gameAreaLeft = document.getElementById("board").offsetLeft;
+                if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
+                    draggingLines.style.display = "none";
+                    myDrag.style.display = "none";
 
-                        draggingLines.style.display = "inline";
-                        myDrag.style.display = "inline";
-                        myDrag.style.width = container.width + "px";
-
-                        var gameAreaLeft = container.left - gameArea.offsetLeft;
-                        myDrag.style.left = gameAreaLeft + "px";
-                        //console.log("drag left: " + myDrag.style.left);
-                        //console.log("game left: " + gameAreaLeft);
-                        myDrag.style.paddingBottom= container.height + "px";
-                        myDrag.style.top = container.top + "px";
-
-                        var centerXY = {x: container.width / 2 + gameAreaLeft - 15, y: container.top + container.height / 2};
-                        //console.log("center: " + "here" );
-                        setDraggingLines(centerXY);
-
-                    }
+                    draggingStartedRowCol = null;
+                    draggingPiece = null;
                 }
             }
 
-            if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
-                draggingLines.style.display = "none";
-                myDrag.style.display = "none";
-
-                draggingStartedRowCol = null;
-                draggingPiece = null;
+            function printObject(obj) {
+                return JSON.stringify(obj, null, 4);
             }
-        }
 
-        function getTileContainerSize(pos) {
-            if (pos) {
-                var row = pos.row;
-                var col = pos.col;
-                if ( row >= 0 && row < gameBoardRows ||        // from game baord
-                    row === gameBoardRows + $scope.turnIndex &&   // from player's hand
-                    col >= 0 && col < $scope.board[row].length )
-                {
-                    var container = document.getElementById("MyPiece" + row + "x" + col).parentElement.getBoundingClientRect();
-                    return container;
+            function getTileContainerSize(pos) {
+                if (pos) {
+                    var row = pos.row;
+                    var col = pos.col;
+                    if ( row >= 0 && row < gameBoardRows ||        // from game baord
+                        row === gameBoardRows + $scope.turnIndex &&   // from player's hand
+                        col >= 0 && col < $scope.board[row].length )
+                    {
+                        var container = document.getElementById("MyPiece" + row + "x" + col).parentElement.getBoundingClientRect();
+                        return container;
+                    } else {
+                        return undefined;
+                    }
+
                 } else {
                     return undefined;
                 }
 
-            } else {
-                return undefined;
             }
 
-        }
-
-        function setDraggingLines(centerXY) {
-            if (centerXY !== undefined) {
-                verticalDraggingLine.setAttribute("x1", centerXY.x);
-                verticalDraggingLine.setAttribute("x2", centerXY.x);
-                horizontalDraggingLine.setAttribute("y1", centerXY.y);
-                horizontalDraggingLine.setAttribute("y2", centerXY.y);
+            function setDraggingLines(centerXY) {
+                if (centerXY !== undefined) {
+                    verticalDraggingLine.setAttribute("x1", centerXY.x);
+                    verticalDraggingLine.setAttribute("x2", centerXY.x);
+                    horizontalDraggingLine.setAttribute("y1", centerXY.y);
+                    horizontalDraggingLine.setAttribute("y2", centerXY.y);
+                }
             }
-        }
 
-        /**
-         *
-         * @param clientX the absolute x position in window
-         * @param clientY the absolute y position in window
-         * @returns {{row: number, col: number}}
-         */
-        function getDraggingTilePosition(clientX, clientY) {
+            /**
+             *
+             * @param clientX the absolute x position in window
+             * @param clientY the absolute y position in window
+             * @returns {{row: number, col: number}}
+             */
+            function getDraggingTilePosition(clientX, clientY) {
 
-            //if (isWithinElement(clientX, clientY, boardPanel)) {
-            //    $log.info("board");
-            //} else if (isWithinElement(clientX, clientY, handPanel)) {
-            //    // clicking tile in hand
-            //    var leftEdge = document.getElementById("hand").getBoundingClientRect().left;
-            //    $log.info("hand left: " + leftEdge);
-            //}
-
-            var x = clientX - boardPanel.parentElement.offsetLeft;
-            var y = clientY - boardPanel.offsetTop;
-            var row = -1;
-            var col = -1;
-            if (x > 0 && y > 0 && x < boardPanel.clientWidth && y < boardPanel.clientHeight) {
-                // dragging in board panel
-                //$log.info("width: " + boardPanel.clientWidth);
-                //$log.info("x: " + x);
-                row = Math.floor(gameBoardRows * y / boardPanel.clientHeight);
-                col = Math.floor(gameBoardCols * x / boardPanel.clientWidth);
-                $log.info("row: " + row);
-                $log.info("col: " + col);
-            } else {
-                var windowOffset = handPanel.getBoundingClientRect();
-                x = clientX - windowOffset.left;
-                y = clientY - windowOffset.top;
-                if (x > 0 && y > 0 && x < handPanel.clientWidth && y < handPanel.clientHeight) {
-                    //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
-                    row = gameBoardRows + $scope.turnIndex;
-                    col = Math.floor($scope.board[row].length * x / handPanel.clientWidth);
+                var board = document.getElementById("board");
+                console.log("padding: " + board.style.paddingLeft);
+                //TODO: minus the real padding-left
+                var x = clientX - boardPanel.parentElement.offsetLeft - 15;
+                var y = clientY - boardPanel.offsetTop;
+                var row = -1;
+                var col = -1;
+                if (x > 0 && y > 0 && x < boardPanel.clientWidth && y < boardPanel.clientHeight) {
+                    // dragging in board panel
+                    //$log.info("width: " + boardPanel.clientWidth);
+                    //$log.info("x: " + x);
+                    row = Math.floor(gameBoardRows * y / boardPanel.clientHeight);
+                    col = Math.floor(gameBoardCols * x / boardPanel.clientWidth);
                     $log.info("row: " + row);
                     $log.info("col: " + col);
-                }
-            }
-            return row !== -1 ? {row: row, col: col} : null ;
-        }
+                } else {
+                    // clicking player hand area?
 
-        function dragDone(from, to) {
-            $scope.$apply(function () {
-                try {
-                    $scope.boardCellClicked(from.row, from.col);
-                    $scope.boardCellClicked(to.row, to.col);
-                    var msg = "Dragged to " + to.row + "x" + to.col;
-                    $log.info(msg);
-                    $scope.msg = msg;
-                }catch(e) {
-                    // illegal move, restore
-                    $log.info(e.message);
-                    /* return immediately! */
-                    $scope.debug = e.message;
+                    var handUl = document.getElementById("hand-ul");
+                    //var container = handUl.getBoundingClientRect();
+
+                    var windowOffset = handUl.getBoundingClientRect();
+                    x = clientX - windowOffset.left;
+                    y = clientY - windowOffset.top;
+                    if (x > 0 && y > 0 && x < handPanel.clientWidth && y < handPanel.clientHeight) {
+                        //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
+                        row = gameBoardRows + $scope.turnIndex;
+                        col = Math.floor($scope.board[row].length * x / handPanel.clientWidth);
+                        $log.info("row: " + row);
+                        $log.info("col: " + col);
+                    }
+                }
+                return row !== -1 ? {row: row, col: col} : null ;
+            }
+
+            function dragDone(from, to) {
+                $scope.$apply(function () {
+                    try {
+                        $scope.boardCellClicked(from.row, from.col);
+                        $scope.boardCellClicked(to.row, to.col);
+                        var msg = "Dragged to " + to.row + "x" + to.col;
+                        $log.info(msg);
+                        $scope.msg = msg;
+                    }catch(e) {
+                        // illegal move, restore
+                        $log.info(e.message);
+                        /* return immediately! */
+                        $scope.debug = e.message;
+                        return;
+                    }
+                });
+            }
+
+            var computerMovesInProcess = false;
+            function sendComputerMove() {
+                var move;
+
+                if (computerMovesInProcess === false) {
+                    move = gameAIService.createComputerMove($scope.turnIndex, $scope.state);
+                    if (move[1].set.value !== "PICK") {
+                        computerMovesInProcess = true;
+                    }
+                    gameService.makeMove(move);
                     return;
                 }
-            });
-        }
 
-        function sendComputerMove() {
-            //gameService.makeMove(gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex)[0]);
+                if (computerMovesInProcess) {
+                    move = gameLogicService.createMeldMove($scope.turnIndex, $scope.state);
+                    gameService.makeMove(move);
+                    computerMovesInProcess = false;
+                }
 
-            gameService.makeMove(gameLogicService.createPickMove($scope.turnIndex, $scope.state));
+                //if (computerMovesInProcess === false) {
+                //    var deltas = gameAIService.createComputerMove($scope.turnIndex, $scope.state);
+                //    if (deltas.length === 0) {
+                //        // has to pick one more tile
+                //        gameService.makeMove(gameLogicService.createPickMove($scope.turnIndex, $scope.state));
+                //    } else {
+                //        computerDeltas = deltas;
+                //        computerMovesInProcess = true;
+                //    }
+                //}
+                //
+                //if (computerMovesInProcess === true) {
+                //    if (computerDeltas.length > 0 ) {
+                //        var delta = computerDeltas[0];
+                //        var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
+                //        gameService.makeMove(move);
+                //        computerDeltas.splice(0, 1);
+                //    } else {
+                //        // make a meld move
+                //        gameService.makeMove(gameLogicService.createMeldMove($scope.turnIndex, $scope.state));
+                //        computerMovesInProcess = false;
+                //    }
+                //}
 
-            //var items = gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex);
-            //gameService.makeMove(items[Math.floor(Math.random()*items.length)]);
-            //$scope.debug = "computer picks one tile";
-            //$scope.turnInfo = "Your turn";
-        }
+            }
 
-        $scope.shouldSlowlyAppear = function () {
-            return $scope.activeTile !== undefined;
-        };
+            $scope.shouldSlowlyAppear = function () {
+                return $scope.activeTile !== undefined;
+            };
 
-        /**
-         *
-         * @param params (object) {yourPlayerIndex: (int),
+            /**
+             *
+             * @param params (object) {yourPlayerIndex: (int),
          *                         stateAfterMove: *,
          *                         turnIndexAfterMove: *,
          *                         playersInfo: [{playerId: (int)},{}]}
-         */
-        function updateUI(params) {
+             */
+            function updateUI(params) {
 
-            animationEnded = false;
+                animationEnded = false;
 
-            // initialize move
-            //if (isEmptyObj(params.stateAfterMove)) {
-            if (isEmptyObj(params.stateAfterMove) && !params.stateBeforeMove &&
-                params.turnIndexBeforeMove ===0 &&  params.turnIndexAfterMove === 0) {
-                var playerIndex = 0;
-                var nPlayers = 2;
-                //var nPlayers = params.playersInfo.length;
-                try {
-                    var move = gameLogicService.createInitialMove(playerIndex, nPlayers);
-                    /* let player0 initializes the game. */
-                    params.yourPlayerIndex = 0;
-                    gameService.makeMove(move);
-                } catch (e) {
-                    $log.info(e.message);
-                }
-                return;
-            }
-
-            $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
-            params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn
-            turnIndex = params.turnIndexAfterMove;
-
-            gameEnd = params.turnindexAfterMove === -1;
-            $scope.yourPlayerIndex = params.yourPlayerIndex;
-            $scope.turnIndex = params.turnIndexAfterMove;
-            $scope.state = params.stateAfterMove;
-            $scope.board = params.stateAfterMove.board;
-            $scope.nexttile = params.stateAfterMove.trace.nexttile;
-            $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
-
-            // disable sort feature when empty slots left in board
-            // because sort will reset player hand
-            $scope.sortDisabled = false;
-            for (var i = 0; i < $scope.playerHand.length; i++) {
-                if ($scope.playerHand[i] === -1) {
-                    $scope.sortDisabled = true;
-                    break;
-                }
-            }
-
-            if ($scope.isYourTurn) {
-                //var opponentIndex = 1 - $scope.turnIndex;
-                //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
-                //$scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
-            }
-
-            // Is it the computer's turn?
-            isComputerTurn = $scope.isYourTurn &&
-            params.playersInfo[params.yourPlayerIndex].playerId  === '';
-            if(isComputerTurn) {
-                $scope.isYourTurn = false; // to make sure the UI won't send another move.
-                // Waiting 0.5 seconds to let the move animation finish; if we call aiService
-                // then the animation is paused until the javascript finishes.
-                $timeout(sendComputerMove, 500);
-                $scope.debug = "Computer makes pick move";
-            }
-
-        }
-
-        $scope.boardCellClicked = function(row, col) {
-            $log.info(["Clicked on cell:", row, col]);
-            $scope.debug = "click board cell: (" + row + "," + col + ")";
-            if ( $scope.isYourTurn === false ) {
-                return;
-            }
-            if (row === -1 || col === -1) {
-                return;
-            }
-            try {
-                if ($scope.activeTile === undefined) {
-                    // no tile has been activated
-                    if ($scope.board[row][col] !== -1) {
-                        // clicking a tile to activate it
-                        $scope.activeTile = $scope.board[row][col];
-                        $scope.from = {row: row, col: col};
-                        $scope.debug = "picking Tile" + $scope.activeTile + " (" +
-                        getTileByIndex($scope.activeTile).color +
-                        "," + getTileByIndex($scope.activeTile).score +
-                        " from: (" + row + "," + col + ")";
+                // initialize move
+                //if (isEmptyObj(params.stateAfterMove)) {
+                if (isEmptyObj(params.stateAfterMove) && !params.stateBeforeMove &&
+                    params.turnIndexBeforeMove ===0 &&  params.turnIndexAfterMove === 0) {
+                    var playerIndex = 0;
+                    var nPlayers = 2;
+                    //var nPlayers = params.playersInfo.length;
+                    try {
+                        var move = gameLogicService.createInitialMove(playerIndex, nPlayers);
+                        /* let player0 initializes the game. */
+                        params.yourPlayerIndex = 0;
+                        gameService.makeMove(move);
+                    } catch (e) {
+                        $log.info(e.message);
                     }
-                } else {
-                    $scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
-                    // some tile has been activated before clicking
-                    if ($scope.board[row][col] === -1) {
-                        // clicking an empty position to send tile to
-                        $scope.to = {row: row, col: col};
-                        var delta = {tileIndex: $scope.activeTile, from: $scope.from, to: $scope.to};
-                        $scope.debug = "index: " + delta.tileIndex;
+                    return;
+                }
+
+                $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
+                params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn
+                turnIndex = params.turnIndexAfterMove;
+
+                gameEnd = params.turnindexAfterMove === -1;
+                $scope.yourPlayerIndex = params.yourPlayerIndex;
+                $scope.turnIndex = params.turnIndexAfterMove;
+                $scope.state = params.stateAfterMove;
+                $scope.board = params.stateAfterMove.board;
+                $scope.nexttile = params.stateAfterMove.trace.nexttile;
+                $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
+
+                // disable sort feature when empty slots left in board
+                // because sort will reset player hand
+                $scope.sortDisabled = false;
+                for (var i = 0; i < $scope.playerHand.length; i++) {
+                    if ($scope.playerHand[i] === -1) {
+                        $scope.sortDisabled = true;
+                        break;
+                    }
+                }
+
+                if ($scope.isYourTurn) {
+                    //var opponentIndex = 1 - $scope.turnIndex;
+                    //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
+                    //$scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
+                }
+
+                // Is it the computer's turn?
+                isComputerTurn = $scope.isYourTurn &&
+                params.playersInfo[params.yourPlayerIndex].playerId  === '';
+
+                if(isComputerTurn) {
+                    $scope.isYourTurn = false; // to make sure the UI won't send another move.
+                    // Waiting 0.5 seconds to let the move animation finish; if we call aiService
+                    // then the animation is paused until the javascript finishes.
+                    sendComputerMove();
+
+                    //$timeout(sendComputerMove, 1000);
+                    //$scope.debug = "Computer makes pick move";
+                }
+
+                if (undoAllInProcess && $scope.state.deltas.length === 0) {
+                    undoAllInProcess = false;
+                }
+
+                if (undoAllInProcess && $scope.state.deltas.length !== 0) {
+                    $scope.undoBtnClicked();
+                }
+
+            }
+
+            $scope.boardCellClicked =  function (row, col) {
+                $log.info(["Clicked on cell:", row, col]);
+                $scope.debug = "click board cell: (" + row + "," + col + ")";
+                if ( $scope.isYourTurn === false ) {
+                    return;
+                }
+                if (row === -1 || col === -1) {
+                    return;
+                }
+                try {
+                    if ($scope.activeTile === undefined) {
+                        // no tile has been activated
+                        if ($scope.board[row][col] !== -1) {
+                            // clicking a tile to activate it
+                            $scope.activeTile = $scope.board[row][col];
+                            $scope.from = {row: row, col: col};
+                            $scope.debug = "picking Tile" + $scope.activeTile + " (" +
+                            getTileByIndex($scope.activeTile).color +
+                            "," + getTileByIndex($scope.activeTile).score +
+                            " from: (" + row + "," + col + ")";
+                            clickRow = row;
+                            clickCol = col;
+                        }
+                    } else {
+                        $scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
+                        // some tile has been activated before clicking
+                        if ($scope.board[row][col] === -1) {
+                            // clicking an empty position to send tile to
+                            $scope.to = {row: row, col: col};
+                            var delta = {tileIndex: $scope.activeTile, from: $scope.from, to: $scope.to};
+                            $scope.debug = "index: " + delta.tileIndex;
+                            var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
+                            gameService.makeMove(move);
+                        }
+                        clearActiveTile();
+                    }
+                    // In case the board is not updated
+                    if (!$scope.$$phase) {
+                        $scope.$apply();
+                    }
+                } catch (e) {
+                    clearActiveTile();
+                    $scope.debug = e.message;
+                    $log.info(e);
+                    return false;
+                }
+            };
+
+            /**
+             * click current player area to retrieve tile from board back to hand
+             */
+            $scope.curPlayerAreaClicked = function() {
+                if (!$scope.isYourTurn) {
+                    return;
+                }
+                if ($scope.activeTile !== undefined &&
+                    $scope.from !== undefined &&
+                    $scope.from.row >= 0 && $scope.from.row < $scope.rows) {
+
+                    // if one tile inside board is activated then we are expecting a 'retrieve' move
+                    var from = $scope.from;
+                    try {
+                        var to = {row: $scope.rows + $scope.turnIndex, col: findFirstEmptyColumnInHand($scope.playerHand)};
+                        var delta = {tileIndex: $scope.activeTile, from: from, to: to};
                         var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                         gameService.makeMove(move);
+                    } catch (e) {
+                        $scope.debug = e.message;
                     }
                     clearActiveTile();
                 }
+            };
+
+            function findFirstEmptyColumnInHand(playerHand) {
+                for (var i = 0; i < playerHand.length; i++) {
+                    if (playerHand[i] === -1) {
+                        return i;
+                    }
+                }
+                return -1;
+            }
+
+            $scope.shouldShowTileOnBoard = function (row, col) {
+                // -1 stands for empty position on board
+                return $scope.board !== undefined && $scope.board[row][col] !== -1;
+            };
+
+            $scope.notJoker = function (tileIndex) {
+                var tile = getTileByIndex(tileIndex);
+                return tile !== undefined && tile.color !== 'joker';
+            };
+
+            $scope.isJoker = function(tileIndex) {
+                var tile = getTileByIndex(tileIndex);
+                return tile !== undefined && tile.color === 'joker';
+            };
+
+            $scope.getTileColor = function(tileIndex) {
+                var tile = getTileByIndex(tileIndex);
+                return tile !== undefined ? tile.color : "";
+            };
+
+            $scope.getTileScore = function(tileIndex) {
+                var tile = getTileByIndex(tileIndex);
+                return tile !== undefined ? tile.score : "";
+            };
+
+
+            /** ****************************************
+             *********      Button Controls    *********
+             *******************************************/
+            $scope.pickBtnClicked = function () {
+                if ($scope.isYourTurn) {
+                    try {
+                        var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
+
+                        //var rest = gameLogicService.test($scope.turnIndex, $scope.state);
+                        //$log.info("rest: " + rest);
+
+                        gameService.makeMove(move);
+                        // reset sort
+                        $scope.sortType = "sort";
+                        $scope.debug = "pick one tile";
+                    } catch (e) {
+                        $log.info(e.stack);
+                        $scope.debug = e.message;
+                    }
+                }
+            };
+
+            $scope.meldBtnClicked = function () {
+                if ($scope.isYourTurn) {
+                    try {
+                        var move = gameLogicService.createMeldMove($scope.turnIndex, $scope.state);
+                        gameService.makeMove(move);
+                        // reset sort
+                        $scope.sortType = "sort";
+                    } catch (e) {
+                        $scope.debug = e.message;
+                    }
+                }
+            };
+
+            $scope.undoBtnClicked = function () {
+                if ($scope.isYourTurn) {
+                    try {
+                        var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
+                        gameService.makeMove(undo);
+                    } catch (e) {
+                    }
+                }
+            };
+
+            $scope.undoAllBtnClicked = function () {
+                if ($scope.isYourTurn) {
+                    undoAllInProcess = true;
+                    $scope.undoBtnClicked();
+                }
+            };
+
+            $scope.sortType = "sort";
+            $scope.setSortTypeBtnClicked = function () {
+                if (gameEnd) {
+                    return;
+                }
+                var type = $scope.sortType;
+                //var playerRow = getCurrentPlayerRow();
+                var nextType;
+                try {
+                    switch (type) {
+                        case "sort":
+                        case "set":
+                            type = "set";
+                            nextType = "123";
+                            break;
+                        case "123":
+                            type = "score";
+                            nextType = "color";
+                            break;
+                        case "color":
+                            nextType = "set";
+                            break;
+                        default:
+                            nextType = "123";
+                    }
+                    var move = gameLogicService.createSortMove($scope.turnIndex, $scope.state, type);
+                    gameService.makeMove(move);
+                    $scope.sortType = nextType;
+                } catch (e) {
+                    $log.info(e);
+                }
+            };
+
+            $scope.getTileDataValue = function(tileIndex) {
+                var dataValue = "";
+                var tile = getTileByIndex(tileIndex);
+                if ( tile !== undefined) {
+                    dataValue = tile.color + " " + tile.score;
+                }
+                return dataValue;
+            };
+
+            $scope.canDrag = function (tileIndex) {
+                return !!($scope.isYourTurn && getTileByIndex(tileIndex) !== undefined);
+            };
+
+
+            //TODO:
+            //function sortTiles() {
+            //}
+
+            /* ================= Helper Functions =================== */
+            function isEmptyObj(obj) {
+
+                // null and undefined are "empty"
+                if (obj === null) {
+                    return true;
+                }
+
+                // Assume if it has a length property with a non-zero value
+                // that that property is correct.
+                if (obj.length > 0)    {
+                    return false;
+                }
+                if (obj.length === 0)  {
+                    return true;
+                }
+
+                // Otherwise, does it have any properties of its own?
+                // Note that this doesn't handle
+                // toString and valueOf enumeration bugs in IE < 9
+                for (var key in obj) {
+                    if (hasOwnProperty.call(obj, key)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            /**
+             * Returns tile object if tileIndex is valid and tile exists.
+             * @param tileIndex
+             * @returns {*} {score: int, color: string}
+             */
+            function getTileByIndex(tileIndex) {
                 // In case the board is not updated
                 if (!$scope.$$phase) {
                     $scope.$apply();
                 }
-            } catch (e) {
-                clearActiveTile();
-                $scope.debug = e.message;
-                $log.info(e);
-                return false;
-            }
-        };
-
-        /**
-         * click current player area to retrieve tile from board back to hand
-         */
-        $scope.curPlayerAreaClicked = function() {
-            if (!$scope.isYourTurn) {
-                return;
-            }
-            if ($scope.activeTile !== undefined &&
-                $scope.from !== undefined &&
-                $scope.from.row >= 0 && $scope.from.row < $scope.rows) {
-
-                // if one tile inside board is activated then we are expecting a 'retrieve' move
-                var from = $scope.from;
-                try {
-                    var to = {row: $scope.rows + $scope.turnIndex, col: findFirstEmptyColumnInHand($scope.playerHand)};
-                    var delta = {tileIndex: $scope.activeTile, from: from, to: to};
-                    var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
-                    gameService.makeMove(move);
-                } catch (e) {
-                    $scope.debug = e.message;
+                if (tileIndex !== undefined && $scope.state['tile' + tileIndex] !== undefined) {
+                    return $scope.state['tile' + tileIndex];
                 }
-                clearActiveTile();
+                return undefined;
             }
-        };
 
-        function findFirstEmptyColumnInHand(playerHand) {
-            for (var i = 0; i < playerHand.length; i++) {
-                if (playerHand[i] === -1) {
-                    return i;
+            $scope.getTileByIndex = getTileByIndex;
+
+            function clearActiveTile() {
+                $scope.activeTile = undefined;
+                $scope.activeOrigin = undefined;
+                $scope.from = undefined;
+                $scope.to = undefined;
+            }
+
+            //$scope.start = 0;
+            //$scope.getRangeNumber = function(from) {
+            //
+            //    if (!$scope.$$phase) {
+            //        $scope.$apply();
+            //    }
+            //
+            //    var result = [];
+            //    var start = from >= 0 ? from : 0;
+            //    for (var i = start; i < 14; i++) {
+            //        result.push(i);
+            //    }
+            //    return result;
+            //};
+
+            //$scope.tileRange = [0,1,2,3,4,5,6];
+            //var range = 6;
+            //
+            //$scope.previous = function() {
+            //    var start = $scope.tileRange[0] - range;
+            //    if (start >= 0) {
+            //        var result = [];
+            //        for (var i = 0; i < range; i++) {
+            //            result.push(start + i);
+            //        }
+            //        $scope.tileRange = result;
+            //    }
+            //};
+            //$scope.nextPage = function() {
+            //    if ($scope.tileRange.length < range) {
+            //        //  no more tiles to show
+            //        return;
+            //    }
+            //    var start = $scope.tileRange[0] + range;
+            //    var result = [];
+            //    for (var i = 0; i < range; i++) {
+            //        if ((start + i) >= $scope.board[6 + $scope.turnIndex].length) {
+            //            break;
+            //        }
+            //        result.push(start + i);
+            //    }
+            //    $scope.tileRange = result;
+            //};
+
+            $scope.getHandTilesRange = function() {
+                if ($scope.board === undefined) {
+                    return [];
                 }
-            }
-            return -1;
-        }
-
-        $scope.shouldShowTileOnBoard = function (row, col) {
-            // -1 stands for empty position on board
-            return $scope.board !== undefined && $scope.board[row][col] !== -1;
-        };
-
-        $scope.notJoker = function (tileIndex) {
-            var tile = getTileByIndex(tileIndex);
-            return tile !== undefined && tile.color !== 'joker';
-        };
-
-        $scope.isJoker = function(tileIndex) {
-            var tile = getTileByIndex(tileIndex);
-            return tile !== undefined && tile.color === 'joker';
-        };
-
-        $scope.getTileColor = function(tileIndex) {
-            var tile = getTileByIndex(tileIndex);
-            return tile !== undefined ? tile.color : "";
-        };
-
-        $scope.getTileScore = function(tileIndex) {
-            var tile = getTileByIndex(tileIndex);
-            return tile !== undefined ? tile.score : "";
-        };
-
-
-        /** ****************************************
-         *********      Button Controls    *********
-         *******************************************/
-        $scope.pickBtnClicked = function() {
-            if ($scope.isYourTurn) {
-                try {
-                    var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
-                    gameService.makeMove(move);
-                    // reset sort
-                    $scope.sortType = "sort";
-                    $scope.debug = "pick one tile";
-                } catch (e) {
-                    $scope.debug = e.message;
+                var len = $scope.board[6 + $scope.turnIndex].length;
+                var result = [];
+                for (var i = 0; i < len; i++) {
+                    result.push(i);
                 }
-            }
-        };
+                return result;
+            };
 
-        $scope.meldBtnClicked = function() {
-            if ($scope.isYourTurn) {
-                try {
-                    var move = gameLogicService.createMeldMove($scope.turnIndex, $scope.state);
-                    gameService.makeMove(move);
-                    // reset sort
-                    $scope.sortType = "sort";
-                } catch (e) {
-                    $scope.debug = e.message;
-                }
-            }
-        };
+            //function getCurrentPlayerRow () {
+            //    return gameBoardRows + $scope.turnIndex;
+            //}
 
-        $scope.undoBtnClicked = function () {
-            if ($scope.isYourTurn) {
-                try {
-                    var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
-                    gameService.makeMove(undo);
-                    //var deltas = $scope.state.deltas;
-                    //var length = deltas.length;
-                    //for (var i = length - 1; i >= 0; i--) {
-                    //    var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
-                    //    gameService.makeMove(undo);
-                    //    // disable sort function during undo process
-                    //    $scope.sortDisabled= true;
-                    //}
-                    $scope.sortType = "sort";
-                } catch (e) {
-                }
-            }
-        };
-
-        $scope.undoAllBtnClicked = function () {
-            if ($scope.isYourTurn) {
-                try {
-                    //var undos = gameLogicService.createUndoAllMove($scope.turnIndex, $scope.state);
-                    //gameService.makeMove(undos);
-                    //$scope.sortType = "sort";
-                } catch (e) {
-                }
-            }
-        };
-
-        $scope.sortType = "sort";
-        $scope.setSortTypeBtnClicked = function () {
-            if (gameEnd) {
-                return;
-            }
-            var type = $scope.sortType;
-            var playerRow = getCurrentPlayerRow();
-            var playerHand = $scope.board[playerRow];
-            var nextType;
-            try {
-                switch (type) {
-                    case "set":
-                        nextType = "123";
-                        break;
-                    case "sort":
-                    case "123":
-                        type = "score";
-                        nextType = "color";
-                        break;
-                    case "color":
-                        nextType = "set";
-                        break;
-                    default:
-                        nextType = "123";
-                }
-                var move = gameLogicService.createSortMove($scope.turnIndex, $scope.state, type);
-                gameService.makeMove(move);
-                $scope.sortType = nextType;
-            } catch (e) {
-                $log.info(e);
-            }
-        };
-
-        $scope.getTileDataValue = function(tileIndex) {
-            var dataValue = "";
-            var tile = getTileByIndex(tileIndex);
-            if ( tile !== undefined) {
-                dataValue = tile.color + " " + tile.score;
-            }
-            return dataValue;
-        };
-
-        $scope.canDrag = function (tileIndex) {
-            return !!($scope.isYourTurn && getTileByIndex(tileIndex) !== undefined);
-        };
-
-
-        //TODO:
-        //function sortTiles() {
-        //}
-
-        /* ================= Helper Functions =================== */
-        function isEmptyObj(obj) {
-
-            // null and undefined are "empty"
-            if (obj === null) {
-                return true;
+            // to allow drag-n-drop move
+            if (allowDragAndDrop) {
+                window.handleDragEvent = handleDragEvent;
             }
 
-            // Assume if it has a length property with a non-zero value
-            // that that property is correct.
-            if (obj.length > 0)    {
-                return false;
-            }
-            if (obj.length === 0)  {
-                return true;
-            }
+            gameService.setGame( {
+                gameDeveloperEmail: "jz1371@nyu.edu",
+                minNumberOfPlayers: 2,
+                //maxNumberOfPlayers: 4, // if bug in stateService fixed
+                maxNumberOfPlayers: 2,
+                isMoveOk: gameLogicService.isMoveOk,
+                updateUI: updateUI
+            });
 
-            // Otherwise, does it have any properties of its own?
-            // Note that this doesn't handle
-            // toString and valueOf enumeration bugs in IE < 9
-            for (var key in obj) {
-                if (hasOwnProperty.call(obj, key)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /**
-         * Returns tile object if tileIndex is valid and tile exists.
-         * @param tileIndex
-         * @returns {*} {score: int, color: string}
-         */
-        function getTileByIndex(tileIndex) {
-            // In case the board is not updated
-            if (!$scope.$$phase) {
-                $scope.$apply();
-            }
-            if (tileIndex !== undefined && $scope.state['tile' + tileIndex] !== undefined) {
-                return $scope.state['tile' + tileIndex];
-            }
-            return undefined;
-        }
-
-        $scope.getTileByIndex = getTileByIndex;
-
-        function clearActiveTile() {
-            $scope.activeTile = undefined;
-            $scope.activeOrigin = undefined;
-            $scope.from = undefined;
-            $scope.to = undefined;
-        }
-
-        //$scope.start = 0;
-        //$scope.getRangeNumber = function(from) {
-        //
-        //    if (!$scope.$$phase) {
-        //        $scope.$apply();
-        //    }
-        //
-        //    var result = [];
-        //    var start = from >= 0 ? from : 0;
-        //    for (var i = start; i < 14; i++) {
-        //        result.push(i);
-        //    }
-        //    return result;
-        //};
-
-        //$scope.tileRange = [0,1,2,3,4,5,6];
-        //var range = 6;
-        //
-        //$scope.previous = function() {
-        //    var start = $scope.tileRange[0] - range;
-        //    if (start >= 0) {
-        //        var result = [];
-        //        for (var i = 0; i < range; i++) {
-        //            result.push(start + i);
-        //        }
-        //        $scope.tileRange = result;
-        //    }
-        //};
-        //$scope.nextPage = function() {
-        //    if ($scope.tileRange.length < range) {
-        //        //  no more tiles to show
-        //        return;
-        //    }
-        //    var start = $scope.tileRange[0] + range;
-        //    var result = [];
-        //    for (var i = 0; i < range; i++) {
-        //        if ((start + i) >= $scope.board[6 + $scope.turnIndex].length) {
-        //            break;
-        //        }
-        //        result.push(start + i);
-        //    }
-        //    $scope.tileRange = result;
-        //};
-
-        $scope.getHandTilesRange = function() {
-            if ($scope.board === undefined) {
-                return [];
-            }
-            var len = $scope.board[6 + $scope.turnIndex].length;
-            var result = [];
-            for (var i = 0; i < len; i++) {
-                result.push(i);
-            }
-            return result;
-        };
-
-
-        function getCurrentPlayerRow () {
-            return gameBoardRows + $scope.turnIndex;
-        }
-
-        // to allow drag-n-drop move
-        if (allowDragAndDrop) {
-            window.handleDragEvent = handleDragEvent;
-        }
-
-        gameService.setGame( {
-            gameDeveloperEmail: "jz1371@nyu.edu",
-            minNumberOfPlayers: 2,
-            //maxNumberOfPlayers: 4, // if bug in stateService fixed
-            maxNumberOfPlayers: 2,
-            isMoveOk: gameLogicService.isMoveOk,
-            updateUI: updateUI
-        });
-
-    }]);
+        }]);
 }());
 ;/**
  * File: app/js/filters/filters.js
@@ -785,6 +848,81 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
 }());
 
+;/**
+ * File: app/js/services/gameAIService.js
+ * ---------------------------------------
+ * @author: Jingxin Zhu
+ * @date  : 2015.04.05
+ * ---------------------------------------
+ */
+
+(function () {
+
+    'use strict';
+
+    angular.module('myApp').factory('gameAIService', [
+        'gameLogicService', function(gameLogicService){
+
+            function createComputerMove(playerIndex, state) {
+
+                var moves = gameLogicService.getPossibleMoves(playerIndex, state);
+
+                var bestMove = getBestMoveByScore(moves, playerIndex, state);
+
+                return moves[bestMove];
+            }
+
+            function getBestMoveByScore(moves, playerIndex, state) {
+                var maxScore = 0;
+                var best = 0;
+                if (moves.length === 1) {
+                    // only one move possible, then make that move
+                    return 0;
+                } else {
+                    maxScore = getScore(moves[0], playerIndex, state);
+                    for (var i = 1; i < moves.length; i++) {
+                        var score = getScore(moves[i], playerIndex, state);
+                        if (score > maxScore) {
+                            best = i;
+                            maxScore = score;
+                        }
+                    }
+
+                }
+                return best;
+            }
+
+            function getScore(move, playerIndex, state) {
+                var type = move[1].set.value;
+                if (type === 'PICK') {
+                    return 0;
+                } else {
+                    var deltas = move[3].set.value;
+                    var tilesSent = gameLogicService.getTilesSentToBoardThisTurn(deltas, 6 + playerIndex);
+                    var score = 0;
+                    for (var i = 0; i < tilesSent.length; i++) {
+                        var tile = state["tile" + tilesSent[i]];
+                        if (tile.color !== 'joker') {
+                            score += tile.score;
+                        } else {
+                            if (state.trace.initial[playerIndex] === true) {
+                                score += 30;
+                            } else {
+                                // joker's score is 0 for player has not finished initial meld
+                                score += 0;
+                            }
+                        }
+                    }
+                    return score;
+                }
+            }
+
+            return {
+                createComputerMove: createComputerMove
+            };
+
+        }]);
+}());
 ;/**
  * File: gameLogicService.js
  * ----------------------------------------------------------
@@ -823,11 +961,11 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
      * 2. deltas: 1D array, recording the move history in current turn.
      *      Each element is like: {tileIndex:*, from: {row: * ,col: * }, to: {row: * ,col: *} }
      *
-     * 3. type:  'INIT' / "MOVE" / "PICK" / "MELD" / "UNDO"
+     * 3. type:  'INIT' / "MOVE" / "PICK" / "MELD" / "UNDO" / "SORT"
      * 
-     * 4. trace: {nplayers: , intial: [], nexttile:  * }
+     * 4. trace: {nplayers: *, intial: [], nexttile: *}
      *
-     * 5. tiles: array of tile, each tile is {tileIndex: {score: , color: }}
+     * 5. tiles: array of tile, each tile is {tileIndex: {score: *, color: 'red'/'black'/'orange'/'blue'/'joker'}}
      * 
      *---------------------------------------------------------------------------------- 
      *
@@ -888,13 +1026,14 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                 );
             }
             var expectedMove;
+            var deltas;
             switch (moveType) {
                 case "INIT":
                     var nPlayers = actualMove[2].set.value.nplayers;
                     expectedMove = getInitialMove(playerIndex, nPlayers);
                     break;
                 case "MOVE":
-                    var deltas = actualMove[3].set.value;
+                    deltas = actualMove[3].set.value;
                     var delta = deltas[deltas.length - 1];
                     expectedMove = getMoveMove(playerIndex, stateBefore, delta);
                     break;
@@ -911,8 +1050,9 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                 case "UNDO":
                     expectedMove = getSingleUndoMove(playerIndex, stateBefore);
                     break;
-                case "UNDOALL":
-                    expectedMove = getUndoAllMove(playerIndex, stateBefore);
+                case "COMB":
+                    deltas = actualMove[3].set.value;
+                    expectedMove = getCombinedMove(playerIndex, stateBefore, deltas);
                     break;
                 default:
                     throw new Error("Unexpected move");
@@ -929,9 +1069,9 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
          */
         function getInitialMove(playerIndex, nPlayers) {
             // 1. make sure player0 is initializing the game.
-            check(playerIndex === 0,
-                "INIT: player" + playerIndex + " is trying to move, but only player0 can play the initial move."
-            );
+            //check(playerIndex === 0,
+            //    "INIT: player" + playerIndex + " is trying to move, but only player0 can play the initial move."
+            //);
 
             // 2. make sure 2 - 4 players are playing the game.
             check(nPlayers <= 4 && nPlayers >= 0,
@@ -1099,11 +1239,15 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             var traceAfter = angular.copy(stateBefore.trace);
             traceAfter.nexttile = tileToPick + 1;
 
+            var firstOperation =  {setTurn: {turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBefore.trace.nplayers)}};
+            if (traceAfter.nexttile === 106) {
+                firstOperation = {endMatch: {endMatchScores: getEndScores(-1, stateBefore)}};
+            }
             return [
-                {setTurn: {turnIndex: getPlayerIndexOfNextTurn(playerIndex, stateBefore.trace.nplayers)}},
+                firstOperation,
                 {set: {key: 'type', value: "PICK"}},
                 {set: {key: 'board', value: boardAfter}},
-                //{set: {key: 'deltas', value: []}},     // pick move will clear delta history
+                {set: {key: 'deltas', value: []}},     // pick move will clear delta history
                 {set: {key: 'trace', value: traceAfter}},
                 {setVisibility: {key: 'tile' + tileToPick, visibleToPlayerIndices: [playerIndex]}}
             ];
@@ -1125,7 +1269,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             check ( tilesSentToBoardThisTurn.length !== 0,
                 "[MELD] you cannot meld since no tiles sent to board in this turn"
             );
-
 
             // 1. check all sets in board are valid sets (runs or groups)
             check (isMeldOk(stateBefore, board, playerIndex ,stateBefore.trace.initial[playerIndex]),
@@ -1183,7 +1326,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                     boardAfter[getPlayerRow(playerIndex)] = findAllSetInHand(playerHand, stateBefore);
                     break;
                 default :
-                    throw new error("Unexpected sort type: " + sortType);
+                    throw new Error("Unexpected sort type: " + sortType);
             }
             return [
                 {setTurn: {turnIndex: playerIndex}},
@@ -1194,6 +1337,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
         }
 
         /**
+         *
          * Undo last move by player in current turn
          * @param playerIndex
          * @param stateBefore
@@ -1208,45 +1352,308 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return moveUndo;
         }
 
+        function getCombinedMove(playerIndex, stateBefore, deltas) {
 
-        //TODO:
-        function getUndoAllMove(playerIndex, stateBefore) {
-            var deltas = stateBefore.deltas;
-            for (var i = deltas.length - 1; i >= 0; i--) {
+            check(deltas.length > 0, "no move to make");
+
+            var board = angular.copy(stateBefore.board);
+
+            for (var i = 0; i < deltas.length; i++) {
                 var delta = deltas[i];
-                // reverse the last delta, and then make that move
-                var deltaUndo = {tileIndex: delta.tileIndex , from: delta.to, to: delta.from};
-                var moveUndo = getMoveMove(playerIndex, stateBefore, deltaUndo, true);
+                checkDelta(delta, board);
+                board[delta.from.row][delta.from.col] = -1;
+                board[delta.to.row][delta.to.col] = delta.tileIndex;
             }
-            moveUndo[1].set.value = "UNDOALL";
-            return [
-                {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
-                {set: {key: 'type', value: "UNDOALL"}},
-                {set: {key: 'board', value: boardAfter}},
-                {set: {key: 'deltas', value: deltasAfter}},
-                {setVisibility: {key: 'tile' + tileToMove, visibleToPlayerIndices: visibility}}
+
+            var traceAfter = angular.copy(stateBefore.trace);
+            traceAfter.initial[playerIndex] = true;
+            //console.log("board: " + board);
+            var move = [
+                {setTurn: {turnIndex: playerIndex}},
+                {set: {key: 'type', value: "COMB"}},
+                {set: {key: 'board', value: board}},
+                {set: {key: 'deltas', value: deltas}},
+                {set: {key: 'trace', value: traceAfter}}
             ];
+            return move;
         }
 
-        /**
-         *
-         * @param stateBefore
-         * @param playerIndex
-         * @returns {Array}
-         */
-        function getPossibleMoves(stateBefore,  playerIndex) {
+        function checkDelta(delta, board) {
+            check(delta.tileIndex !== undefined && delta.from !== undefined, delta.to !== undefined,
+                "missing part for delta" );
+
+            check (board[delta.from.row][delta.from.col] === delta.tileIndex,
+                "tile" + delta.tileIndex + " is not at board[" + delta.from.row + "][" + delta.from.col + "]");
+
+            check (board[delta.to.row][delta.to.col] === -1, "position is occupied");
+
+        }
+
+
+        function getPossibleMoves(playerIndex, stateBefore) {
             var possibleMoves = [];
-            try {
-                // "PICK" is possible
-                possibleMoves.push(getPickMove(playerIndex, stateBefore));
+            possibleMoves.push(getPickMove(playerIndex, stateBefore));
 
-                // can meld from player's own hand?
+            var computerDeltas = [];
+            //var playerRow = getPlayerRow(playerIndex);
+
+            // 1. find all sets in hand (group > set)
+            var playerHand = angular.copy(stateBefore.board[getPlayerRow(playerIndex)]);
+            var hand = angular.copy(playerHand);
+
+            var findResultOfGroupFirst = findSetsInHand(playerHand, stateBefore, "groupFirst");
+            var sets = findResultOfGroupFirst.sets;
+
+            var ableToInitial = true;
+            if (stateBefore.trace.initial[playerIndex] === false) {
+                if (getScore(playerIndex, sets, stateBefore) < 30) {
+                    ableToInitial = false;
+                }
+            }
+
+            //var remains = findResultOfGroupFirst.remains;
+
+            //var findResultOfRunFirst = findSetsInHand(playerHand, stateBefore, "runFirst");
+            //var sets2 = findResultOfRunFirst.sets;
+            //var remains2 = findResultOfRunFirst.remains;
+            //console.log("sets1: " + sets);
+            //console.log("sets2: " + sets2);
+
+            // 2. for rest tiles, try to append them using tiles in board
+            var board = angular.copy(stateBefore.board);
+
+            //if (stateBefore.trace.initial[playerIndex] === true) {
+            //    // only able to append tile to other tiles on board when finish initial meld
+            //    var expectingTiles = getExpectingTiles(stateBefore);
+            //    console.log("expect: " + printObj(expectingTiles));
+            //
+            //    if (expectingTiles.length > 0) {
+            //        for (var i = 0 ; i < remains.length; i++) {
+            //            var tileIndex = remains[i];
+            //            var tile = findTileFromGameStateByIndex(remains[i], stateBefore);
+            //            for (var j = 0; j < expectingTiles; j++) {
+            //                if (angular.equals(tile, expectingTiles[j].tile)) {
+            //                    var delta = {tileIndex: remains[i],
+            //                        from: {row: playerRow, col: hand.indexOf(tileIndex)},
+            //                        to: expectingTiles[j].pos
+            //                    };
+            //                    computerDeltas.push(delta);
+            //                    board[delta.to.row][delta.to.col] = delta.tileIndex;
+            //                    board[delta.from.row][delta.from.col] = -1;
+            //                    break;
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+
+            // 3. find proper position to place sets
+            var start = {row: 0, col: 0};
+            for (var i = 0; i < sets.length; i++) {
+                var emptySlot = getNextEmptySlotInBoard(board, start, sets[i].length);
+                if (emptySlot === null) {
+                    break;
+                }
+                for (var j = 0; j < sets[i].length; j++) {
+                    var delta = {tileIndex: sets[i][j],
+                        from: {row: getPlayerRow(playerIndex), col: hand.indexOf(sets[i][j])},
+                        to: {row: emptySlot.row, col: emptySlot.col + j}
+                    };
+                    //console.log("aa: " + sets[i][j] + " , "  + hand);
+                    computerDeltas.push(delta);
+                    board[delta.from.row][delta.from.to] = -1;
+                    board[delta.to.row][delta.to.col] = delta.tileIndex;
+                }
+                start = {row: emptySlot.row, col: emptySlot.col + sets[i].length};
+            }
+            //console.dir(computerDeltas);
+            //console.log("here" + JSON.stringify(computerDeltas, null, 4));
 
 
-            } catch (e) {
+            if (ableToInitial && computerDeltas.length !== 0) {
+
+                var move = getCombinedMove(playerIndex, stateBefore, computerDeltas);
+                possibleMoves.push(move);
 
             }
+
             return possibleMoves;
+
+        }
+
+        //function getExpectingTiles (gameState) {
+        //    var expecting = [];
+        //    var board = gameState.board;
+        //    var setsOnBoard = getAllSetsOnBoard(board, gameState);
+        //
+        //    // check each set
+        //    for (var i = 0; i < setsOnBoard.length; i++) {
+        //        var tileSet = setsOnBoard[i].tileSet;
+        //        var start = setsOnBoard[i].start;
+        //        //console.log("here: " + printObj(tileSet));
+        //        //console.log("at: " + printObj(start) );
+        //
+        //        //TODO: deal with set that has joker inside
+        //        var hasJoker = false;
+        //        for (var j = 0; j < tileSet.length; j++) {
+        //            if (tileSet[j].color === 'joker') {
+        //                hasJoker = true;
+        //            }
+        //        }
+        //
+        //        //TODO: let computer rearrange tiles on board
+        //        if (hasJoker === false) {
+        //            var colToSend;
+        //            if (tileSet[0].color === tileSet[1].color) {
+        //                // expecting a tile inserted into run
+        //                colToSend = start.col + tileSet.length;
+        //                var highScore = tileSet[tileSet.length - 1].score;
+        //                if (highScore < 13 &&
+        //                    colToSend < getGameBoardCols() && colToSend + 1 < getGameBoardCols() &&
+        //                        board[start.row][colToSend] === -1 && board[start.row][colToSend + 1] === -1
+        //                ) {
+        //                    expecting.push({tile: {score: highScore + 1, color: tileSet[0].color}, pos: {row: start.row, col: colToSend}});
+        //                }
+        //                var lowScore = tileSet[0].score;
+        //                if (lowScore > 1 &&
+        //                        colToSend >= 0 && colToSend - 1 >= 0 &&
+        //                        board[start.row][colToSend] === -1 && board[start.row][colToSend - 1] === -1
+        //                ) {
+        //                    expecting.push({tile: {score: lowScore - 1, color: tileSet[0].color, pos: {row: start.row, col: colToSend}}});
+        //                }
+        //
+        //            } else {
+        //                // expecting a tile inserted into group
+        //                if (tileSet.length === 3) {
+        //                    var colors = ["black", "red", "blue", "orange"];
+        //                    for (var ii = 0; ii < 3; ii++) {
+        //                        var index = colors.indexOf(tileSet[i].color);
+        //                        if (index !== -1) {
+        //                            colors.splice(index, 1);
+        //                        }
+        //                    }
+        //                    colToSend = start.col + tileSet.length;
+        //                    if ( colToSend < getGameBoardCols() && colToSend + 1 < getGameBoardCols() &&
+        //                        board[start.row][colToSend] === -1 && board[start.row][colToSend + 1] === -1
+        //                    ) {
+        //                        expecting.push({
+        //                            tile: {score: tileSet[0].score, color: colors[0]},
+        //                            pos: {row: start.row, col: colToSend}
+        //                        });
+        //                    }
+        //                }
+        //
+        //            }
+        //        }
+        //
+        //    }
+        //    return expecting;
+        //
+        //}
+
+        //function findTileFromGameStateByIndex(tileIndex, gameState) {
+        //    check (gameState["tile" + tileIndex] !== undefined, "undefined tile");
+        //    return gameState["tile" + tileIndex];
+        //}
+
+        function getScore(playerIndex, sets, gameState) {
+            var score = 0;
+            for (var i = 0; i < sets.length; i++) {
+                for (var j = 0; j < sets[i].length; j++) {
+                    var tileIndex = sets[i][j];
+                    var tile = gameState["tile" + tileIndex];
+                    // joker's score in initial meld is 0
+                    if (tile.color !== "joker") {
+                        score += tile.score;
+                    }
+                }
+            }
+            return score;
+        }
+
+        function getNextEmptySlotInBoard(board, start, slot_size) {
+            if (start.row > getGameBoardRows() ) {
+                return null;
+            }
+            var row = start.row;
+            var col = start.col;
+            var emptyCount = 0;
+            for (var r = row; r < getGameBoardRows(); r++) {
+                var colStart = (r === row) ? col : 0;
+                for (var c = colStart; c < getGameBoardCols(); c++) {
+                    if (board[r][c] === -1) {
+                        emptyCount = 0;
+
+                        for (var i = c; i < getGameBoardCols(); i++) {
+                            if (board[r][i] !== -1) {
+                                c = i + 1;
+                                break;
+                            }
+                            emptyCount++;
+                            if (c === 0 && emptyCount > slot_size) {
+                                // need one empty cell on right side to separate with next
+                                return {row: r, col: 0};
+                            }
+                            if (c !== 0 && emptyCount > slot_size + 1) {
+                                // need one empty cell on both left side and right side
+                                return {row: r, col:  c + 1};
+                            }
+                            if (i === getGameBoardCols() - 1 && emptyCount > slot_size) {
+                                // need one empty cell on left side to separate set originally on left side
+                                return {row: r, col: c + 1};
+                            }
+                        }
+                        // continue in this row
+                    }
+                }
+            }
+            return null;
+        }
+
+        function findSetsInHand(tiles, state, option) {
+            var remains = tiles;
+            var sets = [];
+            var groups = [];
+            var runs = [];
+            if (option === "groupFirst") {
+                groups = findAllGroups(tiles, state);
+                if (groups.length !== 0) {
+                    // group found in hand
+                    remains = getRemainTilesFromSets(tiles, groups);
+                    sets = sets.concat(groups);
+                }
+                runs = findAllRuns(remains, state);
+                if (runs.length !== 0) {
+                    sets = sets.concat(runs);
+                    remains = getRemainTilesFromSets(remains, runs);
+                }
+            } else {
+                // "runFirst" option
+                runs = findAllRuns(tiles, state);
+                if (runs.length !== 0) {
+                    remains = getRemainTilesFromSets(tiles, runs);
+                    sets = sets.concat(runs);
+                }
+                groups = findAllGroups(remains, state);
+                if (groups.length !== 0) {
+                    sets = sets.concat(groups);
+                    remains = getRemainTilesFromSets(remains, groups);
+                }
+            }
+            return {sets: sets, remains: remains};
+        }
+
+        function getRemainTilesFromSets(tiles, sets) {
+            var result = angular.copy(tiles);
+            for (var i = 0; i < sets.length; i++) {
+                for (var j = 0; j < sets[i].length; j++) {
+                    var index = result.indexOf(sets[i][j]);
+                    if (index !== -1) {
+                        result.splice(index, 1);
+                    }
+                }
+            }
+            return result;
         }
 
         /** ******************************************************
@@ -1272,7 +1679,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
         /**
          * gets the player's index of next turn.
-         * 
+         *
          * @param playerIndex
          * @param nPlayers number of players in current game.
          * @returns {number} index of next turn.
@@ -1507,29 +1914,35 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
          */
         function getEndScores(winnerIndex, state) {
             var result = [];
-            var scoresFromAllLosers = 0;
-            var nPlayers = state.nplayers;
-            for (var i = 0; i < nPlayers; i++) {
-                // calculating score for each player who is not winner
-                if (i !== winnerIndex) {
-                    var tilesRemaining = state["player" + i].tiles;
-                    var score = 0;
-                    for (var j = 0; j < tilesRemaining.length; j++) {
-                        // adding each tile's score
-                        var tile = state["tile" + tilesRemaining[j]];
-                        if (tile.color === 'joker') {
-                            // joker tile's score is 30
-                            score -= 30;
-                        } else {
-                            score -= tile.score;
-                        }
-                    }
-                    result[i] = score;
-                    scoresFromAllLosers += score;
+            var nPlayers = state.trace.nplayers;
+            if (winnerIndex === -1 ) {
+                for (var ii = 0; ii < nPlayers; ii++ ) {
+                    result.push(0);
                 }
+            } else {
+                var scoresFromAllLosers = 0;
+                for (var i = 0; i < nPlayers; i++) {
+                    // calculating score for each player who is not winner
+                    if (i !== winnerIndex) {
+                        var tilesRemaining = state.board[getPlayerRow(i)];
+                        var score = 0;
+                        for (var j = 0; j < tilesRemaining.length; j++) {
+                            // adding each tile's score
+                            var tile = state["tile" + tilesRemaining[j]];
+                            if (tile.color === 'joker') {
+                                // joker tile's score is 30
+                                score -= 30;
+                            } else {
+                                score -= tile.score;
+                            }
+                        }
+                        result[i] = score;
+                        scoresFromAllLosers += score;
+                    }
+                }
+                // winner score is all scores from losers
+                result[winnerIndex] = - scoresFromAllLosers;
             }
-            // winner score is all scores from losers
-            result[winnerIndex] = - scoresFromAllLosers;
             return result;
         }
 
@@ -1564,6 +1977,35 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return true;
         }
 
+        //function getAllSetsOnBoard(board, gameState) {
+        //    var setsOnBoard = [];
+        //    for (var row = 0; row < getGameBoardRows(); row++) {
+        //
+        //        var tileSet = [];
+        //        for (var col  = 0; col < getGameBoardCols(); col++) {
+        //            var tileIndex = board[row][col];
+        //            if (tileIndex === -1) {
+        //                // current set ends
+        //                if (tileSet.length !== 0) {
+        //                    var obj = {tileSet: tileSet, start: {row: row, col: col - tileSet.length}};
+        //                    setsOnBoard.push(obj);
+        //                    tileSet = [];
+        //                }
+        //            } else {
+        //                check(tileIndex >= 0 && tileIndex < 106,
+        //                    "tileIndex: " + tileIndex
+        //                );
+        //                tileSet.push(findTileFromGameStateByIndex(tileIndex, gameState));
+        //            }
+        //        }
+        //        // in case last tileSet ends at last element of row
+        //        if (tileSet.length !== 0) {
+        //            setsOnBoard.push({tileSet: tileSet, start: {row: row, col: col - tileSet.length}});
+        //        }
+        //    }
+        //    return setsOnBoard;
+        //}
+
         /**
          * gets the score for player's initial meld.
          * In initial meld, only sets contain no tiles that from opponents can be calculated,
@@ -1595,7 +2037,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             }
             return score;
         }
-
 
         /**
          * check wether game is over.
@@ -1673,9 +2114,9 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return 6;
         }
 
-        //function getGameBoardCols() {
-        //    return 18;
-        //}
+        function getGameBoardCols() {
+            return 18;
+        }
 
         /**
          *
@@ -1703,9 +2144,15 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return result;
         }
 
+        /**
+         *
+         * @param playerHand
+         * @param state
+         * @returns {Array}
+         */
         function findAllSetInHand(playerHand, state) {
             if (playerHand.length === 0) {
-                return;
+                return playerHand;
             }
             // try to find all groups in hand
             var hand = angular.copy(playerHand);
@@ -1720,26 +2167,32 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             }
             // 2. get the rest tiles in hand
             var restTiles = [];
-            for (var i = 0; i < hand.length; i++) {
-                if (handAfter.indexOf(hand[i]) === -1) {
-                    restTiles.push(hand[i]);
+            for (var ii = 0; ii < hand.length; ii++) {
+                if (handAfter.indexOf(hand[ii]) === -1) {
+                    restTiles.push(hand[ii]);
                 }
             }
 
             // 3. find all runs from the rest tiles in hand
             var runs = findAllRuns(restTiles, state);
-            for (var i = 0; i < runs.length; i++) {
-                console.log("run: " + runs[i]);
-                handAfter = handAfter.concat(runs[i]);
+            for (var j = 0; j < runs.length; j++) {
+                console.log("run: " + runs[j]);
+                handAfter = handAfter.concat(runs[j]);
             }
-            for (var i = 0 ; i < restTiles.length; i++) {
-                if (handAfter.indexOf(restTiles[i]) === -1) {
-                    handAfter.push(restTiles[i]);
+            for (var k = 0 ; k < restTiles.length; k++) {
+                if (handAfter.indexOf(restTiles[k]) === -1) {
+                    handAfter.push(restTiles[k]);
                 }
             }
             return handAfter;
         }
 
+        /**
+         *
+         * @param tiles
+         * @param state
+         * @returns {Array} each array is array of valid run [[1,2,3],[4,5,6]]
+         */
         function findAllRuns(tiles, state) {
             if (tiles.length === 0) {
                 return [];
@@ -1859,7 +2312,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return state["tile" + tileIndex].color;
         }
 
-
         /**
          * usage:
          *   playerHand.sort(sortBy("score", $scope.state));
@@ -1878,7 +2330,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                     }
                 }
                 return 1;
-            }
+            };
         }
 
         /** *********************************
@@ -1891,14 +2343,16 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             getPossibleMoves: getPossibleMoves,
             findAllSetInHand: findAllSetInHand,
             sortBy: sortBy,
+            getTilesSentToBoardThisTurn: getTilesSentToBoardThisTurn,
 
             createInitialMove: getInitialMove,
             createPickMove: getPickMove,
             createMeldMove: getMeldMove,
             createSingleUndoMove: getSingleUndoMove,
-            createUndoAllMove: getUndoAllMove,
             createMoveMove: getMoveMove,
-            createSortMove: getSortMove
+            createSortMove: getSortMove,
+            //test: test,
+            createCombinedMove: getCombinedMove
 
         };
 

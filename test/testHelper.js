@@ -29,7 +29,7 @@
      *
      * @returns {*[]}
      */
-    function getEmptyBoard () {
+    function getInitialBoard () {
         var board = [
             //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
             [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 0
@@ -37,7 +37,9 @@
             [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 2
             [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 3
             [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 4
-            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  // 5
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+            [0,1,2,3,4,5,6,7,8,9,10,11,12,13],
+            [14,15,16,17,18,19,20,21,22,23,24,25,26]
         ];
         return board;
     }
@@ -49,7 +51,7 @@
      * @returns {*[]}
      */
     function setBoard(setting, board) {
-        var board = board !== undefined ? board : getEmptyBoard();
+        var board = board !== undefined ? board : getInitialBoard();
         try {
             for (var i = 0; i < setting.length; i++) {
                 var s = setting[i];
@@ -306,18 +308,11 @@
      */
     function getInitialState() {
         var state = {};
-        state.player0 =  {
-            initial: false,
-            tiles: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13]
-        };
-        state.player1 = {
-            initial: false,
-            tiles: [14,15,16,17,18,19,20,21,22,23,24,25,26,27]
-        };
-        state.board = getEmptyBoard();
-        state.tilesSentToBoardThisTurn = [];
-        state.nplayers = 2;
-        state.nexttile = 28;
+
+        state.trace = {nplayers: 2, initial: [false, false]};
+        state.board = getInitialBoard();
+        state.deltas = [];
+        state.type = "INIT";
 
         state.tile0 = {color: 'blue'  , score:  1};
         state.tile1 = {color: 'blue'  , score:  2};
@@ -429,6 +424,7 @@
 
         state.tile104 = {color: 'joker' , score: 0};
         state.tile105 = {color: 'joker' , score: 0};
+
         return state;
     }
 
@@ -583,7 +579,7 @@
 
 
     /********** Export functions ***********/
-    exports.GetEmptyBoard = getEmptyBoard;
+    exports.GetEmptyBoard = getInitialBoard;
     exports.SetGameBoard = setBoard;
     exports.GetInitialMove = getInitialMove;
     exports.GetInitialState = getInitialState;

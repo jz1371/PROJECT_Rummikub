@@ -30,7 +30,12 @@
     "grunt-manifest": "~0.4.0",
     "grunt-processhtml": "~0.3.7",
     "grunt-protractor-coverage": "^0.2.13",
-    "grunt-protractor-runner": "~1.2.1"
+    "grunt-protractor-runner": "~1.2.1",
+    "jasmine-core": "^2.2.0",
+    "karma": "^0.12.31",
+    "karma-chrome-launcher": "^0.1.7",
+    "karma-coverage": "^0.2.7",
+    "karma-jasmine": "^0.2.2"
   },
   "scripts": {
     "postinstall": "bower install",

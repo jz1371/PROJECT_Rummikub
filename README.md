@@ -35,4 +35,10 @@
    * Drag and drop on game board
    * some animations
    * create appcache
-  
+
+8. [[HW8](http://github.com/jz1371/PROJECT_Rummikub/tree/hw8)] add AI and AI test for game
+   See source file
+   * `app/js/services/gameAIServic.js`.
+   * `app/js/services/gameLogicServic.js`.
+   * `test/unit/gameAIServiceSpec.js`.
+

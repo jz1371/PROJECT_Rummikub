@@ -23,7 +23,6 @@ module.exports = function(grunt) {
                 nonbsp: true,
                 nonew: true,
                 notypeof: true,
-                singleGroups: true,
                 jasmine: true,
                 jquery: true,
                 globals: {

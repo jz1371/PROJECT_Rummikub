@@ -28,7 +28,7 @@
 <div id="game" class="row">
     <div id="menu-panel" class="col-xs-1">
         <div class="row">
-            <div class="info col-xs-12">
+            <div class="info col-xs-12" style="font-size: 1.5vw; padding-bottom: 0">
                 <div ng-repeat="i in [] | range: state.trace.nplayers" class="text-info">
                     <p ng-if="i == turnIndex" class="text-info">
                         <strong>Me</strong><br>{{board[6 + i].length}}
@@ -55,18 +55,20 @@
                 <button id="undobtn" type="button" class="btn btn-success btn-circle" ng-click="undoBtnClicked()">undo</button>
             </div>
 
-            <!--<div class="col-xs-12">-->
-                <!--<button id="undoallbtn" type="button" class="btn btn-danger btn-circle" ng-click="undoAllBtnClicked()">undo all</button>-->
-            <!--</div>-->
+            <div class="col-xs-12">
+                <button id="undoallbtn" type="button" class="btn btn-danger btn-circle" ng-click="undoAllBtnClicked()">
+                    <p style="font-size: 1vw;"> undo all </p>
+                </button>
+            </div>
 
             <div class="col-xs-12" ng-controller="ModalDemoCtrl">
             <div ng-include="'template/help.html'"></div>
             <button class="btn btn-primary btn-circle" ng-click="open()">Help</button>
             </div>
 
-            <div class="col-xs-12">
-                <p id="tiles-left" style="font-size: 2vw">{{106 - state.trace.nexttile}}</p>
-                <p style="font-size: 2vw">tiles left</p>
+            <div class="col-xs-12" style="font-size: 1.5vw">
+                <p id="tiles-left">{{106 - state.trace.nexttile}}</p>
+                <p>tiles left</p>
             </div>
 
         </div>
