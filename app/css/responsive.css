@@ -115,10 +115,9 @@
         }
     }
 
-
     #menu-panel {
         padding-top: 5%;
-        padding-left: 15%;
+        padding-left: 8.3%;
         width: 100%;
         border: none;
     }
@@ -130,6 +129,10 @@
 
     #menu-panel p {
         display: inline-block;
+    }
+
+    #player-panel {
+        /*margin-top: 5%;*/
     }
 
 }

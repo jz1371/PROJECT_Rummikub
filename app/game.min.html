@@ -26,54 +26,6 @@
 
 <body ng-cloak ng-controller="GameCtrl" class="container-fluid">
 <div id="game" class="row">
-    <div id="menu-panel" class="col-xs-1">
-        <div class="row">
-            <div class="info col-xs-12" style="font-size: 1.5vw; padding-bottom: 0">
-                <div ng-repeat="i in [] | range: state.trace.nplayers" class="text-info">
-                    <p ng-if="i == turnIndex" class="text-info">
-                        <strong>Me</strong><br>{{board[6 + i].length}}
-                    </p>
-                    <p ng-if="i != turnIndex" class="text-warning">
-                        <strong>P{{i}}</strong><br>{{board[6 + i].length}}
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-xs-12">
-                <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">pick</button>
-            </div>
-
-            <div class="col-xs-12">
-                <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">meld</button>
-            </div>
-
-            <div class="col-xs-12">
-                <button id="sortbtn" type="button" class="btn btn-default btn-circle" ng-disabled="sortDisabled" ng-click="setSortTypeBtnClicked()">{{sortType || "sort"}}</button>
-            </div>
-
-            <div class="col-xs-12">
-                <button id="undobtn" type="button" class="btn btn-success btn-circle" ng-click="undoBtnClicked()">undo</button>
-            </div>
-
-            <div class="col-xs-12">
-                <button id="undoallbtn" type="button" class="btn btn-danger btn-circle" ng-click="undoAllBtnClicked()">
-                    <p style="font-size: 1vw;"> undo all </p>
-                </button>
-            </div>
-
-            <div class="col-xs-12" ng-controller="ModalDemoCtrl">
-            <div ng-include="'template/help.html'"></div>
-            <button class="btn btn-primary btn-circle" ng-click="open()">Help</button>
-            </div>
-
-            <div class="col-xs-12" style="font-size: 1.5vw">
-                <p id="tiles-left">{{106 - state.trace.nexttile}}</p>
-                <p>tiles left</p>
-            </div>
-
-        </div>
-    </div><!-- /.menu-panel -->
-
 
     <div id="gameArea" class="col-xs-11">
         <div class="tile-wrapper"
@@ -183,13 +135,59 @@
 
         </div>
 
-    </div><!-- /.col-xs-11 -->
-</div><!-- /.row -->
+    </div><!-- #gameArrea /.col-xs-11 -->
 
+    <div id="menu-panel" class="col-xs-1">
 
+        <div class="row">
+            <!--<div class="info col-xs-12" style="font-size: 1.5vw; padding-bottom: 0">-->
+            <div ng-repeat="i in [] | range: state.trace.nplayers" class="col-xs-12 text-info" style="font-size: 1.5vw; padding-bottom: 0">
+                <p ng-if="i == turnIndex" class="text-info">
+                    <strong>Me</strong><br>{{board[6 + i].length}}
+                </p>
+                <p ng-if="i != turnIndex" class="text-warning">
+                    <strong>P{{i}}</strong><br>{{board[6 + i].length}}
+                </p>
+            </div>
+            <!--</div>-->
 
+            <div class="col-xs-12">
+                <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">pick</button>
+            </div>
 
-<!--<div ng-include="'template/help.html'"></div>-->
+            <div class="col-xs-12">
+                <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">meld</button>
+            </div>
+
+            <div class="col-xs-12">
+                <button id="sortbtn" type="button" class="btn btn-default btn-circle" ng-disabled="sortDisabled" ng-click="setSortTypeBtnClicked()">{{sortType || "sort"}}</button>
+            </div>
+
+            <div class="col-xs-12">
+                <button id="undobtn" type="button" class="btn btn-success btn-circle" ng-click="undoBtnClicked()">undo</button>
+            </div>
+
+            <div class="col-xs-12">
+                <button id="undoallbtn" type="button" class="btn btn-danger btn-circle" ng-click="undoAllBtnClicked()">
+                    <p style="font-size: 1vw;"> undo all </p>
+                </button>
+            </div>
+
+            <div class="col-xs-12" ng-controller="ModalDemoCtrl">
+                <div ng-include="'template/help.html'"></div>
+                <button class="btn btn-primary btn-circle" ng-click="open()">Help</button>
+            </div>
+
+            <div class="col-xs-12" style="font-size: 1.5vw">
+                <p id="tiles-left">{{106 - state.trace.nexttile}} tiles left</p>
+            </div>
+
+        </div><!-- /.row -->
+
+    </div><!-- /#menu-panel col-xs-1 -->
+
+</div><!-- #game /.row -->
+
 <!--<div ng-include="'template/error.html'"></div>-->
 
 <script src="http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js"></script>

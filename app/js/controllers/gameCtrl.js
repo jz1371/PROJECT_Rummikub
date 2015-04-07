@@ -203,6 +203,7 @@
             function getDraggingTilePosition(clientX, clientY) {
 
                 var board = document.getElementById("board");
+                var boardOffset = board.getBoundingClientRect();
                 console.log("padding: " + board.style.paddingLeft);
                 //TODO: minus the real padding-left
                 var x = clientX - boardPanel.parentElement.offsetLeft - 15;
@@ -213,8 +214,8 @@
                     // dragging in board panel
                     //$log.info("width: " + boardPanel.clientWidth);
                     //$log.info("x: " + x);
-                    row = Math.floor(gameBoardRows * y / boardPanel.clientHeight);
-                    col = Math.floor(gameBoardCols * x / boardPanel.clientWidth);
+                    row = Math.floor(gameBoardRows * y / (boardPanel.clientHeight));
+                    col = Math.floor(gameBoardCols * x / (boardPanel.clientWidth - 30));
                     $log.info("row: " + row);
                     $log.info("col: " + col);
                 } else {
@@ -229,7 +230,9 @@
                     if (x > 0 && y > 0 && x < handPanel.clientWidth && y < handPanel.clientHeight) {
                         //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
                         row = gameBoardRows + $scope.turnIndex;
-                        col = Math.floor($scope.board[row].length * x / handPanel.clientWidth);
+                        console.log("handaaL:   " + handPanel.clientWidth);
+                        console.log("handul: " + windowOffset.width);
+                        col = Math.floor($scope.board[row].length * x / windowOffset.width);
                         $log.info("row: " + row);
                         $log.info("col: " + col);
                     }

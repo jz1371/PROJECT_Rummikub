@@ -158,16 +158,16 @@
     <div id="menu-panel" class="col-xs-1">
 
         <div class="row">
-            <div class="info col-xs-12" style="font-size: 1.5vw; padding-bottom: 0">
-                <div ng-repeat="i in [] | range: state.trace.nplayers" class="text-info">
-                    <p ng-if="i == turnIndex" class="text-info">
-                        <strong>Me</strong><br>{{board[6 + i].length}}
-                    </p>
-                    <p ng-if="i != turnIndex" class="text-warning">
-                        <strong>P{{i}}</strong><br>{{board[6 + i].length}}
-                    </p>
-                </div>
+            <!--<div class="info col-xs-12" style="font-size: 1.5vw; padding-bottom: 0">-->
+            <div ng-repeat="i in [] | range: state.trace.nplayers" class="col-xs-12 text-info" style="font-size: 1.5vw; padding-bottom: 0">
+                <p ng-if="i == turnIndex" class="text-info">
+                    <strong>Me</strong><br>{{board[6 + i].length}}
+                </p>
+                <p ng-if="i != turnIndex" class="text-warning">
+                    <strong>P{{i}}</strong><br>{{board[6 + i].length}}
+                </p>
             </div>
+            <!--</div>-->
 
             <div class="col-xs-12">
                 <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">pick</button>
