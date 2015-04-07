@@ -80,6 +80,11 @@
     font-size: 2.5vw;
 }
 
+#menu-panel ul {
+    /*padding-left: 15px;*/
+    -webkit-padding-start: 10px;
+}
+
 /*#menu-panel > .info {*/
     /*padding-bottom: 2vw   *//* [Setter] here for distance between items in left menu */
 /*}*/

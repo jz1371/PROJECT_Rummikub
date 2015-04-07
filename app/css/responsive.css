@@ -101,3 +101,41 @@
 @media only screen and (min-width: 1920px) {
 
 }
+
+@media screen and (orientation:portrait) {
+    /* Portrait styles here */
+    #gameArea {
+        width: 100%;
+    }
+
+    @media only screen and (min-width: 240px) {
+
+        #board-panel {
+            font-size: 2vw;
+        }
+    }
+
+
+    #menu-panel {
+        padding-top: 5%;
+        padding-left: 15%;
+        width: 100%;
+        border: none;
+    }
+
+    #menu-panel .col-xs-12
+    {
+        width: 8.33%;
+    }
+
+    #menu-panel p {
+        display: inline-block;
+    }
+
+}
+/* Landscape */
+@media screen and (orientation:landscape) {
+    /* Landscape styles here */
+
+}
+
