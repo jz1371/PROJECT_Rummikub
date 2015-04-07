@@ -1,4 +1,4 @@
-module.exports = function(config){
+module.exports = function (config) {
 
     'use strict';
 
@@ -7,12 +7,16 @@ module.exports = function(config){
         basePath : '../',
 
         files : [
-            // use web service, so no local npm dependency required
             'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js',
             'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-mocks.js',
+            'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-touch.js',
+            'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.js',
+            'app/js/app.js',
+            'app/js/services/gameLogicService.js',
+            'app/js/services/gameAIService.js',
 
-            'app/js/services/*.js',
-            'test/unit/**/gameLogicServiceSpec.js'
+            'test/unit/gameAIServiceSpec.js'
+
         ],
 
         reporters: ['progress', 'coverage'],
@@ -24,6 +28,7 @@ module.exports = function(config){
             'app/js/services/gameLogicService.js': ['coverage']
         },
 
+        // optionally, configure the reporter
         coverageReporter: {
             type : 'html',
             dir : 'coverage/'
@@ -37,15 +42,9 @@ module.exports = function(config){
 
         plugins : [
             'karma-chrome-launcher',
-            'karma-firefox-launcher',
             'karma-jasmine',
-            'karma-junit-reporter'
-        ],
-
-        junitReporter : {
-            outputFile: 'test_out/unit.xml',
-            suite: 'unit'
-        }
+            'karma-coverage'
+        ]
 
     });
 };

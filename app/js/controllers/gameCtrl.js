@@ -56,9 +56,12 @@
 
             var boardPanel = document.getElementById("board-panel");
             var handPanel = document.getElementById("hand-panel");
-            var hand = document.getElementById("hand-ul");
+            //var hand = document.getElementById("hand-ul");
 
-            var computerMoves = [];
+            var clickRow = -1;
+            var clickCol = -1;
+
+            //var computerMoves = [];
 
             var undoAllInProcess = false;
 
@@ -81,6 +84,10 @@
                 } else {
                     var pos = getDraggingTilePosition(clientX, clientY);
                     if (type === "touchstart" ) {
+
+                        console.log("active: " + $scope.activeTile);
+
+
                         // drag started
                         if (pos &&  $scope.board[pos.row][pos.col] !== -1) {
                             // starting from game board or player hand and is a valid tile
@@ -130,6 +137,14 @@
                             myDrag.style.top = container.top + "px";
 
                             var centerXY = {x: container.width / 2 + gameAreaLeft - 15, y: container.top + container.height / 2};
+                            var tile = document.getElementById("MyPiece6x0");
+                            console.log("tile: " + JSON.stringify(tile.getBoundingClientRect(), null));
+                            var handUl = document.getElementById("hand-panel");
+                            console.log("parent: " + JSON.stringify(handUl.getBoundingClientRect(), null));
+                            console.log("center: " + printObject(centerXY));
+                            console.log("container: " + printObject(container));
+                            console.log("point: " + clientX + ", " + clientY);
+                            console.log("gameArea" + printObject(gameAreaLeft));
                             //console.log("center: " + "here" );
                             setDraggingLines(centerXY);
 
@@ -144,6 +159,10 @@
                     draggingStartedRowCol = null;
                     draggingPiece = null;
                 }
+            }
+
+            function printObject(obj) {
+                return JSON.stringify(obj, null, 4);
             }
 
             function getTileContainerSize(pos) {
@@ -183,7 +202,10 @@
              */
             function getDraggingTilePosition(clientX, clientY) {
 
-                var x = clientX - boardPanel.parentElement.offsetLeft;
+                var board = document.getElementById("board");
+                console.log("padding: " + board.style.paddingLeft);
+                //TODO: minus the real padding-left
+                var x = clientX - boardPanel.parentElement.offsetLeft - 15;
                 var y = clientY - boardPanel.offsetTop;
                 var row = -1;
                 var col = -1;
@@ -196,7 +218,12 @@
                     $log.info("row: " + row);
                     $log.info("col: " + col);
                 } else {
-                    var windowOffset = handPanel.getBoundingClientRect();
+                    // clicking player hand area?
+
+                    var handUl = document.getElementById("hand-ul");
+                    //var container = handUl.getBoundingClientRect();
+
+                    var windowOffset = handUl.getBoundingClientRect();
                     x = clientX - windowOffset.left;
                     y = clientY - windowOffset.top;
                     if (x > 0 && y > 0 && x < handPanel.clientWidth && y < handPanel.clientHeight) {
@@ -228,47 +255,49 @@
                 });
             }
 
-            var again = true;
-
-            var computerDeltas = [];
+            var computerMovesInProcess = false;
             function sendComputerMove() {
-                //gameService.makeMove(gameLogicService.getPossibleMoves($scope.state, $scope.turnIndex)[0]);
-                if (computerDeltas.length === 0 && again) {
-                    var delta = {tileIndex: 14, from: {row: 7, col: 0}, to: {row: 1, col: 1}};
-                    var delta2 = {tileIndex: 15, from: {row: 7, col: 1}, to: {row: 1, col: 2}};
-                    computerDeltas.push(delta);
-                    computerDeltas.push(delta2);
-                    again = false;
-                }
-                if (computerDeltas.length !== 0) {
-                    try {
-                        var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, computerDeltas[0]);
-                        gameService.makeMove(move);
-                        computerDeltas.splice(0, 1);
-                    } catch(e) {
-                        $log.info(e);
+                var move;
+
+                if (computerMovesInProcess === false) {
+                    move = gameAIService.createComputerMove($scope.turnIndex, $scope.state);
+                    if (move[1].set.value !== "PICK") {
+                        computerMovesInProcess = true;
                     }
+                    gameService.makeMove(move);
+                    return;
                 }
 
-                //if (computerMoves.length === 0 && again) {
-                //    //computerMoves = gameAIService.createComputerMove($scope.turnIndex, $scope.state);
-                //    //var delta = {tileIndex: 14, from: {row: 7, col: 0}, to: {row: 1, col: 1}};
-                //    //var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
-                //    //computerMoves.push(move);
-                //    //delta = {tileIndex: 15, from: {row: 7, col: 1}, to: {row: 1, col: 2}};
-                //    //var move2 = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
-                //    //computerMoves.push(move2);
-                //    //again = false;
-                //}
-                //if (computerMoves.length !== 0 ){
-                //    try {
-                //        var move =
-                //        gameService.makeMove(computerMoves[0]);
-                //        computerMoves.splice(0, 1);
-                //    } catch (e) {
-                //        $log.info(e);
+                if (computerMovesInProcess) {
+                    move = gameLogicService.createMeldMove($scope.turnIndex, $scope.state);
+                    gameService.makeMove(move);
+                    computerMovesInProcess = false;
+                }
+
+                //if (computerMovesInProcess === false) {
+                //    var deltas = gameAIService.createComputerMove($scope.turnIndex, $scope.state);
+                //    if (deltas.length === 0) {
+                //        // has to pick one more tile
+                //        gameService.makeMove(gameLogicService.createPickMove($scope.turnIndex, $scope.state));
+                //    } else {
+                //        computerDeltas = deltas;
+                //        computerMovesInProcess = true;
                 //    }
                 //}
+                //
+                //if (computerMovesInProcess === true) {
+                //    if (computerDeltas.length > 0 ) {
+                //        var delta = computerDeltas[0];
+                //        var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
+                //        gameService.makeMove(move);
+                //        computerDeltas.splice(0, 1);
+                //    } else {
+                //        // make a meld move
+                //        gameService.makeMove(gameLogicService.createMeldMove($scope.turnIndex, $scope.state));
+                //        computerMovesInProcess = false;
+                //    }
+                //}
+
             }
 
             $scope.shouldSlowlyAppear = function () {
@@ -335,8 +364,9 @@
                 // Is it the computer's turn?
                 isComputerTurn = $scope.isYourTurn &&
                 params.playersInfo[params.yourPlayerIndex].playerId  === '';
+
                 if(isComputerTurn) {
-                    $scope.isYourTurn = true; // to make sure the UI won't send another move.
+                    $scope.isYourTurn = false; // to make sure the UI won't send another move.
                     // Waiting 0.5 seconds to let the move animation finish; if we call aiService
                     // then the animation is paused until the javascript finishes.
                     sendComputerMove();
@@ -375,6 +405,8 @@
                             getTileByIndex($scope.activeTile).color +
                             "," + getTileByIndex($scope.activeTile).score +
                             " from: (" + row + "," + col + ")";
+                            clickRow = row;
+                            clickCol = col;
                         }
                     } else {
                         $scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
@@ -464,17 +496,20 @@
             /** ****************************************
              *********      Button Controls    *********
              *******************************************/
-            $scope.pickBtnClicked = pickBtnClicked;
-            function pickBtnClicked() {
-                //if ($scope.isYourTurn) {
-                if (true) {
+            $scope.pickBtnClicked = function () {
+                if ($scope.isYourTurn) {
                     try {
                         var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
+
+                        //var rest = gameLogicService.test($scope.turnIndex, $scope.state);
+                        //$log.info("rest: " + rest);
+
                         gameService.makeMove(move);
                         // reset sort
                         $scope.sortType = "sort";
                         $scope.debug = "pick one tile";
                     } catch (e) {
+                        $log.info(e.stack);
                         $scope.debug = e.message;
                     }
                 }
@@ -516,15 +551,15 @@
                     return;
                 }
                 var type = $scope.sortType;
-                var playerRow = getCurrentPlayerRow();
-                var playerHand = $scope.board[playerRow];
+                //var playerRow = getCurrentPlayerRow();
                 var nextType;
                 try {
                     switch (type) {
+                        case "sort":
                         case "set":
+                            type = "set";
                             nextType = "123";
                             break;
-                        case "sort":
                         case "123":
                             type = "score";
                             nextType = "color";
@@ -671,10 +706,9 @@
                 return result;
             };
 
-
-            function getCurrentPlayerRow () {
-                return gameBoardRows + $scope.turnIndex;
-            }
+            //function getCurrentPlayerRow () {
+            //    return gameBoardRows + $scope.turnIndex;
+            //}
 
             // to allow drag-n-drop move
             if (allowDragAndDrop) {
