@@ -22,11 +22,26 @@
         function($scope, $log, $window,  $animate, $timeout,
                  stateService ,gameService, gameLogicService, gameAIService) {
 
-            var allowDragAndDrop = true;
+
+            /***************************************************************
+             *   Configuration  */
+            var verbose = true;
+
+            function logout(log, obj) {
+                if (verbose) {
+                    if (obj === undefined && obj === true) {
+                        console.log(JSON.stringify(log, null));
+                    } else {
+                        console.log(log);
+                    }
+                }
+            }
 
             // to allow manipulating game state in e2e tests
             window.e2e_test_stateService = stateService;
 
+            // to allow drag-n-drop move
+            window.handleDragEvent = handleDragEvent;
 
             var debugMode = true;
             var gameEnd = false;
@@ -85,7 +100,7 @@
                     var pos = getDraggingTilePosition(clientX, clientY);
                     if (type === "touchstart" ) {
 
-                        console.log("active: " + $scope.activeTile);
+                        logout("active: " + $scope.activeTile);
 
 
                         // drag started
@@ -131,21 +146,21 @@
 
                             var gameAreaLeft = container.left - gameArea.offsetLeft;
                             myDrag.style.left = gameAreaLeft + "px";
-                            //console.log("drag left: " + myDrag.style.left);
-                            //console.log("game left: " + gameAreaLeft);
+                            //logout("drag left: " + myDrag.style.left);
+                            //logout("game left: " + gameAreaLeft);
                             myDrag.style.paddingBottom= container.height + "px";
                             myDrag.style.top = container.top + "px";
 
                             var centerXY = {x: container.width / 2 + gameAreaLeft - 15, y: container.top + container.height / 2};
                             var tile = document.getElementById("MyPiece6x0");
-                            console.log("tile: " + JSON.stringify(tile.getBoundingClientRect(), null));
+                            logout("tile: " + JSON.stringify(tile.getBoundingClientRect(), null));
                             var handUl = document.getElementById("hand-panel");
-                            console.log("parent: " + JSON.stringify(handUl.getBoundingClientRect(), null));
-                            console.log("center: " + printObject(centerXY));
-                            console.log("container: " + printObject(container));
-                            console.log("point: " + clientX + ", " + clientY);
-                            console.log("gameArea" + printObject(gameAreaLeft));
-                            //console.log("center: " + "here" );
+                            logout("parent: " + JSON.stringify(handUl.getBoundingClientRect(), null));
+                            logout("center: " + printObject(centerXY));
+                            logout("container: " + printObject(container));
+                            logout("point: " + clientX + ", " + clientY);
+                            logout("gameArea" + printObject(gameAreaLeft));
+                            //logout("center: " + "here" );
                             setDraggingLines(centerXY);
 
                         }
@@ -204,7 +219,7 @@
 
                 var board = document.getElementById("board");
                 var boardOffset = board.getBoundingClientRect();
-                console.log("padding: " + board.style.paddingLeft);
+                logout("padding: " + board.style.paddingLeft);
                 //TODO: minus the real padding-left
                 var x = clientX - boardPanel.parentElement.offsetLeft - 15;
                 var y = clientY - boardPanel.offsetTop;
@@ -212,12 +227,12 @@
                 var col = -1;
                 if (x > 0 && y > 0 && x < boardPanel.clientWidth && y < boardPanel.clientHeight) {
                     // dragging in board panel
-                    //$log.info("width: " + boardPanel.clientWidth);
-                    //$log.info("x: " + x);
+                    //logout("width: " + boardPanel.clientWidth);
+                    //logout("x: " + x);
                     row = Math.floor(gameBoardRows * y / (boardPanel.clientHeight));
                     col = Math.floor(gameBoardCols * x / (boardPanel.clientWidth - 30));
-                    $log.info("row: " + row);
-                    $log.info("col: " + col);
+                    logout("row: " + row);
+                    logout("col: " + col);
                 } else {
                     // clicking player hand area?
 
@@ -230,11 +245,11 @@
                     if (x > 0 && y > 0 && x < handPanel.clientWidth && y < handPanel.clientHeight) {
                         //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
                         row = gameBoardRows + $scope.turnIndex;
-                        console.log("handaaL:   " + handPanel.clientWidth);
-                        console.log("handul: " + windowOffset.width);
+                        logout("handaaL:   " + handPanel.clientWidth);
+                        logout("handul: " + windowOffset.width);
                         col = Math.floor($scope.board[row].length * x / windowOffset.width);
-                        $log.info("row: " + row);
-                        $log.info("col: " + col);
+                        logout("row: " + row);
+                        logout("col: " + col);
                     }
                 }
                 return row !== -1 ? {row: row, col: col} : null ;
@@ -246,11 +261,11 @@
                         $scope.boardCellClicked(from.row, from.col);
                         $scope.boardCellClicked(to.row, to.col);
                         var msg = "Dragged to " + to.row + "x" + to.col;
-                        $log.info(msg);
+                        logout(msg);
                         $scope.msg = msg;
                     }catch(e) {
                         // illegal move, restore
-                        $log.info(e.message);
+                        logout(e.message);
                         /* return immediately! */
                         $scope.debug = e.message;
                         return;
@@ -331,7 +346,7 @@
                         params.yourPlayerIndex = 0;
                         gameService.makeMove(move);
                     } catch (e) {
-                        $log.info(e.message);
+                        logout(e.message);
                     }
                     return;
                 }
@@ -389,7 +404,7 @@
             }
 
             $scope.boardCellClicked =  function (row, col) {
-                $log.info(["Clicked on cell:", row, col]);
+                logout(["Clicked on cell:", row, col]);
                 $scope.debug = "click board cell: (" + row + "," + col + ")";
                 if ( $scope.isYourTurn === false ) {
                     return;
@@ -431,7 +446,7 @@
                 } catch (e) {
                     clearActiveTile();
                     $scope.debug = e.message;
-                    $log.info(e);
+                    logout(e);
                     return false;
                 }
             };
@@ -505,14 +520,14 @@
                         var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
 
                         //var rest = gameLogicService.test($scope.turnIndex, $scope.state);
-                        //$log.info("rest: " + rest);
+                        //logout("rest: " + rest);
 
                         gameService.makeMove(move);
                         // reset sort
                         $scope.sortType = "sort";
                         $scope.debug = "pick one tile";
                     } catch (e) {
-                        $log.info(e.stack);
+                        logout(e.stack);
                         $scope.debug = e.message;
                     }
                 }
@@ -577,7 +592,7 @@
                     gameService.makeMove(move);
                     $scope.sortType = nextType;
                 } catch (e) {
-                    $log.info(e);
+                    logout(e);
                 }
             };
 
@@ -653,50 +668,6 @@
                 $scope.to = undefined;
             }
 
-            //$scope.start = 0;
-            //$scope.getRangeNumber = function(from) {
-            //
-            //    if (!$scope.$$phase) {
-            //        $scope.$apply();
-            //    }
-            //
-            //    var result = [];
-            //    var start = from >= 0 ? from : 0;
-            //    for (var i = start; i < 14; i++) {
-            //        result.push(i);
-            //    }
-            //    return result;
-            //};
-
-            //$scope.tileRange = [0,1,2,3,4,5,6];
-            //var range = 6;
-            //
-            //$scope.previous = function() {
-            //    var start = $scope.tileRange[0] - range;
-            //    if (start >= 0) {
-            //        var result = [];
-            //        for (var i = 0; i < range; i++) {
-            //            result.push(start + i);
-            //        }
-            //        $scope.tileRange = result;
-            //    }
-            //};
-            //$scope.nextPage = function() {
-            //    if ($scope.tileRange.length < range) {
-            //        //  no more tiles to show
-            //        return;
-            //    }
-            //    var start = $scope.tileRange[0] + range;
-            //    var result = [];
-            //    for (var i = 0; i < range; i++) {
-            //        if ((start + i) >= $scope.board[6 + $scope.turnIndex].length) {
-            //            break;
-            //        }
-            //        result.push(start + i);
-            //    }
-            //    $scope.tileRange = result;
-            //};
-
             $scope.getHandTilesRange = function() {
                 if ($scope.board === undefined) {
                     return [];
@@ -709,14 +680,6 @@
                 return result;
             };
 
-            //function getCurrentPlayerRow () {
-            //    return gameBoardRows + $scope.turnIndex;
-            //}
-
-            // to allow drag-n-drop move
-            if (allowDragAndDrop) {
-                window.handleDragEvent = handleDragEvent;
-            }
 
             gameService.setGame( {
                 gameDeveloperEmail: "jz1371@nyu.edu",
