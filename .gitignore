@@ -8,8 +8,6 @@ coverage
 .DS_Store
 roadtrip.md
 bower_components
-.idea
 node_modules
 *.log
-roadmap.md
 app/trash

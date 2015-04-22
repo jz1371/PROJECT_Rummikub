@@ -94,6 +94,7 @@ module.exports = function(grunt) {
                         'css/tile.css',
                         'css/responsive.css',
                         'css/main.css',
+                        'css/game.css',
                         'img/game-background.jpg',
                         'img/joker-red.png',
                         'img/valid.png',
