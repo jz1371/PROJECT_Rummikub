@@ -2,14 +2,13 @@
 <!-- build:[manifest] game.appcache -->
 <html lang="en" ng-app="myApp" ng-strict-di>
 <!-- /build -->
-
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="Rummikub">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="img/favicon.ico" sizes="32x32">
     <title>Rummikub</title>
-
 
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="http://yoav-zibin.github.io/emulator/main.css">
@@ -21,7 +20,6 @@
 
 <body ng-cloak ng-controller="GameCtrl" class="container-fluid">
 <div id="game" class="row">
-
     <div id="gameArea" class="col-xs-11">
         <div class="tile-wrapper"
              id="MyDrag" style="display: none; position: absolute;width: 0; padding-bottom: 0;z-index: 106;background-color: yellow;">
@@ -48,10 +46,8 @@
                   stroke-width="1%"/>
         </svg>
 
-
         <div id="board-panel" class="row">
             <div id="board" class="col-xs-12">
-
                 <div class="row" ng-repeat="row in [] | range: rows" style="">
                     <!--<div class="col-xs-18" ng-repeat="col in [] | range: cols"-->
                     <div class="col-xs-18" ng-repeat="col in [] | range: cols" style=""
@@ -208,7 +204,6 @@
 <script src="http://yoav-zibin.github.io/emulator/stateService.js"></script>
 <!-- /build -->
 <script src="http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js"></script>
-
 </body>
 
 </html>
