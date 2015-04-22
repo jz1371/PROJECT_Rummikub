@@ -69,7 +69,7 @@
      *
      **************************************************************************************
      */
-    angular.module('myApp').factory('gameLogicService', function() {
+    angular.module('myApp').factory('gameLogicService', ['CONSTANT', function(CONSTANT) {
 
         /**
          * Checks whether given move is Ok or not.
@@ -1186,11 +1186,11 @@
         }
 
         function getGameBoardRows() {
-            return 6;
+            return CONSTANT.GAME_BOARD_ROWS;
         }
 
         function getGameBoardCols() {
-            return 18;
+            return CONSTANT.GAME_BOARD_COLS;
         }
 
         /**
@@ -1426,10 +1426,9 @@
             createSingleUndoMove: getSingleUndoMove,
             createMoveMove: getMoveMove,
             createSortMove: getSortMove,
-            //test: test,
             createCombinedMove: getCombinedMove
 
         };
 
-    });
+    }]);
 }());

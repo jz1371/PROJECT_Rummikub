@@ -18,4 +18,9 @@
 //  $routeProvider.otherwise({redirectTo: '/view2'});
 //}]);
 
-angular.module('myApp',['ngTouch', 'ui.bootstrap']);
+angular.module('myApp',['ngTouch', 'ui.bootstrap'])
+    .constant("CONSTANT", {
+        GAME_BOARD_ROWS: 6,
+        GAME_BOARD_COLS: 18,
+        GAME_AREA_PADDING_PERCENTAGE: 0.02})
+;

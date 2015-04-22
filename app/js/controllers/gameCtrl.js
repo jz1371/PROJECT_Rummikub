@@ -18,14 +18,13 @@
      */
     angular.module('myApp').controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
-        'stateService', 'gameService', 'gameLogicService', 'gameAIService',
+        'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONSTANT',
         function($scope, $log, $window,  $animate, $timeout,
-                 stateService ,gameService, gameLogicService, gameAIService) {
-
+                 stateService ,gameService, gameLogicService, gameAIService, CONSTANT) {
 
             /***************************************************************
              *   Configuration  */
-            var verbose = true;
+            var verbose = false;
 
             function logout(log, obj) {
                 if (verbose) {
@@ -46,11 +45,11 @@
             var debugMode = true;
             var gameEnd = false;
 
-            var gameBoardRows = 6;
-            var gameBoardCols = 18;
+            var gameBoardRows = CONSTANT.GAME_BOARD_ROWS;
+            var gameBoardCols = CONSTANT.GAME_BOARD_COLS;
 
-            $scope.rows = 6;
-            $scope.cols = 18;
+            $scope.rows = gameBoardRows;
+            $scope.cols = gameBoardCols;
 
             var animationEnded = false;
             //var canMakeMove = false;
@@ -672,7 +671,7 @@
                 if ($scope.board === undefined) {
                     return [];
                 }
-                var len = $scope.board[6 + $scope.turnIndex].length;
+                var len = $scope.board[CONSTANT.GAME_BOARD_ROWS + $scope.turnIndex].length;
                 var result = [];
                 for (var i = 0; i < len; i++) {
                     result.push(i);

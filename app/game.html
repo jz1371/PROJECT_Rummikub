@@ -138,10 +138,10 @@
             <!--<div class="info col-xs-12" style="font-size: 1.5vw; padding-bottom: 0">-->
             <div ng-repeat="i in [] | range: state.trace.nplayers" class="col-xs-12 text-info" style="font-size: 1.5vw; padding-bottom: 0">
                 <p ng-if="i == turnIndex" class="text-info">
-                    <strong>Me</strong><br>{{board[6 + i].length}}
+                    <strong>Me</strong><br>{{board[rows + i].length}}
                 </p>
                 <p ng-if="i != turnIndex" class="text-warning">
-                    <strong>P{{i}}</strong><br>{{board[6 + i].length}}
+                    <strong>P{{i}}</strong><br>{{board[rows + i].length}}
                 </p>
             </div>
             <!--</div>-->
