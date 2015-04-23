@@ -16,7 +16,11 @@
      *
      **************************************************************************************
      */
-    angular.module('myApp').controller('GameCtrl', [
+    angular.module('myApp')
+        .config(['$translateProvider', function($translateProvider) {
+            'use strict';
+            $translateProvider.init(['en', 'de']); }])
+        .controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
         'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONSTANT',
         function($scope, $log, $window,  $animate, $timeout,
@@ -256,15 +260,17 @@
             };
 
             function updateUI(params) {
-                if (isEmptyObj(params.stateAfterMove) && !params.stateBeforeMove &&
-                    params.turnIndexBeforeMove ===0 &&  params.turnIndexAfterMove === 0) {
-                    var playerIndex = 0;
-                    var nPlayers = 2;
+
+                $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
+                params.yourPlayerIndex === params.turnIndexAfterMove;         // it's my turn
+
+                // make initial move only when its player's turn
+                if (isEmptyObj(params.stateAfterMove) && $scope.isYourTurn) {
                     //var nPlayers = params.playersInfo.length;
+                    var nPlayers = 2;
                     try {
-                        var move = gameLogicService.createInitialMove(playerIndex, nPlayers);
+                        var move = gameLogicService.createInitialMove(nPlayers);
                         /* let player0 initializes the game. */
-                        params.yourPlayerIndex = 0;
                         gameService.makeMove(move);
                     } catch (e) {
                         logout(e.message);
@@ -272,29 +278,27 @@
                     return;
                 }
 
-                $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
-                params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn
-                turnIndex = params.turnIndexAfterMove;
-
-                gameEnd = params.turnindexAfterMove === -1;
-                $scope.yourPlayerIndex = params.yourPlayerIndex;
-                $scope.turnIndex = params.turnIndexAfterMove;
-                $scope.state = params.stateAfterMove;
-                $scope.board = params.stateAfterMove.board;
-                $scope.nexttile = params.stateAfterMove.trace.nexttile;
-                $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
-
-                // disable sort feature when empty slots left in board
-                // because sort will reset player hand
-                $scope.sortDisabled = false;
-                for (var i = 0; i < $scope.playerHand.length; i++) {
-                    if ($scope.playerHand[i] === -1) {
-                        $scope.sortDisabled = true;
-                        break;
-                    }
-                }
 
                 if ($scope.isYourTurn) {
+                    turnIndex = params.turnIndexAfterMove;
+
+                    gameEnd = params.turnindexAfterMove === -1;
+                    $scope.yourPlayerIndex = params.yourPlayerIndex;
+                    $scope.turnIndex = params.turnIndexAfterMove;
+                    $scope.state = params.stateAfterMove;
+                    $scope.board = params.stateAfterMove.board;
+                    $scope.nexttile = params.stateAfterMove.trace.nexttile;
+                    $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
+
+                    // disable sort feature when empty slots left in board
+                    // because sort will reset player hand
+                    $scope.sortDisabled = false;
+                    for (var i = 0; i < $scope.playerHand.length; i++) {
+                        if ($scope.playerHand[i] === -1) {
+                            $scope.sortDisabled = true;
+                            break;
+                        }
+                    }
                     //var opponentIndex = 1 - $scope.turnIndex;
                     //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
                     //$scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
@@ -594,7 +598,7 @@
             gameService.setGame( {
                 gameDeveloperEmail: "jz1371@nyu.edu",
                 minNumberOfPlayers: 2,
-                //maxNumberOfPlayers: 4, // if bug in stateService fixed
+                //maxNumberOfPlayers: 4,
                 maxNumberOfPlayers: 2,
                 isMoveOk: gameLogicService.isMoveOk,
                 updateUI: updateUI
