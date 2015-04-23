@@ -22,11 +22,22 @@
         function($scope, $log, $window,  $animate, $timeout,
                  stateService ,gameService, gameLogicService, gameAIService, CONSTANT) {
 
-            /***************************************************************
-             *   Configuration  */
+            /**************************************************************
+             **********************   Configuration  **********************
+             **************************************************************/
+            // whether output information to console
             var verbose = false;
 
+            // whether show dragging lines while dragging
             var showDraggingLines = true;
+
+            // enable to manipulate game state in e2e tests
+            window.e2e_test_stateService = stateService;
+
+            // enable platform's drag-n-drop listener
+            window.handleDragEvent = handleDragEvent;
+
+            $scope.gameAreaPaddingPercent = CONSTANT.GAME_AREA_PADDING_PERCENTAGE;
 
             function logout(log, obj) {
                 if (verbose) {
@@ -38,13 +49,6 @@
                 }
             }
 
-            // to allow manipulating game state in e2e tests
-            window.e2e_test_stateService = stateService;
-
-            // to allow drag-n-drop move
-            window.handleDragEvent = handleDragEvent;
-
-            var debugMode = true;
             var gameEnd = false;
 
             var gameBoardRows = CONSTANT.GAME_BOARD_ROWS;
@@ -53,89 +57,81 @@
             $scope.rows = gameBoardRows;
             $scope.cols = gameBoardCols;
 
-            var animationEnded = false;
             //var canMakeMove = false;
             var isComputerTurn = false;
             //var state = null;
             var turnIndex = null;
 
+            var myDrag        = document.getElementById("MyDrag");
+            var gameArea      = document.getElementById("gameArea");
+            var handPanel     = document.getElementById("hand-panel");
             var draggingLines = document.getElementById("draggingLines");
+            var verticalDraggingLine   = document.getElementById("verticalDraggingLine");
             var horizontalDraggingLine = document.getElementById("horizontalDraggingLine");
-            var verticalDraggingLine = document.getElementById("verticalDraggingLine");
 
-            var myDrag = document.getElementById("MyDrag");
-
-            var gameArea = document.getElementById("gameArea");
-            var draggingStartedRowCol = null; // The {row: YY, col: XX} where dragging started.
-            var draggingPiece = null;
-            var nextZIndex = 200;
-
-            var boardPanel = document.getElementById("board-panel");
-            var handPanel = document.getElementById("hand-panel");
-            //var hand = document.getElementById("hand-ul");
-
-            var clickRow = -1;
-            var clickCol = -1;
-
-            //var computerMoves = [];
-
+            var dragFrom = null; // The {row: YY, col: XX} where dragging started.
             var undoAllInProcess = false;
 
-            function isWithinElement(x, y, element) {
+            function isWithinGameArea(clientX, clientY) {
+                var element = gameArea;
                 var offset = element.getBoundingClientRect();
-                return x >= offset.left && x < offset.right &&
-                    y >= offset.top && y <= offset.bottom;
+                return clientX >= offset.left && clientX < offset.right &&
+                    clientY >= offset.top && clientY <= offset.bottom;
             }
 
             function handleDragEvent(type, clientX, clientY) {
-                if (!$scope.isYourTurn) {
+                if (!$scope.isYourTurn || !isWithinGameArea(clientX, clientY)) {
+                    draggingLines.style.display = "none";
                     return;
                 }
-                if (!isWithinElement(clientX, clientY, gameArea)) {
-                    if (debugMode) {
-                        draggingLines.style.display = "none";
-                    }
+                var pos = getDraggingTilePosition(clientX, clientY);
+                if (type === "touchstart" ) {
+                    dragStartHandler(pos);
+                }
+                if (!dragFrom) {
+                    // end dragging if not a valid drag start
                     return;
+                }
+                if (type === "touchend") {
+                    dragEndHandler(pos);
                 } else {
-                    var pos = getDraggingTilePosition(clientX, clientY);
-                    if (type === "touchstart" ) {
-                        dragStartHandler(pos);
-                    }
-                    if (!draggingPiece) {
-                        return;
-                    }
-                    if (type === "touchend") {
-                        if (pos) {
-                            var from = draggingStartedRowCol;
-                            var to = {row: pos.row, col: pos.col};
-                            dragEndHandler(from, to);
-                        }
-                    } else {
-                        // Drag continue
-                        dragContinueHandler(pos, clientX, clientY);
-                    }
+                    // drag continues
+                    dragContinueHandler(pos, clientX, clientY);
                 }
-
                 if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
                     draggingLines.style.display = "none";
                     myDrag.style.display = "none";
-
-                    draggingStartedRowCol = null;
-                    draggingPiece = null;
+                    dragFrom = null;
                 }
             }
 
             function dragStartHandler(pos) {
-                // drag started
-                if (pos &&  $scope.board[pos.row][pos.col] !== -1) {
-                    // starting from game board or player hand and is a valid tile
-                    var row = pos.row;
-                    var col = pos.col;
-                    draggingStartedRowCol = {row: row, col: col};
-                    draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
-                    if (draggingPiece) {
-                        draggingPiece.style['z-index'] = ++nextZIndex;
-                    }
+                if (pos && $scope.board[pos.row][pos.col] !== -1) {
+                    dragFrom = pos;
+                } else {
+                    dragFrom = null;
+                }
+            }
+
+            function dragEndHandler(pos) {
+                if (pos) {
+                    var from = dragFrom;
+                    var to = pos;
+                    $scope.$apply(function () {
+                        try {
+                            $scope.boardCellClicked(from.row, from.col);
+                            $scope.boardCellClicked(to.row, to.col);
+                            var msg = "Dragged to " + to.row + "x" + to.col;
+                            logout(msg);
+                            $scope.msg = msg;
+                        }catch(e) {
+                            // illegal move, restore
+                            logout(e.message);
+                            /* return immediately! */
+                            $scope.debug = e.message;
+                            return;
+                        }
+                    });
                 }
             }
 
@@ -143,7 +139,7 @@
                 if (pos) {
                     var container = getTileContainerSize(pos);
                     $scope.$apply(function () {
-                        var tileIndex = $scope.board[draggingStartedRowCol.row][draggingStartedRowCol.col];
+                        var tileIndex = $scope.board[dragFrom.row][dragFrom.col];
                         var tile = $scope.state['tile' + tileIndex];
                         $scope.tileIndex = tileIndex;
                         $scope.drag_color = tile.color;
@@ -151,35 +147,22 @@
                         $scope.tile = tile;
                     });
 
-                    //gameAreaLeft = document.getElementById("board").offsetLeft;
-
                     myDrag.style.display = "inline";
                     myDrag.style.width = container.width + "px";
 
-                    var gameAreaLeft = container.left - gameArea.offsetLeft;
-                    myDrag.style.left = gameAreaLeft + "px";
-                    //logout("drag left: " + myDrag.style.left);
-                    //logout("game left: " + gameAreaLeft);
+                    myDrag.style.left = container.left + "px";
                     myDrag.style.paddingBottom= container.height + "px";
                     myDrag.style.top = container.top + "px";
 
-                    var centerXY = {x: container.width / 2 + gameAreaLeft - 15, y: container.top + container.height / 2};
-                    var tile = document.getElementById("MyPiece6x0");
-                    logout("tile: " + JSON.stringify(tile.getBoundingClientRect(), null));
-                    var handUl = document.getElementById("hand-panel");
-                    logout("parent: " + JSON.stringify(handUl.getBoundingClientRect(), null));
-                    logout("center: " + printObject(centerXY));
-                    logout("container: " + printObject(container));
-                    logout("point: " + clientX + ", " + clientY);
-                    logout("gameArea" + printObject(gameAreaLeft));
+                    var centerXY = {
+                        //TODO: better to determine center x
+                        x: container.left + container.width / 2 - document.getElementById("game").clientWidth * $scope.gameAreaPaddingPercent,
+                        y: container.top  + container.height / 2};
+                    logout("centerXY: " + centerXY.x);
 
                     setDraggingLines(centerXY);
 
                 }
-            }
-
-            function printObject(obj) {
-                return JSON.stringify(obj, null, 4);
             }
 
             function getTileContainerSize(pos) {
@@ -222,61 +205,29 @@
              * @returns {{row: number, col: number}}
              */
             function getDraggingTilePosition(clientX, clientY) {
-
                 var board = document.getElementById("board");
                 var boardOffset = board.getBoundingClientRect();
-                logout("padding: " + board.style.paddingLeft);
-                //TODO: minus the real padding-left
-                var x = clientX - boardPanel.parentElement.offsetLeft - 15;
-                var y = clientY - boardPanel.offsetTop;
+                var x = clientX - boardOffset.left;
+                var y = clientY - boardOffset.top;
                 var row = -1;
                 var col = -1;
-                if (x > 0 && y > 0 && x < boardPanel.clientWidth && y < boardPanel.clientHeight) {
-                    // dragging in board panel
-                    //logout("width: " + boardPanel.clientWidth);
-                    //logout("x: " + x);
-                    row = Math.floor(gameBoardRows * y / (boardPanel.clientHeight));
-                    col = Math.floor(gameBoardCols * x / (boardPanel.clientWidth - 30));
-                    logout("row: " + row);
-                    logout("col: " + col);
+                if (x > 0 && y > 0 && x < boardOffset.width && y < boardOffset.height) {
+                    row = Math.floor(gameBoardRows * y / boardOffset.height);
+                    col = Math.floor(gameBoardCols * x / boardOffset.width );
                 } else {
-                    // clicking player hand area?
-
                     var handUl = document.getElementById("hand-ul");
-                    //var container = handUl.getBoundingClientRect();
-
                     var windowOffset = handUl.getBoundingClientRect();
                     x = clientX - windowOffset.left;
                     y = clientY - windowOffset.top;
                     if (x > 0 && y > 0 && x < handPanel.clientWidth && y < handPanel.clientHeight) {
                         //row = gameBoardRows + $scope.turnIndex +  Math.floor(gameBoardRows * y / handPanel.clientHeight);
                         row = gameBoardRows + $scope.turnIndex;
-                        logout("handaaL:   " + handPanel.clientWidth);
-                        logout("handul: " + windowOffset.width);
                         col = Math.floor($scope.board[row].length * x / windowOffset.width);
-                        logout("row: " + row);
-                        logout("col: " + col);
                     }
                 }
+                logout("row: " + row);
+                logout("col: " + col);
                 return row !== -1 ? {row: row, col: col} : null ;
-            }
-
-            function dragEndHandler(from, to) {
-                $scope.$apply(function () {
-                    try {
-                        $scope.boardCellClicked(from.row, from.col);
-                        $scope.boardCellClicked(to.row, to.col);
-                        var msg = "Dragged to " + to.row + "x" + to.col;
-                        logout(msg);
-                        $scope.msg = msg;
-                    }catch(e) {
-                        // illegal move, restore
-                        logout(e.message);
-                        /* return immediately! */
-                        $scope.debug = e.message;
-                        return;
-                    }
-                });
             }
 
             var computerMovesInProcess = false;
@@ -298,49 +249,13 @@
                     computerMovesInProcess = false;
                 }
 
-                //if (computerMovesInProcess === false) {
-                //    var deltas = gameAIService.createComputerMove($scope.turnIndex, $scope.state);
-                //    if (deltas.length === 0) {
-                //        // has to pick one more tile
-                //        gameService.makeMove(gameLogicService.createPickMove($scope.turnIndex, $scope.state));
-                //    } else {
-                //        computerDeltas = deltas;
-                //        computerMovesInProcess = true;
-                //    }
-                //}
-                //
-                //if (computerMovesInProcess === true) {
-                //    if (computerDeltas.length > 0 ) {
-                //        var delta = computerDeltas[0];
-                //        var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
-                //        gameService.makeMove(move);
-                //        computerDeltas.splice(0, 1);
-                //    } else {
-                //        // make a meld move
-                //        gameService.makeMove(gameLogicService.createMeldMove($scope.turnIndex, $scope.state));
-                //        computerMovesInProcess = false;
-                //    }
-                //}
-
             }
 
             $scope.shouldSlowlyAppear = function () {
                 return $scope.activeTile !== undefined;
             };
 
-            /**
-             *
-             * @param params (object) {yourPlayerIndex: (int),
-         *                         stateAfterMove: *,
-         *                         turnIndexAfterMove: *,
-         *                         playersInfo: [{playerId: (int)},{}]}
-             */
             function updateUI(params) {
-
-                animationEnded = false;
-
-                // initialize move
-                //if (isEmptyObj(params.stateAfterMove)) {
                 if (isEmptyObj(params.stateAfterMove) && !params.stateBeforeMove &&
                     params.turnIndexBeforeMove ===0 &&  params.turnIndexAfterMove === 0) {
                     var playerIndex = 0;
@@ -429,8 +344,6 @@
                             getTileByIndex($scope.activeTile).color +
                             "," + getTileByIndex($scope.activeTile).score +
                             " from: (" + row + "," + col + ")";
-                            clickRow = row;
-                            clickCol = col;
                         }
                     } else {
                         $scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
@@ -524,10 +437,6 @@
                 if ($scope.isYourTurn) {
                     try {
                         var move = gameLogicService.createPickMove($scope.turnIndex, $scope.state);
-
-                        //var rest = gameLogicService.test($scope.turnIndex, $scope.state);
-                        //logout("rest: " + rest);
-
                         gameService.makeMove(move);
                         // reset sort
                         $scope.sortType = "sort";
@@ -616,10 +525,6 @@
             };
 
 
-            //TODO:
-            //function sortTiles() {
-            //}
-
             /* ================= Helper Functions =================== */
             function isEmptyObj(obj) {
 
@@ -685,7 +590,6 @@
                 }
                 return result;
             };
-
 
             gameService.setGame( {
                 gameDeveloperEmail: "jz1371@nyu.edu",

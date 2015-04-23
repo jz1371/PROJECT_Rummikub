@@ -18,9 +18,9 @@
     <link rel="stylesheet" type="text/css" href="css/game.css">
 </head>
 
-<body ng-cloak ng-controller="GameCtrl" class="container-fluid">
+<body ng-cloak ng-controller="GameCtrl">
 <div id="game" class="row">
-    <div id="gameArea" class="col-xs-11">
+    <div id="gameArea" class="col-xs-11" style="padding: 0 {{gameAreaPaddingPercent * 100}}%;">
         <div class="tile-wrapper"
              id="MyDrag" style="display: none; position: absolute;width: 0; padding-bottom: 0;z-index: 106;background-color: yellow;">
             <div class="tile">
@@ -203,7 +203,11 @@
 <script src="http://yoav-zibin.github.io/emulator/messageService.js"></script>
 <script src="http://yoav-zibin.github.io/emulator/stateService.js"></script>
 <!-- /build -->
-<script src="http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js"></script>
+
+<!-- build:js http://yoav-zibin.github.io/emulator/dist/dragAndDropListeners.min.js -->
+<script src="js/services/silentDragAndDropListenerService.js"></script>
+<!-- /build -->
+<!--<script src="http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js"></script>-->
 </body>
 
 </html>

@@ -86,7 +86,7 @@ module.exports = function(grunt) {
                         'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-touch.min.js',
                         'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/gameServices.min.js',
-                        'http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js',
+                        'http://yoav-zibin.github.io/emulator/dist/dragAndDropListeners.min.js',
                         'dist/everything.min.js',
                         'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',
                         'http://yoav-zibin.github.io/emulator/main.css',
