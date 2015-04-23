@@ -310,6 +310,8 @@
             // 4. construct move operations.
             var boardAfter = angular.copy(stateBefore.board);
             boardAfter[playerRow].push(tileToPick);
+            // sort tiles in hand by finding all sets and put sets at the front
+            boardAfter[playerRow] = findAllSetInHand(boardAfter[playerRow], stateBefore);
 
             var traceAfter = angular.copy(stateBefore.trace);
             traceAfter.nexttile = tileToPick + 1;
