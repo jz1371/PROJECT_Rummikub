@@ -78,16 +78,12 @@
             </div>
         </div><!-- /#board-panel -->
 
-        <div id="info-panel" class="row" ng-if="true">
-            info: {{debug}}
-            <div id="rotate" class="text-primary" style="font-size: 4vh">please rotate your phone to landscape for better display</div>
+        <div id="info-panel" class="row text-primary" ng-if="true">
+            {{debug}}
+            <div id="rotate" class="text-primary" style="font-size: 4vh">{{'ROTATE_INFO' | translate}}</div>
         </div>
 
         <div id="player-panel" class="row row-eq-height" style="border: groove;" ng-click="curPlayerAreaClicked()">
-
-            <!--<div class="col-xs-1">-->
-            <!--<button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="previous()">left</button>-->
-            <!--</div>-->
 
             <div class="col-xs-10" id="hand-panel">
                 <ul id="hand-ul" ng-repeat="row in [rows + yourPlayerIndex]">
@@ -121,10 +117,6 @@
                 </ul>
             </div>
 
-            <!--<div class="col-xs-1">-->
-            <!--<button id="pickbtn" type="button" class="btn btn-info btn-small btn-circle" ng-click="nextPage()">right</button>-->
-            <!--</div>-->
-
         </div>
 
     </div><!-- #gameArrea /.col-xs-11 -->
@@ -135,39 +127,40 @@
             <!--<div class="info col-xs-12" style="font-size: 1.5vw; padding-bottom: 0">-->
             <div ng-repeat="i in [] | range: state.trace.nplayers" class="col-xs-12 text-info" style="font-size: 1.5vw; padding-bottom: 0">
                 <p ng-if="i == turnIndex" class="text-info">
-                    <strong>Me</strong><br>{{board[rows + i].length}}
+                    <strong>{{'ME' | translate}}</strong><br>{{board[rows + i].length}}
                 </p>
                 <p ng-if="i != turnIndex" class="text-warning">
-                    <strong>P{{i}}</strong><br>{{board[rows + i].length}}
+                    <strong>{{'P' + i | translate}}</strong><br>{{board[rows + i].length}}
                 </p>
             </div>
             <!--</div>-->
 
             <div class="col-xs-12">
-                <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">pick</button>
+                <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">{{'PICK' | translate}}</button>
             </div>
 
             <div class="col-xs-12">
-                <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">meld</button>
+                <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">{{'MELD' | translate}}</button>
             </div>
 
             <div class="col-xs-12">
-                <button id="sortbtn" type="button" class="btn btn-default btn-circle" ng-disabled="sortDisabled" ng-click="setSortTypeBtnClicked()">{{sortType || "sort"}}</button>
+                <button id="sortbtn" type="button" class="btn btn-default btn-circle" ng-disabled="sortDisabled" ng-click="setSortTypeBtnClicked()">{{sortType.toUpperCase() || "sort" | translate}}</button>
             </div>
 
             <div class="col-xs-12">
-                <button id="undobtn" type="button" class="btn btn-success btn-circle" ng-click="undoBtnClicked()">undo</button>
+                <button id="undobtn" type="button" class="btn btn-success btn-circle" ng-click="undoBtnClicked()">{{'UNDO' | translate}}</button>
             </div>
 
             <div class="col-xs-12">
                 <button id="undoallbtn" type="button" class="btn btn-danger btn-circle" ng-click="undoAllBtnClicked()">
-                    <p style="font-size: 1vw;"> undo all </p>
+
+                    <p style="font-size: 1vw;"> {{'UNDO_ALL' | translate}}</p>
                 </button>
             </div>
 
             <div class="col-xs-12" ng-controller="ModalDemoCtrl">
                 <div ng-include="'template/help.html'"></div>
-                <button class="btn btn-primary btn-circle" ng-click="open()">Help</button>
+                <button class="btn btn-primary btn-circle" ng-click="open()">{{'HELP' | translate}}</button>
             </div>
 
             <div class="col-xs-12" style="font-size: 1.5vw">
@@ -207,6 +200,11 @@
 
 <!-- build:js http://yoav-zibin.github.io/emulator/dist/dragAndDropListeners.min.js -->
 <script src="js/services/silentDragAndDropListenerService.js"></script>
+<!-- /build -->
+<script src="js/languages/en.js"></script>
+<script src="js/languages/zh.js"></script>
+<!-- build:js http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.2.6.1.min.js -->
+<script src="http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.2.6.1.js"></script>
 <!-- /build -->
 <!--<script src="http://yoav-zibin.github.io/emulator/examples/drag_n_drop/dragAndDropListeners.js"></script>-->
 </body>
