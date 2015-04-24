@@ -299,7 +299,7 @@ describe("Rummikub Unit Tests", function() {
 
     });
 
-    fdescribe("Two Players Mode", function() {
+    describe("Two Players Mode", function() {
 
         var nPlayers = 2;
         var state = {};
@@ -339,7 +339,7 @@ describe("Rummikub Unit Tests", function() {
             });
         });
 
-        fdescribe("[PICK]", function() {
+        describe("[PICK]", function() {
 
             beforeEach(function setMoveType(){
                 state.type = "PICK";
@@ -442,7 +442,7 @@ describe("Rummikub Unit Tests", function() {
             });
 
             it ("[Wrong] player cannot pick tile if he sent tiles to board and did not retrieve them back in this turn.", function(){
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 state.board[0][0] = 13;
                 state.board[6] = [0,1,2,3,4,5,6,7,8,9,10,11,12];
                 state.deltas = [{from: {row: 6, col: 13}, to: {row: 0, col: 0}, tileIndex: 13}];
@@ -452,7 +452,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] player cannot mess up 'able-to-meld' board if he decides to pick tile", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 // after several moves, board is messed up.
                 // because [9,10],[18,19],[20],[21] are not valid sets
                 stateBefore.board = [
@@ -473,7 +473,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] player cannot mess up 'able-to-meld' board", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore.board = [
                     // (1,2,3) is 'runs'  (21,34,60) is 'groups'
                     /*! (22,35,62) is neither 'runs' nor 'groups' !*/
@@ -504,427 +504,390 @@ describe("Rummikub Unit Tests", function() {
         });
 
         describe("[MOVE]", function() {
-            function defaultSendMove(playerIndex) {
-                var sendMove = [
-                    // player0 sends tile 13 from his rack to board
-                    {setTurn: {turnIndex: playerIndex}},
-                    {set: {key: 'type', value: "SEND"}},
-                    {set: {key: 'todelta', value: {tile: 13, row: 0, col: 0}}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial : false,
-                        tiles   : [0,1,2,3,4,5,6,7,8,9,10,11,12]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: [13]}},
-                    {set: {key: 'board', value: [
-                        [13,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    ]}},
-                    {setVisibility: {key: 'tile13', visibleToPlayerIndices: [1 - playerIndex]}}
+            function moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove, visibleTo) {
+                return [
+                    {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
+                    {set: {key: 'type', value: "MOVE"}},
+                    {set: {key: 'board', value: boardExpect}},
+                    {set: {key: 'deltas', value: deltasExpect}},
+                    {setVisibility: {key: 'tile' + tileToMove, visibleToPlayerIndices: visibleTo}}
                 ];
-                return sendMove;
             }
 
             it ("[Right] player0 sends his tile to board after player1 picks one tile and shifts turn", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
 
-                var move = defaultSendMove(playerIndex);
+                var stateBefore = angular.copy(state);
+
+                var boardExpect = [
+                   // 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [ 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    // p1 sends tile0 to board[0][0]
+                    [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]
+                ];
+                var tileToMove = 0;
+
+                var deltasExpect = angular.copy(stateBefore.deltas);
+                deltasExpect.push({from: {row: 6, col: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+
+                var move = moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove,null);
 
                 expectMoveOk(playerIndex, stateBefore, move);
 
             });
 
-            it ("[Right] player0 sends his tile to board after he sent another tile in current turn", function() {
-                var stateBefore = state;
-                stateBefore.player0.tiles    = [0,1,2,3,4,5,6,7,8,9,10,11,12];
-                // player has sent tile13 to board already
-                stateBefore.board[1] = [-1,-1,-1,13,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-                stateBefore.tilesSentToBoardThisTurn = [13];
+            it ("[Right] player0 continues to send his tile to board after he sent another tile in current turn", function() {
+                var stateBefore = angular.copy(state);
+                // simulating in last move, tile0 was sent to board[0][0]
+                stateBefore.board[0][0] = 0;
+                stateBefore.board[6][0] = -1;
 
-                expectMoveOk(0, stateBefore,[
-                    {setTurn: {turnIndex: 0}},
-                    {set: {key: 'type', value: "SEND"}},
-                    {set: {key: 'todelta', value: {tile:9, row: 0, col: 1}}},  // sending tile 9
-                    {set: {key: 'player0', value: {
-                        initial : false,
-                        tiles   : [0,1,2,3,4,5,6,7,8,  10,11,12]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: [13,9]}},
-                    {set: {key: 'board', value: [
-                        [-1, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,13,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    ]}},
-                    {setVisibility: {key: 'tile9', visibleToPlayerIndices: [1]}}
-                ]);
+                var playerIndex = 0;
+
+                var boardExpect = [
+                    // 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [ 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,13,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    // p1 sends tile13 to board[1][1]
+                    [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,-1],
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]
+                ];
+
+                var deltasExpect = angular.copy(stateBefore.deltas);
+                var tileToMove = 13;
+                deltasExpect.push({from: {row: 6, col: 13}, to: {row: 1, col: 1}, tileIndex: tileToMove} );
+
+                var move = moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove,null);
+
+                expectMoveOk(playerIndex, stateBefore, move);
             });
 
-            it ("[Right] player1 sends his tile to board after he sent another tile in current turn", function() {
-                var stateBefore = state;
-                // player sent tile 26 to board
-                state.board = [
-                    [-1,26,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                ];
-                state.player1 = {
-                    initial : false,
-                    tiles   : [14,15,16,17,18,19,20,21,22,23,24,25,27]
-                };
-                state.tilesSentToBoardThisTurn = [26];
+            it ("[Right] player1 performs a series of moves", function() {
+                var playerIndex = 1;
+                var stateBefore = angular.copy(state);
 
-                expectMoveOk(1, stateBefore, [
-                    {setTurn: {turnIndex: 1}},
-                    {set: {key: "type", value: "SEND"}},
-                    {set: {key: 'todelta', value: {tile: 27, row: 0, col: 0}}},  // sending tile27
-                    {set: {key: 'player1', value: {
-                        initial : false,
-                        tiles   : [14,15,16,17,18,19,20,21,22,23,24,25]         // sending tile27 after send tile26
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: [26,27]}},
-                    {set: {key: 'board', value: [
-                        [27,26,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    ]}},
-                    {setVisibility: {key: 'tile27', visibleToPlayerIndices: [0]}}
-                ]);
+                // [1st move] tile14:  board[7][0]  -> board[0][0] (from hand to game board)
+                var boardExpect = [
+                    // 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [14,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    // p1 sends tile0 to board[1][1]
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],              // 6
+                    [-1,15,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
+                ];
+
+                var deltasExpect = angular.copy(stateBefore.deltas);
+                var tileToMove = 14;
+                deltasExpect.push({from: {row: 7, col: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+
+                var move = moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove,null);
+
+                expectMoveOk(playerIndex, stateBefore, move);
+
+                // [2nd move] tile15: board[7][1] -> board[0][1] (from hand to game board)
+                var stateBefore2 = angular.copy(state);
+                stateBefore2.board = boardExpect;
+                stateBefore2.deltas = deltasExpect;
+
+                var boardExpect2 = [
+                    // 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    // p1 sends tile0 to board[1][1]
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],              // 6
+                    [-1,-1,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
+                ];
+                var deltasExpect2 = angular.copy(stateBefore2.deltas);
+
+                tileToMove = 15;
+                deltasExpect2.push({from: {row: 7, col: 1}, to: {row: 0, col: 1}, tileIndex: tileToMove} );
+                var move2 = moveMoveTemplate(playerIndex, boardExpect2, deltasExpect2, tileToMove,null);
+                expectMoveOk(playerIndex, stateBefore2, move2);
+
+                // [3rd move] tile14: board[0][0] -> board[5][5] (from game board to game board)
+                var stateBefore3 = angular.copy(stateBefore2);
+                stateBefore3.board = boardExpect2;
+                stateBefore3.deltas = deltasExpect2;
+
+                var boardExpect3 = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,14,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    // p1 sends tile0 to board[1][1]
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],              // 6
+                    [-1,-1,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
+                ];
+                var deltasExpect3 = angular.copy(stateBefore3.deltas);
+
+                tileToMove = 14;
+                deltasExpect3.push({from: {row: 0, col: 0}, to: {row: 5, col: 5}, tileIndex: tileToMove} );
+                var move3 = moveMoveTemplate(playerIndex, boardExpect3, deltasExpect3, tileToMove,null);
+                expectMoveOk(playerIndex, stateBefore3, move3);
+
+
+                // [4th move] tile15: board[0][1] -> board[7][0] (From game board to hand)
+                var stateBefore4 = angular.copy(stateBefore3);
+                stateBefore4.board = boardExpect3;
+                stateBefore4.deltas = deltasExpect3;
+
+                var boardExpect4 = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,14,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],              // 6
+                    [15,-1,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
+                ];
+                var deltasExpect4 = angular.copy(stateBefore4.deltas);
+
+                tileToMove = 15;
+                deltasExpect4.push({from: {row: 0, col: 1}, to: {row: 7, col: 0}, tileIndex: tileToMove} );
+                var move4 = moveMoveTemplate(playerIndex, boardExpect4, deltasExpect4, tileToMove, [1]);
+                expectMoveOk(playerIndex, stateBefore4, move4);
+
+
             });
 
             it ("[Wrong] Send: sending undefined tile", function(){
-                var stateBefore = state;
-                var move = defaultSendMove(0);
-                move[2] = {set: {key: 'todelta', value: {row: 0, col: 0}}};
-
-                expectIllegalMove(0, stateBefore, move);
-            });
-
-            it ("[Wrong] Send: sending tile29 but you should send your own tile: [0,1,2,3]", function () {
-                var stateBefore = state;
-                var playerIndex = 0;
-                state.player0.tiles = [0,1,2,3];    // tiles that player holding before move
-
-                var move = defaultSendMove(playerIndex);
-                move[2].set.value.tile = 29;        // tile that player is to send in the move
-                expectIllegalMove(0, stateBefore, move);
-
-                move = defaultSendMove(playerIndex);
-                move[2].set.value.tile = 'x29';      // tile to send in the move
-                expectIllegalMove(0, stateBefore, move);
-            });
-
-            it ("[Wrong] checkPositionWithinBoard: (row, col) = (undefined, undefined) is undefined", function() {
-                var stateBefore = state;
                 var playerIndex = 1;
-                var move = defaultSendMove(playerIndex);
-                move[2] = {set: {key: 'todelta', value: {tile: 1}}};
-                expectIllegalMove(0, stateBefore, move);
+                var stateBefore = angular.copy(state);
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [ 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 5
+                    [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],             // 6
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]              // 7
+                ];
+                var deltasExpect = angular.copy(stateBefore.deltas);
 
-                move = defaultSendMove(playerIndex);
-                move[2] = {set: {key: 'todelta', value: {tile: 1, col: 0}}};
-                expectIllegalMove(0, stateBefore, move);
+                var tileToMove = undefined;
+                var move = moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
 
-                move = defaultSendMove(playerIndex);
-                move[2] = {set: {key: 'todelta', value: {tile: 1, row: 0}}};
-                expectIllegalMove(0, stateBefore, move);
-
-            });
-
-            it ("[Wrong] checkPositionWithinBoard: (row, col) = (undefined, undefined) is undefined", function() {
-                var stateBefore = state;
-                var move = defaultSendMove();
-                move[2] = {set: {key: 'todelta', value: {tile: 1}}};
-                expectIllegalMove(0, stateBefore, move);
-
-                move = defaultSendMove();
-                move[2] = {set: {key: 'todelta', value: {tile: 1, col: 0}}};
-                expectIllegalMove(0, stateBefore, move);
-
-                move = defaultSendMove();
-                move[2] = {set: {key: 'todelta', value: {tile: 1, row: 0}}};
-                expectIllegalMove(0, stateBefore, move);
+                tileToMove = "tileUnknown";
+                move = moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
 
             });
 
-            it ("[Wrong] checkPositionWithinBoard: position out Of board, [row: -1, col: 0]", function() {
-                var stateBefore = state;
-                var move = defaultSendMove(0);
-                move[2] = {set: {key: 'todelta', value: {tile: 1, row: -1, col: 0}}};
+            it ("[Wrong] checkPositionWithinBoard for from ", function() {
+                var playerIndex = 0;
+                var stateBefore = angular.copy(state);
+                var board = stateBefore.board;
+                var deltas = stateBefore.deltas;
 
-                expectIllegalMove(0, stateBefore, move);
+                var tileToMove = 0;
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] from.col = undefined -> fail
+                deltas.push({from: {row: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+                var move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] from.row = -1 -> out of board's boundary -> fail
+                deltas.push({from: {row: -1, col: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] from.row = 8 -> out of board's boundary -> fail
+                deltas.push({from: {row: 8, col: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] from.col = -1 -> out of board's boundary -> fail
+                deltas.push({from: {row: 0, col: -1}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] from.col = -1 -> out of board's boundary -> fail
+                deltas.push({from: {row: 0, col: 20}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
             });
 
-            it ("[Wrong] checkPositionWithinBoard: position out Of board, [row: 1, col: 22]", function() {
-                var stateBefore = state;
-                var move = defaultSendMove(1);
-                move[2] = {set: {key: 'todelta', value: {tile: 1, row: 1, col: 22}}};
-                move[3].set.value.tiles = [0,1,2,3,4,5,6,7,8,9,10,11,12,13];
+            it ("[Wrong] From: sending tile29 but tile29 does not belong to player", function () {
+                var stateBefore = angular.copy(state);
+                var playerIndex = 1;
+                var board = stateBefore.board;
+                var deltas = stateBefore.deltas;
+                board[7] = [1,2,3];
 
-                expectIllegalMove(1, stateBefore, move);
+                var tileToMove = 29;
+                deltas.push({from: {row: 7, col: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+
+                var move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+
+                // [!] player does not have tile29 in hand, so if he sent tile29, it should fail
+                expectIllegalMove(playerIndex, stateBefore, move);
             });
 
-            it ("[Wrong] Send: board[1,1] is already occupied by tile32, you cannot send to this non-empty position in board.", function() {
-                var stateBefore = state;
-                state.board[1][1] = 32;         // tile32 is already in board[1][1]
-                var move = defaultSendMove(0);
-                move[2] = {set: {key: 'todelta', value: {tile: 1, row: 1, col: 1}}};
-                move[3].set.value.tiles = [0,1,2,3,4,5,6,7,8,9,10,11,12,13];
+            it ("[Wrong] From: an empty position", function() {
+                var stateBefore = angular.copy(state);
 
-                expectIllegalMove(0, stateBefore, move);
+                var playerIndex = 1;
+                var board = stateBefore.board;
+                var deltas = stateBefore.deltas;
+
+                board[7] = [-1,1,2,3];
+
+                // [!] cannot send from an empty position (-1 means empty position on board)
+                var tileToMove = -1;
+                deltas.push({from: {row: 7, col: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+
+                var move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+            });
+
+            it ("[Wrong] checkPositionWithinBoard for to", function() {
+                var playerIndex = 0;
+                var stateBefore = angular.copy(state);
+                var board = stateBefore.board;
+                var deltas = stateBefore.deltas;
+
+                var tileToMove = 0;
+                var move;
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] to.col = undefined -> fail
+                deltas.push({from: {row: 6, col: 0}, to: {row: 0 }, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] to.row = -1 -> out of board's boundary -> fail
+                deltas.push({from: {row: 6, col: 0}, to: {col: 0}, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] to.row = 8 -> out of board's boundary -> fail
+                deltas.push({from: {row: 6, col: 0}, to: {row: 8, col: 0}, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] to.col = 21 -> out of board's boundary -> fail
+                deltas.push({from: {row: 6, col: 0}, to: {row: 0, col: 20}, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+                deltas = angular.copy(stateBefore.deltas);
+                // [!] to.col = -1 -> out of board's boundary -> fail
+                deltas.push({from: {row: 6, col: 0}, to: {row: 0, col: -1}, tileIndex: tileToMove} );
+                move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+            });
+
+            it ("[Wrong] To: a non-empty position", function() {
+                var stateBefore = angular.copy(state);
+
+                var playerIndex = 1;
+                var board = stateBefore.board;
+                var deltas = stateBefore.deltas;
+                //[!] board[0][0] is occupied by tile1, so no tile can be sent here
+                board[0][0] = 1;
+                board[7] = [1,2,3];
+
+                var tileToMove = 1;
+                deltas.push({from: {row: 7, col: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+
+                var move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+            });
+
+            it ("[Wrong] move tiles on board sent by other players when this player has not finished initial meld", function() {
+                var stateBefore = angular.copy(state);
+                var playerIndex = 1;
+                var board = stateBefore.board;
+                var deltas = stateBefore.deltas;
+
+                board[0][0] = 18;
+                var tileToMove = 18;
+
+                //[!] tile18 was sent by other players -> move tile18 -> fail
+                deltas.push({from: {row: 0, col: 0}, to: {row: 1, col: 1}, tileIndex: tileToMove} );
+
+                var move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+            });
+
+            it ("[Right] move tiles on board sent by other players when this player has finished initial meld", function() {
+                var playerIndex = 1;
+                var stateBefore = angular.copy(state);
+                stateBefore.trace.initial[playerIndex] = true;
+                stateBefore.board[0][0] = 18;
+
+                var board = angular.copy(stateBefore.board);
+                var deltas = angular.copy(stateBefore.deltas);
+
+                var tileToMove = 18;
+                board[0][0] = -1;
+                board[1][1] = 18;
+
+                //[!] tile18 was sent by other players -> move tile18 -> fail
+                deltas.push({from: {row: 0, col: 0}, to: {row: 1, col: 1}, tileIndex: tileToMove} );
+
+                var move = moveMoveTemplate(playerIndex, board, deltas, tileToMove,null);
+
+                expectMoveOk(playerIndex, stateBefore, move);
 
             });
 
             it ("[Wrong] Send: game is over, you cannot move any more.", function(){
-                var stateBefore = state;
-                // player0 has no tiles left in hand.
-                state.player0.tiles = [];
-                // player1 still has tiles left in hand.
-                state.player1.tiles = [1,2,3];
-
-                var move = defaultSendMove(0);
-                move[2].set.value.tile = 1;
-
-                expectIllegalMove(0, stateBefore, move);
-
-            });
-
-        });
-
-        describe("RETRIEVE move unit tests", function(){
-
-            function defaultRetrieveMove(playerIndex) {
-                var retrieveMove = [
-                    // player0 retrieves tile9 from board
-                    {setTurn: {turnIndex: playerIndex}},
-                    {set: {key: 'type', value: "RETRIEVE"}},
-                    {set: {key: 'fromdelta', value: {tile: 9, row: 0, col: 1}}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial : false,
-                        tiles   : [0,1,2,3,4,5,6,7,8,  10,11,12,13,9]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}},
-                    {set: {key: 'board', value: [
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,22,23,24,25,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    ]}},
-                    {setVisibility: {key: 'tile9', visibleToPlayerIndices: [playerIndex]}}
-                ];
-                return retrieveMove;
-            }
-
-            it ("[Right] player0 retrieves tile from board", function(){
-                var stateBefore = state;
-                stateBefore.board = [
-                    [-1, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,22,23,24,25,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-                ];
-                stateBefore.player0.tiles    = [0,1,2,3,4,5,6,7,8,  10,11,12,13];
-                stateBefore.tilesSentToBoardThisTurn = [9];
-
-                // player0 is going to retrieve tile9 back to hand.
-                expectMoveOk(0, stateBefore, defaultRetrieveMove(0));
-
-            });
-
-            it ("[Wrong] checkPositionWithinBoard: position out of board.", function(){
-                var playerIndex = 0;
-                var stateBefore = state;
-
-                var move = defaultRetrieveMove(playerIndex);
-                move[2].set.value = {tile: 9, row: -1, col: 0};
-                expectIllegalMove(playerIndex, stateBefore, move);
-
-                move = defaultRetrieveMove(playerIndex);
-                move[2].set.value = {tile: 9, row: 2, col: -5};
-                expectIllegalMove(playerIndex, stateBefore, move);
-            });
-
-            it ("[Wrong] Retrieve: no tile in board[0][0]", function (){
                 var playerIndex = 1;
-                var stateBefore = state;
-                state.board = [
-                    [-1, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,22,23,24,25,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-                ];
 
-                var move = defaultRetrieveMove(1);
-                move[2] = {set: {key: 'fromdelta', value: {tile: 9, row: 0, col: 0}}};
+                var stateBefore = angular.copy(state);
+                // player0 has no tiles left in hand, he is the winner, game should end
+                stateBefore.board[6] = [];
+                // player1 still has tile15 in hand
+                stateBefore.board[7] = [15];
 
-                expectIllegalMove(playerIndex, stateBefore, move);
+                var tileToMove = 15;
 
-            });
+                var deltasExpect = angular.copy(stateBefore.deltas);
+                deltasExpect.push({from: {row: 7, col: 0}, to: {row: 1, col: 1}, tileIndex: tileToMove} );
 
-            it ("[Wrong] Retrieve: retrieving tile, but you should retrieve your own tile", function(){
-                var stateBefore = state;
-                stateBefore.player1.tiles    = [15,16,17,18,19];
-                state.board = [
-                    [-1, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,22,23,24,25,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-                ];
-
-                var playerIndex = 1;
-                var move = defaultRetrieveMove(playerIndex);
-                move[2].set.value = {tile: 9, row: 0, col: 1};
-
-                expectIllegalMove(1, stateBefore, move);
-            });
-
-        });
-
-        describe("REPLACE move unit tests", function () {
-
-            function defaultReplaceMove(playerIndex) {
-                var replaceMove = [
-                    {setTurn: {turnIndex: playerIndex}},
-                    {set: {key: 'type', value: "REPLACE"}},
-                    {set: {key: 'board', value: [
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    ]}},
-                    {set: {key: 'fromdelta', value: {row: 0, col: 0}}},
-                    {set: {key: 'todelta', value: {row: 0, col: 1}}},
-                ];
-                return replaceMove;
-            }
-
-            it ("[Right] player0 replaces tile5 from board[0][0] to board[1][1] before player0 finishes initial meld", function(){
-                var playerIndex = 0;
-                var stateBefore = state;
-                stateBefore.board = [
-                    [ 5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                ];
-                stateBefore.player0 = {
-                    initial : false,
-                    tiles   : [0,1,2,3,4,  6,7,8,9,10,11,12,13]
-                };
-
-                var move = defaultReplaceMove(playerIndex);
-                move[2].set.value = [
-                    [-1, 5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                ];
-                move[3] = {set: {key: 'fromdelta', value: {row: 0, col: 0}}};
-                move[4] = {set: {key: 'todelta',   value: {row: 0, col: 1}}};
-
-                expectMoveOk(playerIndex, stateBefore, move);
-
-            });
-
-            it ("[Right] player1 replaces tile18 from board[2][2] to board[1][1] after he finishes initial meld", function() {
-                var playerIndex = 1;
-                var stateBefore = state;
-                stateBefore.player1.initial = true;
-                stateBefore.board[2][2] = 18;
-
-                var move = defaultReplaceMove(playerIndex);
-                move[2].set.value[2][2] = -1;  // board[2][2]
-                move[2].set.value[1][1] = 18;  // board[1][1]
-                move[3] = {set: {key: 'fromdelta', value: {row: 2, col: 2}}};
-                move[4] = {set: {key: 'todelta',   value: {row: 1, col: 1}}};
-
-                expectMoveOk(playerIndex, stateBefore, move);
-            });
-
-            it ("[Wrong] checkPositionWithininBoard: ", function(){
-                var playerIndex = 1;
-                var stateBefore = state;
-                var move = defaultReplaceMove(playerIndex);
-
-                move[3] = {set: {key: 'fromdelta', value: { col: 5}}};
-                expectIllegalMove(playerIndex, stateBefore, move);
-
-                move[3] = {set: {key: 'fromdelta', value: { row: 5}}};
-                expectIllegalMove(playerIndex, stateBefore, move);
-
-            });
-
-            it ("[Wrong] Replace: no tile in board[5][5]", function(){
-                var playerIndex = 1;
-                var stateBefore = state;
-                stateBefore.board[5][5] = -1;
-
-                var move = defaultReplaceMove(playerIndex);
-                move[3] = {set: {key: 'fromdelta', value: {row: 5, col: 5}}};
-
-                expectIllegalMove(playerIndex, stateBefore, move);
-
-            });
-
-            it ("[Wrong] checkPositionWithinBoard: ", function(){
-                var playerIndex = 1;
-                var stateBefore = state;
-                stateBefore.board[0][0] = 1;
-                var move = defaultReplaceMove(playerIndex);
-
-                move[4] = {set: {key: 'todelta', value: {row: 18, col: 5}}};
-                expectIllegalMove(playerIndex, stateBefore, move);
-
-                move[4] = {set: {key: 'todelta', value: {row: 5, col: 20}}};
-                expectIllegalMove(playerIndex, stateBefore, move);
-
-            });
-
-            it ("[Wrong] Replace: board[4][3] has been occupied with tile10", function(){
-                var playerIndex = 0;
-                var stateBefore = state;
-                stateBefore.board[0][0] = 18;
-                stateBefore.board[4][3] = 10;
-
-                var move = defaultReplaceMove(playerIndex);
-                move[3] = {set: {key: 'fromdelta', value: {row: 0, col: 0}}};
-                move[4] = {set: {key: 'todelta', value: {row: 4, col: 3}}};
-
-                expectIllegalMove(playerIndex, stateBefore, move);
-
-            });
-
-            it ("[Wrong] Replace: moving tile", function(){
-                var playerIndex  = 1;
-                var stateBefore = state;
-                stateBefore.player1 = {initial: false, tiles: [14,15,16,17,18,19,20,21,22,23,24,25,26,27]};
-                var move = defaultReplaceMove(playerIndex);
+                var move = moveMoveTemplate(playerIndex, stateBefore.board, deltasExpect, tileToMove,null);
 
                 expectIllegalMove(playerIndex, stateBefore, move);
 
@@ -955,7 +918,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player1 scores 30 by one 'groups' for his initial meld, ", function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : false,
                     tiles    : [14,15,16,17,18,19,20,21,23,24,25]
@@ -982,7 +945,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player1 scores 30 by combination of 'runs' and 'groups' for his initial meld, ", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : false,
                     tiles    : [14,19,20,22,23,24,25]
@@ -1015,7 +978,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player0 scores 36 by one 'runs' for his initial meld", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : false,
                     tiles    : [0,1,2,3,4,5,6,7,8,9,13]
@@ -1042,7 +1005,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player0's another meld after initial meld", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : true,
                     tiles    : [0,1,2,3,4,5,6,7,8,13]
@@ -1073,7 +1036,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player1 melds with joker after initial meld", function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : true,
                     tiles    : [17,18,19,20,21,23,24,25]
@@ -1103,7 +1066,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player0 melds with two jokers in one group", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : true,
                     tiles    : [0,3,5,6,7,8,13]
@@ -1134,7 +1097,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] player0 needs more than 30 score for his initial meld", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore.player0 = {
                     initial  : false,
                     tiles    : [0,      4,5,6,7,8,9,10,11,12,13]
@@ -1165,7 +1128,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] player1 tries to meld with wrong number of tiles", function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore['player' + playerIndex] = {
                     initial  : true,
                     tiles    : [0,    3,4,5,6,7,8,9,10,11,12,13]
@@ -1183,7 +1146,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] tiles in 'runs' should have the same color", function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore['player' + playerIndex] = {
                     initial  : true,
                     tiles    : [0,1,2,3,4,5,6,7,8,9,      12,13   ]
@@ -1204,7 +1167,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] tiles in 'runs' should have the consecutive number order", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore['player' + playerIndex] = {
                     initial  : true,
                     tiles    : [0,1,2,3,4,5,6,7,  9,      12,13]
@@ -1232,7 +1195,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] tiles in 'groups' should have the same score", function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : false,
                     tiles    : [14,15,16,17,18,19,20,21,   23,24,25]
@@ -1260,7 +1223,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] tiles in 'groups' should have different colors with each other" , function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : false,
                     tiles    : [14,15,16,17,18,19,20,21,   23,24,25]
@@ -1288,7 +1251,7 @@ describe("Rummikub Unit Tests", function() {
             it ("[Wrong] score in initial meld should be at least 30", function(){
 
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : false,
                     // player sent tile14,tile15,tile16,tile35,tile36 to board in current turn.
@@ -1321,7 +1284,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] player0 sent no tiles to board but want to meld", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore["player" + playerIndex] = {
                     initial  : true,
                     tiles    : [14,15,16,17,18,19,20,21,22,23,24,25,35,61]
@@ -1346,7 +1309,7 @@ describe("Rummikub Unit Tests", function() {
         describe("UNKNOWN move unit tests", function(){
             it ("[Wrong] unknown move type ", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 expectIllegalMove(playerIndex, stateBefore, [
                     {setTurn: {turnIndex: playerIndex}},
                     {set: {key: 'type', value: "WHAT?"}}
@@ -1364,7 +1327,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player0 wins the game", function() {
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore.tilesSentToBoardThisTurn = [17,9,8];
                 stateBefore["player" + playerIndex] = {
                     initial : true,
@@ -1402,7 +1365,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player1 wins the game, player0 still holds joker in hand", function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 // player1 sent tile9 to board in this turn and has no tiles left in hand.
                 stateBefore.tilesSentToBoardThisTurn = [9];
                 stateBefore["player" + playerIndex] = {
@@ -1441,7 +1404,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] cannot move any more when someone wins the game.", function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 stateBefore.tilesSentToBoardThisTurn = [];
                 var playerIndexBefore = 1 - playerIndex;
                 stateBefore["player" + playerIndexBefore] = {
@@ -1480,7 +1443,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] game maybe not over even if all tiles are sent to players", function(){
                 var playerIndex = 0;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 // all tiles are sent to players
                 stateBefore.nexttile = 106;
 
@@ -1521,7 +1484,7 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Wrong] cannot move after game is tied", function(){
                 var playerIndex = 1;
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
                 // all tiles are sent to players
                 stateBefore.nexttile = 106;
 
