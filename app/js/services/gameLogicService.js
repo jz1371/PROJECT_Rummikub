@@ -84,10 +84,15 @@
             try {
                 var expectedMove = createMove(stateBefore, playerIndex, actualMove);
                 if (!angular.equals(actualMove, expectedMove)) {
+                    //console.log("act: " + actualMove[0].endMatch.endMatchScores);
+                    //console.log("exp: " + expectedMove[0].endMatch.endMatchScores);
+                    //console.log("act: " + actualMove[2].set.value);
+                    //console.log("exp: " + expectedMove[2].set.value);
                     return false;
                 }
             } catch (e) {
-                console.log(e.stack);
+                //console.log(e.stack);
+                console.log(e.message);
                 return false;
             }
             return true;
@@ -105,7 +110,7 @@
             switch (moveType) {
                 case "INIT":
                     var nPlayers = actualMove[2].set.value.nplayers;
-                    expectedMove = getInitialMove(playerIndex, nPlayers);
+                    expectedMove = getInitialMove(nPlayers);
                     break;
                 case "MOVE":
                     deltas = actualMove[3].set.value;
@@ -138,33 +143,29 @@
         /**
          * Creates the initial move.
          *
-         * @param playerIndex (int) index of player who is playing.
          * @param nPlayers (int) number of players in current game.
          * @returns {*[]} array of operations in initial move.
          */
-        function getInitialMove(playerIndex, nPlayers) {
-            // 1. make sure player0 is initializing the game.
-            //check(playerIndex === 0,
-            //    "INIT: player" + playerIndex + " is trying to move, but only player0 can play the initial move."
-            //);
-
-            // 2. make sure 2 - 4 players are playing the game.
+        function getInitialMove(nPlayers) {
+            // 1. make sure 2 - 4 players are playing the game.
             check(nPlayers <= 4 && nPlayers >= 0,
                 "INIT: nPlayers = " + nPlayers + " is given, but only 2 - 4 players are allowed."
             );
 
-            // whether player has made initial meld
+            // Initially, set 'initial' to false, i.e. no player has made initial meld
             var initial = [];
             for (var i = 0; i < nPlayers; i++) {
                 initial.push(false);
             }
-
-            // 3. construct the move
+            // 2. construct the move
             var nTilesPerPlayerInitially = 14;
             var move = [
                 {setTurn: {turnIndex: 0}},
                 {set: {key: 'type', value: "INIT"}},
-                {set: {key: 'trace', value: {nplayers: nPlayers, initial: initial, nexttile: nPlayers * 14}}},
+                {set: {key: 'trace', value: {
+                    nplayers: nPlayers,
+                    initial: initial,
+                    nexttile: nPlayers * 14}}},
                 {set: {key: 'board', value: getInitialBoard(nPlayers)}},
                 {set: {key: 'deltas', value: []}}
             ];
@@ -177,11 +178,11 @@
                 shuffleKeys[tileIndex] = 'tile' + tileIndex;
             }
 
-            // 3.3. initialize tile visibility
+            // 3.2. initialize tile visibility
             var visibility = [];
             for (var ii = 0; ii < nPlayers; ii++) {
                 for (var jj = 0; jj < nTilesPerPlayerInitially; jj++) {
-                    // each player can see 14 tiles initially
+                    // each player has 14 tiles in hand initially
                     tileIndex = ii * nTilesPerPlayerInitially + jj;
                     visibility[tileIndex] = {setVisibility: {key: 'tile' + tileIndex, visibleToPlayerIndices: [ii]}};
                 }
@@ -298,16 +299,13 @@
 
             // 2. player is able to replace tiles throughout the board,
             //    but before picking, he should restore the 'able-to-meld' state
-            //    and retrieve all tiles he sent to board in this turn.
+            //    and retrieve all tiles he sent to board in this turn back to his hand.
             check(isMeldOk(stateBefore, stateBefore.board, playerIndex, true),
                 "[PICK] you should not mess up the board, if you want to pick" );
 
-            // 3. make sure picking next available tile based on last turn
             var tileToPick = stateBefore.trace.nexttile;
-            check(tileToPick >= 0 && tileToPick < 106,
-                "[PICK] no more tiles  left for picking");
 
-            // 4. construct move operations.
+            // 3. construct move operations.
             var boardAfter = angular.copy(stateBefore.board);
             boardAfter[playerRow].push(tileToPick);
             // sort tiles in hand by finding all sets and put sets at the front
@@ -444,7 +442,6 @@
 
             var traceAfter = angular.copy(stateBefore.trace);
             traceAfter.initial[playerIndex] = true;
-            //console.log("board: " + board);
             var move = [
                 {setTurn: {turnIndex: playerIndex}},
                 {set: {key: 'type', value: "COMB"}},
@@ -1041,7 +1038,7 @@
             for (var ii = 0; ii < setsInBoard.length; ii++) {
                 var sets = getSetsOfTilesByIndex(setsInBoard[ii], stateBefore);
                 if ( !isRuns(sets) && !isGroups(sets) ) {
-                    console.log("isMeldOk, invalid sets: [" + setsInBoard[ii] + "]");
+                    //console.log("isMeldOk, invalid sets: [" + setsInBoard[ii] + "]");
                     return false;
                 }
             }
@@ -1238,7 +1235,7 @@
             var groups = findAllGroups(hand, state);
             var handAfter = [];
             for (var i = 0; i < groups.length; i++) {
-                console.log("group: " + groups[i]);
+                //console.log("group: " + groups[i]);
                 // append all valid groups
                 handAfter = handAfter.concat(groups[i]);
             }
@@ -1253,7 +1250,7 @@
             // 3. find all runs from the rest tiles in hand
             var runs = findAllRuns(restTiles, state);
             for (var j = 0; j < runs.length; j++) {
-                console.log("run: " + runs[j]);
+                //console.log("run: " + runs[j]);
                 handAfter = handAfter.concat(runs[j]);
             }
             for (var k = 0 ; k < restTiles.length; k++) {

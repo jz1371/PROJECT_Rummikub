@@ -1,22 +1,63 @@
 /**
- * File: gameLogic_test.js
- * ------------------------------------------
+ * File: test/unit/gameLogicServiceSpec.js
+ * --------------------------------------------------------------
+ *
+ * Usage from terminal (assuming at project root):
+ *
+ *   0. $ sudo npm install
+ *   1. $ cd test
+ *   2. $ ../node_modules/karma/bin/karma start
+ *
+ * Usage from Webstorm
+ *
+ *   1. right click on karma.conf.js file -> 'Create karma.conf.js'
+ *   2. fill in:
+ *       node interpreter: /usr/local/bin/node
+ *       karma package   : /Users/Steven/node_modules/karma
+ *   3. 'Run karma.conf.js'
+ *
+ * Run single test suite: describe --> fdescribe
+ * Run single test spec:        it --> fit
+ *
  * @author: Jingxin Zhu
  * @date  : 2015.02.18
- * ------------------------------------------
+ * --------------------------------------------------------------
  */
 describe("Rummikub Unit Tests", function() {
 
     'use strict';
 
     var _service;
-    var initMove = [];
-    var nPlayers = 4;
-    var defaultState = {nplayers: nPlayers};
+    var defaultState = {};
 
     beforeEach(module("myApp"));
 
+    beforeEach(inject(function (gameLogicService) {
+        _service = gameLogicService;
+    }));
+
     function getInitMove(nPlayers) {
+        var initial = [];
+        var board = [
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+        ];
+        var tileIndex = 0;
+        var tilesInHandInitially = 14;
+        for (var i = 0; i < nPlayers; i++) {
+            initial.push(false);
+            var row = [];
+            for (var j = 0; j < tilesInHandInitially; j++) {
+                row.push(tileIndex);
+                tileIndex++;
+            }
+            board.push(row);
+        }
+
         var move = [
             // 1. set game turn
             {setTurn: {turnIndex: 0}},
@@ -24,20 +65,12 @@ describe("Rummikub Unit Tests", function() {
             // 2. set move type
             {set: {key: 'type' , value: "INIT"}},
 
-            {set: {key: 'nplayers', value: nPlayers}},
-
-            {set: {key: 'tilesSentToBoardThisTurn', value: []}},
+            {set: {key: 'trace', value: {nplayers: nPlayers, initial: initial, nexttile: nPlayers * 14}}},
 
             // 3. set game board
-            {set: { key: 'board', value: [
-                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
-            ]}
-            },
+            {set: {key: 'board', value: board}},
+
+            {set: {key: 'deltas', value: []}},
 
             // 4. set game tiles
             {set: {key: 'tile0' , value: {color: 'blue'  , score:  1}}},
@@ -169,17 +202,6 @@ describe("Rummikub Unit Tests", function() {
 
         ];
 
-        // 6. set game players
-        var players = [
-            {set: {key: 'player0', value: {initial: false, tiles: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13] }}},
-            {set: {key: 'player1', value: {initial: false, tiles: [14,15,16,17,18,19,20,21,22,23,24,25,26,27] }}},
-            {set: {key: 'player2', value: {initial: false, tiles: [28,29,30,31,32,33,34,35,36,37,38,39,40,41] }}},
-            {set: {key: 'player3', value: {initial: false, tiles: [42,43,44,45,46,47,48,49,50,51,52,53,54,55] }}}
-        ];
-        for (var i = 0; i < nPlayers; i++) {
-            move.push(players[i]);
-        }
-
         // 7. set tile's visibility to players
         var visibility = [
             {setVisibility: {key: 'tile0',  visibleToPlayerIndices: [0]}},
@@ -243,15 +265,9 @@ describe("Rummikub Unit Tests", function() {
             {setVisibility: {key: 'tile55', visibleToPlayerIndices: [3]}}
         ];
         move = move.concat( visibility.slice(0, 14 * nPlayers) );
-        move.push({set: {key: 'nexttile', value: nPlayers * 14}});
-
 
         return move;
     }
-
-    beforeEach(inject(function (gameLogicService) {
-        _service = gameLogicService;
-    }));
 
     function expectMoveOk(turnIndexBeforeMove, stateBeforeMove, move) {
         expect(_service.isMoveOk( {
@@ -269,8 +285,8 @@ describe("Rummikub Unit Tests", function() {
 
     describe("Corner case unit tests", function(){
         it ("[Right] check initial move", function() {
-            var nplayers = nPlayers;
-            expectMoveOk(0, defaultState, getInitMove(nplayers));
+            var nPlayers = 2;
+            expectMoveOk(0, defaultState, getInitMove(nPlayers));
         });
 
         it ("[Wrong] null move ", function(){
@@ -278,39 +294,12 @@ describe("Rummikub Unit Tests", function() {
         });
         
         it ("[Wrong] empty move ", function(){
-            expectIllegalMove(0, {}, [ ]);
+            expectIllegalMove(0, {}, []);
         });
 
-        it ("[Wrong] init should be first move", function(){
-            expectIllegalMove(0, {nplayer: 3}, [
-                {setTurn: {turnIndex: 1}},
-                {set: {key: 'type', value: "PICK"}},
-                {setVisibility: {key: 'tile28', visibleToPlayerIndices: [0]}},
-                {
-                    set: {
-                        key: 'player0', value: {
-                            initial : false,
-                            tiles   : [0,1,2,3,4,5,6,7,8,9,10,11,12,13,28]
-                        }
-                    }
-                },
-                {set: {key: 'nexttile', value: 29}}
-            ]);
-
-            expectIllegalMove(0, {nplayer: 3}, [
-                {setTurn: {turnIndex: 1}},
-                {set: {key: 'type', value: "MELD"}}
-            ]);
-            
-        });
-
-        it ("[Wrong] only player0 can play the initial move", function() {
-            expectIllegalMove(1, defaultState, initMove);
-            expectIllegalMove(6, defaultState, initMove);
-        });
     });
 
-    describe("Two Players Mode", function() {
+    fdescribe("Two Players Mode", function() {
 
         var nPlayers = 2;
         var state = {};
@@ -318,28 +307,23 @@ describe("Rummikub Unit Tests", function() {
 
         beforeEach(function twoPlayerMode() {
             initialMove = getInitMove(nPlayers);
-            state.tilesSentToBoardThisTurn = initialMove[3].set.value;
-            state.board = initialMove[4].set.value;
-            state.player0 = initialMove[112].set.value;
-            state.player1 = initialMove[113].set.value;
-            state.nplayers = 2;
-            state.nexttile = 28;
-        });
-
-        beforeEach(function setTiles(){
+            state.turnIndex = 0;
+            state.trace = initialMove[2].set.value;
+            state.board = initialMove[3].set.value;
+            state.deltas = initialMove[4].set.value;
             for (var i = 0; i < 106; i++) {
                 state['tile' + i] = _service.getTileByIndex(i);
             }
         });
 
-        describe("INIT move unit tests", function(){
+        describe("[INIT]", function(){
 
             it ("[Right] initialize the game", function(){
-                var playerIndex = 0;
+                var turnIndexBeforeMove = 0;
                 var stateBefore = {};
                 stateBefore.nplayers = 2;
                 var move = getInitMove(2);
-                expectMoveOk(playerIndex, stateBefore, move);
+                expectMoveOk(turnIndexBeforeMove, stateBefore, move);
 
             });
 
@@ -355,126 +339,134 @@ describe("Rummikub Unit Tests", function() {
             });
         });
 
-        describe("PICK move unit tests", function() {
+        fdescribe("[PICK]", function() {
 
             beforeEach(function setMoveType(){
                 state.type = "PICK";
             });
 
-            function defaultPickMove(playerIndex) {
-                // player0 picks one tile28 from tile pool
-                var pickMove = [
+            function pickMoveTemplate(playerIndex, tileToPick) {
+                var traceAfter = angular.copy(state.trace);
+                traceAfter.nexttile = tileToPick + 1;
+                return [
                     {setTurn: {turnIndex: 1 - playerIndex}},
                     {set: {key: 'type', value: "PICK"}},
-                    {setVisibility: {key: 'tile28', visibleToPlayerIndices: [playerIndex]}},
-                    {
-                        set: {
-                            key: 'player' + playerIndex, value: {
-                                initial : false,
-                                tiles   : [0,1,2,3,4,5,6,7,8,9,10,11,12,13,28]
-                            }
-                        }
-                    },
-                    {set: {key: 'nexttile', value: 29}}
+                    {set: {key: 'board', value: state.board}},
+                    {set: {key: 'deltas', value: []}},     // pick move will clear delta history
+                    {set: {key: 'trace', value: traceAfter}},
+                    {setVisibility: {key: 'tile' + tileToPick, visibleToPlayerIndices: [playerIndex]}}
                 ];
-                return pickMove;
             }
 
             it ("[Right] player0 picks one tile from tile pool as his first move", function() {
-                var stateBefore = state;
+                var stateBefore = angular.copy(state);
+                var playerIndex = 0;
+                var pickMove = pickMoveTemplate(playerIndex, 28);
+                var boardExpect = [
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    // p1 picks 28 from tile pool AND pick move triggers sort function to player's tiles
+                    [13, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,0,28],
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]
+                ];
+                pickMove[2].set.value = boardExpect;
 
-                expectMoveOk(0, stateBefore, [
-                    {setTurn: {turnIndex: 1}},
-                    {set: {key: 'type', value: "PICK"}},
-                    {setVisibility: {key: 'tile28', visibleToPlayerIndices: [0]}},
-                    {
-                        set: {
-                            key: 'player0', value: {
-                                initial : false,
-                                tiles   : [0,1,2,3,4,5,6,7,8,9,10,11,12,13,28]
-                            }
-                        }
-                    },
-                    {set: {key: 'nexttile', value: 29}}
-                ]);
+                expectMoveOk(playerIndex, stateBefore, pickMove);
 
             });
 
             it ("[Right] player1 picks one tile from tile pool as his move", function() {
-                var stateBefore = state;
-                stateBefore.nexttile = 29;
+                var stateBefore = angular.copy(state);
+                var playerIndex = 1;
+                var pickMove = pickMoveTemplate(playerIndex, 28);
+                var boardExpect = [
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, 13],
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27,28] // p2 picks 28 from tile pool
+                ];
+                pickMove[2].set.value = boardExpect;
 
-                expectMoveOk(1, stateBefore, [
-                    {setTurn: {turnIndex: 0}},
-                    {set: {key: 'type', value: "PICK"}},
-                    {setVisibility: {key: 'tile29', visibleToPlayerIndices: [1]}},
-                    {set: {key: 'player1', value: {
-                                initial : false,
-                                tiles   : [14,15,16,17,18,19,20,21,22,23,24,25,26,27,29]
-                    }}},
-                    {set: {key: 'nexttile', value: 30}}
-                ]);
+                expectMoveOk(playerIndex, stateBefore, pickMove);
 
             });
 
-            it ("[Wrong] not picking any tile while deciding to pick", function() {
+            it ("[Right] player1 picks last tile from tool and then game is tied", function() {
+                var stateBefore = angular.copy(state);
+                stateBefore.trace.nexttile = 105;
+                var move = pickMoveTemplate(0, 105);
+                move[0] = {endMatch: {endMatchScores: [0, 0]}};
+                move[2].set.value[6] = [13,1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,0,105],
+                    /* ! tile index should be [0,106] ! */
+                    expectMoveOk(0, stateBefore, move);
 
-                var stateBefore = state;
-                var move = defaultPickMove(0);
+            });
+
+            it ("[Wrong] picking invalid tile", function() {
+                var stateBefore = angular.copy(state);
+                var move = pickMoveTemplate(0, 28);
 
                 /* ! picking 'undefined' !*/
-                move[2].setVisibility.key = undefined;
+                move[5].setVisibility.key = undefined;
                 expectIllegalMove(0, stateBefore, move);
 
                 /*! picking 'card', not 'tile' !*/
-                move[2].setVisibility.key = 'card28';
+                move[5].setVisibility.key = 'card28';
                 expectIllegalMove(0, stateBefore, move);
-
-
-            });
-
-            it ("[Wrong] player1 cannot pick tile from tile pool when pool is empty", function() {
-                state.type = "PICK";
-                state.nexttile = 106;
-                var move = defaultPickMove(1);
-                /* ! tile index should be [0,106] ! */
-                expectIllegalMove(1, state, move);
 
             });
 
             it ("[Wrong] player can only pick tile next available", function() {
-                var stateBefore = state;
-                var move = defaultPickMove(0);
+                var stateBefore = angular.copy(state);
+                var move = pickMoveTemplate(0, 28);
 
-                stateBefore.nexttile = 28;
+                // should pick tile28
+                stateBefore.trace.nexttile = 28;
 
-                move[2].setVisibility.key = 'tile30';
+                move[5].setVisibility.key = 'tile30';
                 expectIllegalMove(0, stateBefore, move);
 
-                move[2].setVisibility.key = 'tile27';
+                move[5].setVisibility.key = 'tile27';
+                expectIllegalMove(0, stateBefore, move);
+
+                move[5].setVisibility.key = 'tile-1';
                 expectIllegalMove(0, stateBefore, move);
             });
 
             it ("[Wrong] player cannot pick tile if he sent tiles to board and did not retrieve them back in this turn.", function(){
                 var stateBefore = state;
-                stateBefore.tilesSentToBoardThisTurn = [1,2];
-                var move = defaultPickMove(0);
+                state.board[0][0] = 13;
+                state.board[6] = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+                state.deltas = [{from: {row: 6, col: 13}, to: {row: 0, col: 0}, tileIndex: 13}];
+                var move = pickMoveTemplate(0, 28);
                 expectIllegalMove(0, stateBefore, move);
             });
 
             it ("[Wrong] player cannot mess up 'able-to-meld' board if he decides to pick tile", function(){
                 var playerIndex = 0;
                 var stateBefore = state;
-                // after several "replace" moves, board is mess up.
+                // after several moves, board is messed up.
+                // because [9,10],[18,19],[20],[21] are not valid sets
                 stateBefore.board = [
-                    [-1,-1, 9,10,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,18,19,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,20,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,11,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1, 9,10,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,18,19,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,20,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,11,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, 13],
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]
                 ];
-                var move = defaultPickMove(playerIndex);
+                var move = pickMoveTemplate(playerIndex,28);
 
                 expectIllegalMove(playerIndex, stateBefore, move);
             });
@@ -482,41 +474,36 @@ describe("Rummikub Unit Tests", function() {
             it ("[Wrong] player cannot mess up 'able-to-meld' board", function(){
                 var playerIndex = 0;
                 var stateBefore = state;
-                stateBefore["player" + playerIndex] = {
-                    initial  : true,
-                    tiles    : [0,4,5,6,7,8,9,13]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [];
-                stateBefore.nexttile = 30;
                 stateBefore.board = [
                     // (1,2,3) is 'runs'  (21,34,60) is 'groups'
                     /*! (22,35,62) is neither 'runs' nor 'groups' !*/
-                    [-1,-1,1,2,3,-1,-1,21,34,60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,22,35,62,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,61,104,105,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,1,2,3,-1,-1,21,34,60,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,22,35,62,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,61,104,105,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, 13],
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]
                 ];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "PICK"}},
-                    {setVisibility: {key: 'tile30', visibleToPlayerIndices: [playerIndex]}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [0,4,5,6,7,8,9,13,30]
-                    }}},
-                    {set: {key: 'nexttile', value: 31}}
-                ];
+                var move = pickMoveTemplate(playerIndex,28);
 
                 expectIllegalMove(0, stateBefore, move);
 
             });
 
+            it ("[Wrong] after game is over, cannot pick anymore", function() {
+                var stateBefore = angular.copy(state);
+                stateBefore.trace.nexttile = 106;
+                var move = pickMoveTemplate(1, 106);
+                /* ! tile index should be [0,106] ! */
+                expectIllegalMove(1, stateBefore, move);
+
+            });
         });
 
-        describe("SEND move unit tests", function() {
+        describe("[MOVE]", function() {
             function defaultSendMove(playerIndex) {
                 var sendMove = [
                     // player0 sends tile 13 from his rack to board
