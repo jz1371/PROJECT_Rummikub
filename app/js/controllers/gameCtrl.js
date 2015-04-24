@@ -17,9 +17,6 @@
      **************************************************************************************
      */
     angular.module('myApp')
-        .config(['$translateProvider', function($translateProvider) {
-            'use strict';
-            $translateProvider.init(['en', 'de']); }])
         .controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
         'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONSTANT',
@@ -604,5 +601,9 @@
                 updateUI: updateUI
             });
 
+        }])
+        .config(['$translateProvider', function($translateProvider) {
+            'use strict';
+            $translateProvider.init(['en', 'he', 'zh']);
         }]);
 }());

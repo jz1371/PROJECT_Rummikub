@@ -1,5 +1,4 @@
 window.angularTranslations = {
-    TICTACTOE_GAME: "TicTacToe",
     RUMMIKUB_GAME: "Rummikub",
 
     P0: "Me",

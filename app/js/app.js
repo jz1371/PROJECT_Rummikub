@@ -23,8 +23,4 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
         GAME_BOARD_ROWS: 6,
         GAME_BOARD_COLS: 18,
         GAME_AREA_PADDING_PERCENTAGE: 0.02})
-    .config(['$translateProvider', function($translateProvider) {
-        'use strict';
-        $translateProvider.init(['en', 'de']);
-    }])
 ;
