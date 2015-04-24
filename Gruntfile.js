@@ -87,7 +87,7 @@ module.exports = function(grunt) {
                         'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/gameServices.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/dragAndDropListeners.min.js',
-                        'js/languages/en.js',
+                        'languages/en.js',
                         'http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.2.6.1.min.js',
                         'dist/everything.min.js',
                         'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',

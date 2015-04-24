@@ -23,10 +23,6 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
         GAME_BOARD_ROWS: 6,
         GAME_BOARD_COLS: 18,
         GAME_AREA_PADDING_PERCENTAGE: 0.02})
-    .config(['$translateProvider', function($translateProvider) {
-        'use strict';
-        $translateProvider.init(['en', 'de']);
-    }])
 ;
 ;angular.module('myApp').controller('ModalDemoCtrl', ['$scope','$modal','$log',function ($scope, $modal, $log) {
 
@@ -117,7 +113,8 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
      *
      **************************************************************************************
      */
-    angular.module('myApp').controller('GameCtrl', [
+    angular.module('myApp')
+        .controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
         'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONSTANT',
         function($scope, $log, $window,  $animate, $timeout,
@@ -357,15 +354,17 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             };
 
             function updateUI(params) {
-                if (isEmptyObj(params.stateAfterMove) && !params.stateBeforeMove &&
-                    params.turnIndexBeforeMove ===0 &&  params.turnIndexAfterMove === 0) {
-                    var playerIndex = 0;
-                    var nPlayers = 2;
+
+                $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
+                params.yourPlayerIndex === params.turnIndexAfterMove;         // it's my turn
+
+                // make initial move only when its player's turn
+                if (isEmptyObj(params.stateAfterMove) && $scope.isYourTurn) {
                     //var nPlayers = params.playersInfo.length;
+                    var nPlayers = 2;
                     try {
-                        var move = gameLogicService.createInitialMove(playerIndex, nPlayers);
+                        var move = gameLogicService.createInitialMove(nPlayers);
                         /* let player0 initializes the game. */
-                        params.yourPlayerIndex = 0;
                         gameService.makeMove(move);
                     } catch (e) {
                         logout(e.message);
@@ -373,29 +372,27 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                     return;
                 }
 
-                $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
-                params.yourPlayerIndex === params.turnIndexAfterMove;     // it's my turn
-                turnIndex = params.turnIndexAfterMove;
-
-                gameEnd = params.turnindexAfterMove === -1;
-                $scope.yourPlayerIndex = params.yourPlayerIndex;
-                $scope.turnIndex = params.turnIndexAfterMove;
-                $scope.state = params.stateAfterMove;
-                $scope.board = params.stateAfterMove.board;
-                $scope.nexttile = params.stateAfterMove.trace.nexttile;
-                $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
-
-                // disable sort feature when empty slots left in board
-                // because sort will reset player hand
-                $scope.sortDisabled = false;
-                for (var i = 0; i < $scope.playerHand.length; i++) {
-                    if ($scope.playerHand[i] === -1) {
-                        $scope.sortDisabled = true;
-                        break;
-                    }
-                }
 
                 if ($scope.isYourTurn) {
+                    turnIndex = params.turnIndexAfterMove;
+
+                    gameEnd = params.turnindexAfterMove === -1;
+                    $scope.yourPlayerIndex = params.yourPlayerIndex;
+                    $scope.turnIndex = params.turnIndexAfterMove;
+                    $scope.state = params.stateAfterMove;
+                    $scope.board = params.stateAfterMove.board;
+                    $scope.nexttile = params.stateAfterMove.trace.nexttile;
+                    $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
+
+                    // disable sort feature when empty slots left in board
+                    // because sort will reset player hand
+                    $scope.sortDisabled = false;
+                    for (var i = 0; i < $scope.playerHand.length; i++) {
+                        if ($scope.playerHand[i] === -1) {
+                            $scope.sortDisabled = true;
+                            break;
+                        }
+                    }
                     //var opponentIndex = 1 - $scope.turnIndex;
                     //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
                     //$scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
@@ -695,12 +692,16 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             gameService.setGame( {
                 gameDeveloperEmail: "jz1371@nyu.edu",
                 minNumberOfPlayers: 2,
-                //maxNumberOfPlayers: 4, // if bug in stateService fixed
+                //maxNumberOfPlayers: 4,
                 maxNumberOfPlayers: 2,
                 isMoveOk: gameLogicService.isMoveOk,
                 updateUI: updateUI
             });
 
+        }])
+        .config(['$translateProvider', function($translateProvider) {
+            'use strict';
+            $translateProvider.init(['en', 'he', 'zh']);
         }]);
 }());
 ;/**
@@ -733,52 +734,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
 }());
 
-;window.angularTranslations = {
-    TICTACTOE_GAME: "TicTacToe",
-    RUMMIKUB_GAME: "Rummikub",
-
-    P0: "Me",
-    ME: "Me",
-    P1: "P1",
-    P2: "P2",
-    P3: "P3",
-
-    PICK : "Pick",
-    MELD : "Meld",
-    sort : "sort",
-    SORT : "sort",
-    SET  : "set",
-    COLOR: "color",
-    UNDO : "undo",
-    HELP : "help",
-    123  : "123",
-    UNDO_ALL: "undo all",
-
-    ROTATE_INFO: "Please rotate your phone to landscape for better display"
-
-};;window.angularTranslations = {
-    TICTACTOE_GAME: "拉密牌",
-    RUMMIKUB_GAME: "拉密牌",
-
-    P0: "我",
-    ME: "我",
-    P1: "玩家1",
-    P2: "玩家2",
-    P3: "玩家3",
-
-    PICK : "抽牌",
-    MELD : "融合",
-    sort : "排序",
-    SORT : "排序",
-    SET  : "牌组",
-    COLOR: "颜色",
-    UNDO : "撤销",
-    HELP : "帮助",
-    123  : "123",
-    UNDO_ALL: "撤销全部",
-
-    ROTATE_INFO: '请旋转手机屏幕来获得更好的显示效果'
-};
 ;/**
  * File: app/js/services/gameAIService.js
  * ---------------------------------------
@@ -940,10 +895,15 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             try {
                 var expectedMove = createMove(stateBefore, playerIndex, actualMove);
                 if (!angular.equals(actualMove, expectedMove)) {
+                    //console.log("act: " + actualMove[0].endMatch.endMatchScores);
+                    //console.log("exp: " + expectedMove[0].endMatch.endMatchScores);
+                    //console.log("act: " + actualMove[2].set.value);
+                    //console.log("exp: " + expectedMove[2].set.value);
                     return false;
                 }
             } catch (e) {
-                console.log(e.stack);
+                //console.log(e.stack);
+                console.log(e.message);
                 return false;
             }
             return true;
@@ -961,7 +921,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             switch (moveType) {
                 case "INIT":
                     var nPlayers = actualMove[2].set.value.nplayers;
-                    expectedMove = getInitialMove(playerIndex, nPlayers);
+                    expectedMove = getInitialMove(nPlayers);
                     break;
                 case "MOVE":
                     deltas = actualMove[3].set.value;
@@ -994,33 +954,29 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
         /**
          * Creates the initial move.
          *
-         * @param playerIndex (int) index of player who is playing.
          * @param nPlayers (int) number of players in current game.
          * @returns {*[]} array of operations in initial move.
          */
-        function getInitialMove(playerIndex, nPlayers) {
-            // 1. make sure player0 is initializing the game.
-            //check(playerIndex === 0,
-            //    "INIT: player" + playerIndex + " is trying to move, but only player0 can play the initial move."
-            //);
-
-            // 2. make sure 2 - 4 players are playing the game.
+        function getInitialMove(nPlayers) {
+            // 1. make sure 2 - 4 players are playing the game.
             check(nPlayers <= 4 && nPlayers >= 0,
                 "INIT: nPlayers = " + nPlayers + " is given, but only 2 - 4 players are allowed."
             );
 
-            // whether player has made initial meld
+            // Initially, set 'initial' to false, i.e. no player has made initial meld
             var initial = [];
             for (var i = 0; i < nPlayers; i++) {
                 initial.push(false);
             }
-
-            // 3. construct the move
+            // 2. construct the move
             var nTilesPerPlayerInitially = 14;
             var move = [
                 {setTurn: {turnIndex: 0}},
                 {set: {key: 'type', value: "INIT"}},
-                {set: {key: 'trace', value: {nplayers: nPlayers, initial: initial, nexttile: nPlayers * 14}}},
+                {set: {key: 'trace', value: {
+                    nplayers: nPlayers,
+                    initial: initial,
+                    nexttile: nPlayers * 14}}},
                 {set: {key: 'board', value: getInitialBoard(nPlayers)}},
                 {set: {key: 'deltas', value: []}}
             ];
@@ -1033,11 +989,11 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                 shuffleKeys[tileIndex] = 'tile' + tileIndex;
             }
 
-            // 3.3. initialize tile visibility
+            // 3.2. initialize tile visibility
             var visibility = [];
             for (var ii = 0; ii < nPlayers; ii++) {
                 for (var jj = 0; jj < nTilesPerPlayerInitially; jj++) {
-                    // each player can see 14 tiles initially
+                    // each player has 14 tiles in hand initially
                     tileIndex = ii * nTilesPerPlayerInitially + jj;
                     visibility[tileIndex] = {setVisibility: {key: 'tile' + tileIndex, visibleToPlayerIndices: [ii]}};
                 }
@@ -1154,16 +1110,13 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
             // 2. player is able to replace tiles throughout the board,
             //    but before picking, he should restore the 'able-to-meld' state
-            //    and retrieve all tiles he sent to board in this turn.
+            //    and retrieve all tiles he sent to board in this turn back to his hand.
             check(isMeldOk(stateBefore, stateBefore.board, playerIndex, true),
                 "[PICK] you should not mess up the board, if you want to pick" );
 
-            // 3. make sure picking next available tile based on last turn
             var tileToPick = stateBefore.trace.nexttile;
-            check(tileToPick >= 0 && tileToPick < 106,
-                "[PICK] no more tiles  left for picking");
 
-            // 4. construct move operations.
+            // 3. construct move operations.
             var boardAfter = angular.copy(stateBefore.board);
             boardAfter[playerRow].push(tileToPick);
             // sort tiles in hand by finding all sets and put sets at the front
@@ -1300,7 +1253,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
             var traceAfter = angular.copy(stateBefore.trace);
             traceAfter.initial[playerIndex] = true;
-            //console.log("board: " + board);
             var move = [
                 {setTurn: {turnIndex: playerIndex}},
                 {set: {key: 'type', value: "COMB"}},
@@ -1897,7 +1849,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             for (var ii = 0; ii < setsInBoard.length; ii++) {
                 var sets = getSetsOfTilesByIndex(setsInBoard[ii], stateBefore);
                 if ( !isRuns(sets) && !isGroups(sets) ) {
-                    console.log("isMeldOk, invalid sets: [" + setsInBoard[ii] + "]");
+                    //console.log("isMeldOk, invalid sets: [" + setsInBoard[ii] + "]");
                     return false;
                 }
             }
@@ -2094,7 +2046,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             var groups = findAllGroups(hand, state);
             var handAfter = [];
             for (var i = 0; i < groups.length; i++) {
-                console.log("group: " + groups[i]);
+                //console.log("group: " + groups[i]);
                 // append all valid groups
                 handAfter = handAfter.concat(groups[i]);
             }
@@ -2109,7 +2061,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             // 3. find all runs from the rest tiles in hand
             var runs = findAllRuns(restTiles, state);
             for (var j = 0; j < runs.length; j++) {
-                console.log("run: " + runs[j]);
+                //console.log("run: " + runs[j]);
                 handAfter = handAfter.concat(runs[j]);
             }
             for (var k = 0 ; k < restTiles.length; k++) {
