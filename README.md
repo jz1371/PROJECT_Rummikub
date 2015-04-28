@@ -41,4 +41,5 @@
    * `app/js/services/gameAIServic.js`.
    * `app/js/services/gameLogicServic.js`.
    * `test/unit/gameAIServiceSpec.js`.
-
+   
+11. [[HW11](http://github.com/jz1371/PROJECT_Rummikub/tree/hw11)] I18N

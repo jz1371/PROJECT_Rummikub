@@ -121,7 +121,7 @@
                             // illegal move, restore
                             logout(e.message);
                             /* return immediately! */
-                            $scope.debug = e.message;
+                            //$scope.debug = e.message;
                             return;
                         }
                     });
@@ -351,7 +351,7 @@
                     }
                 } catch (e) {
                     clearActiveTile();
-                    $scope.debug = e.message;
+                    //$scope.debug = e.message;
                     logout(e);
                     return false;
                 }
@@ -376,7 +376,7 @@
                         var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                         gameService.makeMove(move);
                     } catch (e) {
-                        $scope.debug = e.message;
+                        //$scope.debug = e.message;
                     }
                     clearActiveTile();
                 }
@@ -427,10 +427,10 @@
                         gameService.makeMove(move);
                         // reset sort
                         $scope.sortType = "sort";
-                        $scope.debug = "pick one tile";
+                        //$scope.debug = "pick one tile";
                     } catch (e) {
                         logout(e.stack);
-                        $scope.debug = e.message;
+                        //$scope.debug = e.message;
                     }
                 }
             };
@@ -443,7 +443,7 @@
                         // reset sort
                         $scope.sortType = "sort";
                     } catch (e) {
-                        $scope.debug = e.message;
+                        //$scope.debug = e.message;
                     }
                 }
             };

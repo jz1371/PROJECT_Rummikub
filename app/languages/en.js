@@ -17,7 +17,7 @@ window.angularTranslationsLoaded('en',{
     HELP : "help",
     123  : "123",
     UNDO_ALL: "undo all",
-    TILES_LEFT: " tiles left",
+    "TILES_LEFT": " tiles left",
 
     ROTATE_INFO: "Please rotate your phone to landscape for better display",
 
