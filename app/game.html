@@ -10,8 +10,9 @@
     <link rel="icon" href="img/favicon.ico" sizes="32x32">
     <title>Rummikub</title>
 
-    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="http://yoav-zibin.github.io/emulator/main.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     <!-- build:css dist/game.css -->
     <link rel="stylesheet" type="text/css" href="css/main.css">
     <link rel="stylesheet" type="text/css" href="css/tile.css">
@@ -81,6 +82,7 @@
         </div><!-- /#board-panel -->
 
         <div id="info-panel" class="row text-primary" ng-if="true">
+            <i class="fa fa-volume-up"></i>
             {{debug}}
             <div id="rotate" class="text-primary" style="font-size: 4vh">{{'ROTATE_INFO' | translate}}</div>
         </div>
