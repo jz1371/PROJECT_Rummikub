@@ -70,6 +70,22 @@ module.exports = function(grunt) {
                 }
             }
         },
+        cssmin: {
+            options: {
+                shorthandCompacting: false,
+                roundingPrecision: -1
+            },
+            target: {
+                files: {
+                    'app/dist/game.css': [
+                        'app/css/main.css',
+                        'app/css/tile.css',
+                        'app/css/response.css',
+                        'app/css/game.css'
+                    ]
+                }
+            }
+        },
         processhtml: {
             dist: {
                 files: {
@@ -86,17 +102,17 @@ module.exports = function(grunt) {
                         'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-touch.min.js',
                         'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/gameServices.min.js',
-                        'http://yoav-zibin.github.io/emulator/dist/dragAndDropListeners.min.js',
                         'http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.min.js',
                         'dist/everything.min.js',
                         'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',
                         'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/fonts/glyphicons-halflings-regular.woff',
                         'http://yoav-zibin.github.io/emulator/main.css',
-                        'css/app.css',
-                        'css/tile.css',
-                        'css/responsive.css',
-                        'css/main.css',
-                        'css/game.css',
+                        'dist/game.css',
+                        //'css/app.css',
+                        //'css/tile.css',
+                        //'css/responsive.css',
+                        //'css/main.css',
+                        //'css/game.css',
                         'img/favicon.ico',
                         'img/game-background.jpg',
                         'img/joker-red.png',
@@ -151,6 +167,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-cssmin');
     grunt.loadNpmTasks('grunt-processhtml');
     grunt.loadNpmTasks('grunt-manifest');
     grunt.loadNpmTasks('grunt-http-server');
@@ -158,10 +175,11 @@ module.exports = function(grunt) {
 
     // Default task(s).
     grunt.registerTask('default', ['jshint', 'karma',
-        'concat', 'uglify',
+        'concat', 'uglify', 'cssmin',
         'processhtml', 'manifest',
         'http-server', 'protractor']);
 
-    grunt.registerTask('factory',['concat', 'uglify','processhtml','manifest']);
+    grunt.registerTask('build',['concat', 'uglify','cssmin', 'processhtml','manifest']);
+
 
 };
