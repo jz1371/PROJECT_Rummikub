@@ -87,10 +87,10 @@ module.exports = function(grunt) {
                         'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/gameServices.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/dragAndDropListeners.min.js',
-                        'languages/en.js',
-                        'http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.2.6.1.min.js',
+                        'http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.min.js',
                         'dist/everything.min.js',
                         'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',
+                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/fonts/glyphicons-halflings-regular.woff',
                         'http://yoav-zibin.github.io/emulator/main.css',
                         'css/app.css',
                         'css/tile.css',
@@ -107,7 +107,11 @@ module.exports = function(grunt) {
                         'img/valid-run2.png',
                         'template/help.html'
                     ],
-                    network: ['languages/zh.js','dist/everything.min.js.map', 'dist/everything.js'],
+                    network: [
+                        'languages/en.js',
+                        'languages/zh.js',
+                        'dist/everything.min.js.map',
+                        'dist/everything.js'],
                     timestamp: true
                 },
                 dest: 'app/game.appcache',
