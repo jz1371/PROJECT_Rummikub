@@ -10,12 +10,6 @@
 
     'use strict';
 
-    /**
-     **************************************************************************************
-     * I. Elements in $scope
-     *
-     **************************************************************************************
-     */
     angular.module('myApp')
         .controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
@@ -23,9 +17,8 @@
         function($scope, $log, $window,  $animate, $timeout,
                  stateService ,gameService, gameLogicService, gameAIService, CONSTANT) {
 
-            /**************************************************************
-             **********************   Configuration  **********************
-             **************************************************************/
+            /*************************************************************
+             *********************   Configuration  *********************/
             // whether output information to console
             var verbose = false;
 
@@ -37,6 +30,7 @@
 
             // enable platform's drag-n-drop listener
             window.handleDragEvent = handleDragEvent;
+            /** ************************************************************/
 
             $scope.gameAreaPaddingPercent = CONSTANT.GAME_AREA_PADDING_PERCENTAGE;
 
@@ -58,9 +52,7 @@
             $scope.rows = gameBoardRows;
             $scope.cols = gameBoardCols;
 
-            //var canMakeMove = false;
             var isComputerTurn = false;
-            //var state = null;
             var turnIndex = null;
 
             var myDrag        = document.getElementById("MyDrag");
@@ -150,14 +142,13 @@
 
                     myDrag.style.display = "inline";
                     myDrag.style.width = container.width + "px";
-
-                    myDrag.style.left = container.left + "px";
+                    myDrag.style.left = container.left - gameArea.getBoundingClientRect().left + "px";
                     myDrag.style.paddingBottom= container.height + "px";
                     myDrag.style.top = container.top + "px";
 
                     var centerXY = {
                         //TODO: better to determine center x
-                        x: container.left + container.width / 2 - document.getElementById("game").clientWidth * $scope.gameAreaPaddingPercent,
+                        x: container.left - gameArea.getBoundingClientRect().left + container.width / 2 - document.getElementById("game").clientWidth * $scope.gameAreaPaddingPercent,
                         y: container.top  + container.height / 2};
                     logout("centerXY: " + centerXY.x);
 
@@ -296,9 +287,6 @@
                             break;
                         }
                     }
-                    //var opponentIndex = 1 - $scope.turnIndex;
-                    //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
-                    //$scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
                 }
 
                 // Is it the computer's turn?
@@ -311,8 +299,6 @@
                     // then the animation is paused until the javascript finishes.
                     sendComputerMove();
 
-                    //$timeout(sendComputerMove, 1000);
-                    //$scope.debug = "Computer makes pick move";
                 }
 
                 if (undoAllInProcess && $scope.state.deltas.length === 0) {
@@ -327,7 +313,7 @@
 
             $scope.boardCellClicked =  function (row, col) {
                 logout(["Clicked on cell:", row, col]);
-                $scope.debug = "click board cell: (" + row + "," + col + ")";
+                //$scope.debug = "click board cell: (" + row + "," + col + ")";
                 if ( $scope.isYourTurn === false ) {
                     return;
                 }
@@ -341,19 +327,19 @@
                             // clicking a tile to activate it
                             $scope.activeTile = $scope.board[row][col];
                             $scope.from = {row: row, col: col};
-                            $scope.debug = "picking Tile" + $scope.activeTile + " (" +
-                            getTileByIndex($scope.activeTile).color +
-                            "," + getTileByIndex($scope.activeTile).score +
-                            " from: (" + row + "," + col + ")";
+                            //$scope.debug = "picking Tile" + $scope.activeTile + " (" +
+                            //getTileByIndex($scope.activeTile).color +
+                            //"," + getTileByIndex($scope.activeTile).score +
+                            //" from: (" + row + "," + col + ")";
                         }
                     } else {
-                        $scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
+                        //$scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
                         // some tile has been activated before clicking
                         if ($scope.board[row][col] === -1) {
                             // clicking an empty position to send tile to
                             $scope.to = {row: row, col: col};
                             var delta = {tileIndex: $scope.activeTile, from: $scope.from, to: $scope.to};
-                            $scope.debug = "index: " + delta.tileIndex;
+                            //$scope.debug = "index: " + delta.tileIndex;
                             var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                             gameService.makeMove(move);
                         }
@@ -602,8 +588,4 @@
             });
 
         }])
-        .config(['$translateProvider', function($translateProvider) {
-            'use strict';
-            $translateProvider.init(['en', 'he', 'zh']);
-        }]);
 }());

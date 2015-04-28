@@ -24,77 +24,6 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
         GAME_BOARD_COLS: 18,
         GAME_AREA_PADDING_PERCENTAGE: 0.02})
 ;
-;angular.module('myApp').controller('ModalDemoCtrl', ['$scope','$modal','$log',function ($scope, $modal, $log) {
-
-    'use strict';
-
-    $scope.items = ['item1', 'item2', 'item3'];
-
-    $scope.open = function (size) {
-
-        var modalInstance = $modal.open({
-            templateUrl: 'help.html',
-            controller: 'ModalInstanceCtrl',
-            size: size,
-            resolve: {
-                items: function () {
-                    return $scope.items;
-                }
-            }
-        });
-
-        modalInstance.result.then(function (selectedItem) {
-            $scope.selected = selectedItem;
-        }, function () {
-            $log.info('Modal dismissed at: ' + new Date());
-        });
-    };
-
-
-
-}]);
-
-// Please note that $modalInstance represents a modal window (instance) dependency.
-// It is not the same as the $modal service used above.
-
-angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance','items', function ($scope, $modalInstance, items) {
-
-    'use strict';
-    $scope.items = items;
-    $scope.selected = {
-        item: $scope.items[0]
-    };
-
-    $scope.ok = function () {
-        $modalInstance.close($scope.selected.item);
-    };
-
-    $scope.cancel = function () {
-        $modalInstance.dismiss('cancel');
-    };
-}]);
-
-angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scope) {
-    'use strict';
-    $scope.myInterval = 5000;
-    var slides = $scope.slides = [];
-    $scope.addSlide = function() {
-        var newWidth = 600 + slides.length + 1;
-        slides.push({
-            image: 'http://placekitten.com/' + newWidth + '/300',
-            text: ['More','Extra','Lots of','Surplus'][slides.length % 4] + ' ' +
-            ['Cats', 'Kittys', 'Felines', 'Cutes'][slides.length % 4]
-        });
-    };
-    for (var i=0; i<4; i++) {
-        $scope.addSlide();
-    }
-    slides.push({
-        image: 'img/joker-red.png',
-        text: ['More','Extra','Lots of','Surplus'][slides.length % 4] + ' ' +
-        ['Cats', 'Kittys', 'Felines', 'Cutes'][slides.length % 4]
-    });
-}]);
 ;/**
  * File: app/js/controllers/gameCtrl.js
  * ------------------------------------
@@ -107,12 +36,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
     'use strict';
 
-    /**
-     **************************************************************************************
-     * I. Elements in $scope
-     *
-     **************************************************************************************
-     */
     angular.module('myApp')
         .controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
@@ -120,9 +43,8 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
         function($scope, $log, $window,  $animate, $timeout,
                  stateService ,gameService, gameLogicService, gameAIService, CONSTANT) {
 
-            /**************************************************************
-             **********************   Configuration  **********************
-             **************************************************************/
+            /*************************************************************
+             *********************   Configuration  *********************/
             // whether output information to console
             var verbose = false;
 
@@ -134,6 +56,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
             // enable platform's drag-n-drop listener
             window.handleDragEvent = handleDragEvent;
+            /** ************************************************************/
 
             $scope.gameAreaPaddingPercent = CONSTANT.GAME_AREA_PADDING_PERCENTAGE;
 
@@ -155,9 +78,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             $scope.rows = gameBoardRows;
             $scope.cols = gameBoardCols;
 
-            //var canMakeMove = false;
             var isComputerTurn = false;
-            //var state = null;
             var turnIndex = null;
 
             var myDrag        = document.getElementById("MyDrag");
@@ -247,14 +168,13 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
                     myDrag.style.display = "inline";
                     myDrag.style.width = container.width + "px";
-
-                    myDrag.style.left = container.left + "px";
+                    myDrag.style.left = container.left - gameArea.getBoundingClientRect().left + "px";
                     myDrag.style.paddingBottom= container.height + "px";
                     myDrag.style.top = container.top + "px";
 
                     var centerXY = {
                         //TODO: better to determine center x
-                        x: container.left + container.width / 2 - document.getElementById("game").clientWidth * $scope.gameAreaPaddingPercent,
+                        x: container.left - gameArea.getBoundingClientRect().left + container.width / 2 - document.getElementById("game").clientWidth * $scope.gameAreaPaddingPercent,
                         y: container.top  + container.height / 2};
                     logout("centerXY: " + centerXY.x);
 
@@ -393,9 +313,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                             break;
                         }
                     }
-                    //var opponentIndex = 1 - $scope.turnIndex;
-                    //$scope.opponent_top = params.stateAfterMove["player" + opponentIndex].tiles;
-                    //$scope.curPlayer = params.stateAfterMove["player" + $scope.turnIndex].tiles;
                 }
 
                 // Is it the computer's turn?
@@ -408,8 +325,6 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                     // then the animation is paused until the javascript finishes.
                     sendComputerMove();
 
-                    //$timeout(sendComputerMove, 1000);
-                    //$scope.debug = "Computer makes pick move";
                 }
 
                 if (undoAllInProcess && $scope.state.deltas.length === 0) {
@@ -424,7 +339,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
 
             $scope.boardCellClicked =  function (row, col) {
                 logout(["Clicked on cell:", row, col]);
-                $scope.debug = "click board cell: (" + row + "," + col + ")";
+                //$scope.debug = "click board cell: (" + row + "," + col + ")";
                 if ( $scope.isYourTurn === false ) {
                     return;
                 }
@@ -438,19 +353,19 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
                             // clicking a tile to activate it
                             $scope.activeTile = $scope.board[row][col];
                             $scope.from = {row: row, col: col};
-                            $scope.debug = "picking Tile" + $scope.activeTile + " (" +
-                            getTileByIndex($scope.activeTile).color +
-                            "," + getTileByIndex($scope.activeTile).score +
-                            " from: (" + row + "," + col + ")";
+                            //$scope.debug = "picking Tile" + $scope.activeTile + " (" +
+                            //getTileByIndex($scope.activeTile).color +
+                            //"," + getTileByIndex($scope.activeTile).score +
+                            //" from: (" + row + "," + col + ")";
                         }
                     } else {
-                        $scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
+                        //$scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
                         // some tile has been activated before clicking
                         if ($scope.board[row][col] === -1) {
                             // clicking an empty position to send tile to
                             $scope.to = {row: row, col: col};
                             var delta = {tileIndex: $scope.activeTile, from: $scope.from, to: $scope.to};
-                            $scope.debug = "index: " + delta.tileIndex;
+                            //$scope.debug = "index: " + delta.tileIndex;
                             var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                             gameService.makeMove(move);
                         }
@@ -699,11 +614,58 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             });
 
         }])
-        .config(['$translateProvider', function($translateProvider) {
-            'use strict';
-            $translateProvider.init(['en', 'he', 'zh']);
-        }]);
 }());
+;angular.module('myApp').controller('HelpCtrl', ['$scope','$modal','$log',function ($scope, $modal, $log) {
+
+    'use strict';
+
+    $scope.items = ['item1', 'item2', 'item3'];
+
+    $scope.open = function (size) {
+
+        var modalInstance = $modal.open({
+            templateUrl: 'help.html',
+            controller: 'ModalInstanceCtrl',
+            size: size,
+            resolve: {
+                items: function () {
+                    return $scope.items;
+                }
+            }
+        });
+
+        modalInstance.result.then(function (selectedItem) {
+            $scope.selected = selectedItem;
+        }, function () {
+            $log.info('Modal dismissed at: ' + new Date());
+        });
+    };
+
+
+
+}]);
+
+angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance','items', function ($scope, $modalInstance, items) {
+
+    'use strict';
+    $scope.items = items;
+    $scope.selected = {
+        item: $scope.items[0]
+    };
+
+    $scope.ok = function () {
+        $modalInstance.close($scope.selected.item);
+    };
+
+    $scope.cancel = function () {
+        $modalInstance.dismiss('cancel');
+    };
+}]);
+
+angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scope) {
+    'use strict';
+    $scope.myInterval = 5000;
+}]);
 ;/**
  * File: app/js/filters/filters.js
  * ----------------------------------------

@@ -2,7 +2,7 @@
     <div class="modal-header">
         <button class="btn close" ng-click="cancel()"><span aria-hidden="true">&times;</span></button>
         <h4 class="modal-title" style="text-align: center">
-            First time to play Rummikub?
+            {{'First time to play Rummikub?' | translate }}
         </h4>
     </div>
     <div class="modal-body">
@@ -12,25 +12,30 @@
                 <carousel interval="3000">
                     <slide active="slide.active">
                         <img src="img/valid.png" style="margin:auto;">
-                        <p>Meld tiles in your hand in runs or groups</p>
+                        <h6>{{"Meld tiles in your hand in runs or groups" | translate }}</h6>
                     </slide>
                     <slide>
                         <img src="img/valid-runs.png" style="margin:auto;">
-                        <p class=""> Valid runs: same color, at least 3 tiles in order </p>
+                        <h6> {{'Valid runs: same color, at least 3 tiles in order' | translate }} </h6>
                     </slide>
                     <slide>
                         <img src="img/valid-groups.png" style="margin: auto">
-                        <p> Valid groups: different color,same number </p>
+                        <h6> {{'Valid groups: different color,same number' | translate}} </h6>
                     </slide>
                     <slide>
                         <img src="img/valid-joker.png" style="margin: auto">
-                        <p> Use joker to substitute </p>
+                        <h6> {{'Use joker to substitute' | translate}} </h6>
                     </slide>
                     <slide>
-                        <p>Sum of tiles' number >= 30 to achieve first meld.</p>
+                        <h6>{{"Sum of tiles' number >= 30 to achieve first meld" | translate}}.</h6>
+                        <br>
                         <img src="img/valid-run2.png" style="margin: auto">
-                        <h6> 'Pick' one more tile when cannot meld.</h6>
-                        See rules on <a href="http://en.wikipedia.org/wiki/Rummikub">wiki</a>.
+                        <br>
+                        <h6> {{"'Pick' one more tile when cannot meld" | translate}}.</h6>
+                        <br>
+                        <h6>{{"To win" | translate}}</h6>
+                        <br>
+                        <h6>{{'See rules on' | translate}}<a href="http://en.wikipedia.org/wiki/Rummikub">{{'wiki' | translate}}</a></h6>
                     </slide>
                 </carousel>
             </div>

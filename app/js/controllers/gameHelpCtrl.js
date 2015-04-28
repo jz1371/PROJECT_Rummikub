@@ -1,4 +1,4 @@
-angular.module('myApp').controller('ModalDemoCtrl', ['$scope','$modal','$log',function ($scope, $modal, $log) {
+angular.module('myApp').controller('HelpCtrl', ['$scope','$modal','$log',function ($scope, $modal, $log) {
 
     'use strict';
 
@@ -28,9 +28,6 @@ angular.module('myApp').controller('ModalDemoCtrl', ['$scope','$modal','$log',fu
 
 }]);
 
-// Please note that $modalInstance represents a modal window (instance) dependency.
-// It is not the same as the $modal service used above.
-
 angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance','items', function ($scope, $modalInstance, items) {
 
     'use strict';
@@ -51,21 +48,4 @@ angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance
 angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scope) {
     'use strict';
     $scope.myInterval = 5000;
-    var slides = $scope.slides = [];
-    $scope.addSlide = function() {
-        var newWidth = 600 + slides.length + 1;
-        slides.push({
-            image: 'http://placekitten.com/' + newWidth + '/300',
-            text: ['More','Extra','Lots of','Surplus'][slides.length % 4] + ' ' +
-            ['Cats', 'Kittys', 'Felines', 'Cutes'][slides.length % 4]
-        });
-    };
-    for (var i=0; i<4; i++) {
-        $scope.addSlide();
-    }
-    slides.push({
-        image: 'img/joker-red.png',
-        text: ['More','Extra','Lots of','Surplus'][slides.length % 4] + ' ' +
-        ['Cats', 'Kittys', 'Felines', 'Cutes'][slides.length % 4]
-    });
 }]);
