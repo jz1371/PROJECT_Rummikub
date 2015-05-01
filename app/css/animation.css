@@ -1,0 +1,24 @@
+.slowlyAppear {
+    -webkit-animation: slowlyAppear 0.5s linear;
+    -moz-animation: slowlyAppear 0.5s linear;
+    -ms-animation: slowlyAppear 0.5s linear;
+    -o-animation: slowlyAppear 0.5s linear;
+    animation: slowlyAppear 0.5s linear;
+}
+
+@-webkit-keyframes slowlyAppear {
+    from {opacity: 0.1;}
+    to {opacity: 1;}
+}
+@-moz-keyframes slowlyAppear {
+    from {opacity: 0.1;}
+    to {opacity: 1;}
+}
+@-o-keyframes slowlyAppear {
+    from {opacity: 0.1;}
+    to {opacity: 1;}
+}
+@keyframes slowlyAppear {
+    from {opacity: 0.1;}
+    to {opacity: 1;}
+}

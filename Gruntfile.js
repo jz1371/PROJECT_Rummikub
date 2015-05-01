@@ -78,10 +78,11 @@ module.exports = function(grunt) {
             target: {
                 files: {
                     'app/dist/game.css': [
-                        'app/css/main.css',
+                        // order is important
+                        'app/css/animation.css',
+                        'app/css/game.css',
                         'app/css/tile.css',
-                        'app/css/response.css',
-                        'app/css/game.css'
+                        'app/css/responsive.css'
                     ]
                 }
             }
@@ -106,6 +107,7 @@ module.exports = function(grunt) {
                         'http://yoav-zibin.github.io/emulator/main.css',
                         'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',
                         'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/fonts/glyphicons-halflings-regular.woff',
+                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/fonts/glyphicons-halflings-regular.ttf',
                         '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css',
                         'http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.woff2?v=4.3.0',
                         'dist/everything.min.js',

@@ -1,29 +1,17 @@
 'use strict';
 
-// Declare app level module which depends on filters, and services
-//var myApp = angular.module('myApp', [
-//    'ngAnimate',
-//    'ngTouch',
-//  'ngRoute',
-//    'ui.bootstrap'
-//  //'myApp.filters.filters',
-//  //'myApp.services.gameLogicService',
-//  //  'myApp.controllers.gameCtrl',
-//  //  'myApp.controllers.gameAlertCtrl',
-//  //'myApp.directives'
-//]).
-//config(['$routeProvider', function($routeProvider) {
-//  $routeProvider.when('/view1', {templateUrl: 'partials/partial1.html', controller: 'MyCtrl1'});
-//  $routeProvider.when('/view2', {templateUrl: 'partials/partial2.html', controller: 'MyCtrl2'});
-//  $routeProvider.otherwise({redirectTo: '/view2'});
-//}]);
-
 angular.module('myApp',['ngTouch', 'ui.bootstrap'])
-    .constant("CONSTANT", {
+    .constant("CONFIG", {
         GAME_BOARD_ROWS: 6,
         GAME_BOARD_COLS: 18,
-        GAME_AREA_PADDING_PERCENTAGE: 0.02})
-;
+        GAME_AREA_PADDING_PERCENTAGE: 0.02,
+
+        SETTING: {
+            verbose            : false,
+            show_dragging_lines: true,
+        }
+    }
+);
 ;/**
  * File: app/js/controllers/gameCtrl.js
  * ------------------------------------
@@ -39,17 +27,17 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
     angular.module('myApp')
         .controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
-        'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONSTANT',
+        'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONFIG',
         function($scope, $log, $window,  $animate, $timeout,
-                 stateService ,gameService, gameLogicService, gameAIService, CONSTANT) {
+                 stateService ,gameService, gameLogicService, gameAIService, CONFIG) {
 
             /*************************************************************
              *********************   Configuration  *********************/
             // whether output information to console
-            var verbose = false;
+            var verbose = CONFIG.SETTING.verbose;
 
             // whether show dragging lines while dragging
-            var showDraggingLines = true;
+            var showDraggingLines = CONFIG.SETTING.show_dragging_lines;
 
             // enable to manipulate game state in e2e tests
             window.e2e_test_stateService = stateService;
@@ -58,7 +46,7 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
             window.handleDragEvent = handleDragEvent;
             /** ************************************************************/
 
-            $scope.gameAreaPaddingPercent = CONSTANT.GAME_AREA_PADDING_PERCENTAGE;
+            $scope.gameAreaPaddingPercent = CONFIG.GAME_AREA_PADDING_PERCENTAGE;
 
             function logout(log, obj) {
                 if (verbose) {
@@ -72,8 +60,8 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
 
             var gameEnd = false;
 
-            var gameBoardRows = CONSTANT.GAME_BOARD_ROWS;
-            var gameBoardCols = CONSTANT.GAME_BOARD_COLS;
+            var gameBoardRows = CONFIG.GAME_BOARD_ROWS;
+            var gameBoardCols = CONFIG.GAME_BOARD_COLS;
 
             $scope.rows = gameBoardRows;
             $scope.cols = gameBoardCols;
@@ -596,7 +584,7 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                 if ($scope.board === undefined) {
                     return [];
                 }
-                var len = $scope.board[CONSTANT.GAME_BOARD_ROWS + $scope.turnIndex].length;
+                var len = $scope.board[CONFIG.GAME_BOARD_ROWS + $scope.turnIndex].length;
                 var result = [];
                 for (var i = 0; i < len; i++) {
                     result.push(i);
@@ -842,7 +830,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
      *
      **************************************************************************************
      */
-    angular.module('myApp').factory('gameLogicService', ['CONSTANT', function(CONSTANT) {
+    angular.module('myApp').factory('gameLogicService', ['CONFIG', function(CONFIG) {
 
         /**
          * Checks whether given move is Ok or not.
@@ -857,15 +845,27 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             try {
                 var expectedMove = createMove(stateBefore, playerIndex, actualMove);
                 if (!angular.equals(actualMove, expectedMove)) {
-                    //console.log("act: " + actualMove[0].endMatch.endMatchScores);
-                    //console.log("exp: " + expectedMove[0].endMatch.endMatchScores);
-                    //console.log("act: " + actualMove[2].set.value);
-                    //console.log("exp: " + expectedMove[2].set.value);
+                    if (CONFIG.SETTING.verbose) {
+                        var actLen = actualMove.length;
+                        var expLen = expectedMove.length;
+                        if (actLen !== expLen) {
+                            console.log("Different length for actual move and expected move");
+                        } else {
+                            for (var i = 0; i < actLen; i++) {
+                                if (actualMove[i] !== expectedMove[i]) {
+                                    console.log("act: " + JSON.stringify(actualMove[i]));
+                                    console.log("exp: " + JSON.stringify(expectedMove[i]));
+                                }
+                            }
+                        }
+                    }
                     return false;
                 }
             } catch (e) {
-                //console.log(e.stack);
-                console.log(e.message);
+                if (CONFIG.SETTING.verbose) {
+                    //console.log(e.stack);
+                    console.log(e.message);
+                }
                 return false;
             }
             return true;
@@ -1958,11 +1958,11 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
         }
 
         function getGameBoardRows() {
-            return CONSTANT.GAME_BOARD_ROWS;
+            return CONFIG.GAME_BOARD_ROWS;
         }
 
         function getGameBoardCols() {
-            return CONSTANT.GAME_BOARD_COLS;
+            return CONFIG.GAME_BOARD_COLS;
         }
 
         /**

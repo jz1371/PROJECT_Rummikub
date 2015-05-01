@@ -69,7 +69,7 @@
      *
      **************************************************************************************
      */
-    angular.module('myApp').factory('gameLogicService', ['CONSTANT', function(CONSTANT) {
+    angular.module('myApp').factory('gameLogicService', ['CONFIG', function(CONFIG) {
 
         /**
          * Checks whether given move is Ok or not.
@@ -84,15 +84,27 @@
             try {
                 var expectedMove = createMove(stateBefore, playerIndex, actualMove);
                 if (!angular.equals(actualMove, expectedMove)) {
-                    //console.log("act: " + actualMove[0].endMatch.endMatchScores);
-                    //console.log("exp: " + expectedMove[0].endMatch.endMatchScores);
-                    //console.log("act: " + actualMove[2].set.value);
-                    //console.log("exp: " + expectedMove[2].set.value);
+                    if (CONFIG.SETTING.verbose) {
+                        var actLen = actualMove.length;
+                        var expLen = expectedMove.length;
+                        if (actLen !== expLen) {
+                            console.log("Different length for actual move and expected move");
+                        } else {
+                            for (var i = 0; i < actLen; i++) {
+                                if (actualMove[i] !== expectedMove[i]) {
+                                    console.log("act: " + JSON.stringify(actualMove[i]));
+                                    console.log("exp: " + JSON.stringify(expectedMove[i]));
+                                }
+                            }
+                        }
+                    }
                     return false;
                 }
             } catch (e) {
-                //console.log(e.stack);
-                console.log(e.message);
+                if (CONFIG.SETTING.verbose) {
+                    //console.log(e.stack);
+                    console.log(e.message);
+                }
                 return false;
             }
             return true;
@@ -1185,11 +1197,11 @@
         }
 
         function getGameBoardRows() {
-            return CONSTANT.GAME_BOARD_ROWS;
+            return CONFIG.GAME_BOARD_ROWS;
         }
 
         function getGameBoardCols() {
-            return CONSTANT.GAME_BOARD_COLS;
+            return CONFIG.GAME_BOARD_COLS;
         }
 
         /**

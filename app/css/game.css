@@ -1,3 +1,118 @@
+#game {
+   background-image: url('../img/game-background.jpg');
+   background-size: 100% 100%;
+   font-size: 2.5vw;
+
+   /*adding below to fix background image bug for mobile browsers*/
+   -o-background-size: cover;
+   -moz-background-size: cover;
+   -webkit-background-size:cover;
+}
+
+/*
+ *  |----------------    game area   -------------|
+ *  +---------------------------------------------+
+ *  |col-xs-1|------------- col-xs-11 ------------|
+ *  |        | +--------------------------------+ |
+ *  |        | |                                | |
+ *  |        | |                                | |
+ *  |        | |                                | |
+ *  |        | |              board             | |
+ *  |        | |            (6  x 18)           | |
+ *  |        | |                                | |
+ *  |  menu  | |                                | |
+ *  |        | |                                | |
+ *  |        | |col-xs-18|............|col-xs-18| |
+ *  |        | +--------------------------------+ |
+ *  |        |                                    |
+ *  |        | +--------------------------------+ |
+ *  |        | |   +--------------------------+ | |
+ *  |        | |   |          player          | | |
+ *  |        | |   +------- col-xs-10 --------+ | |
+ *  |        | +--------------------------------+ |
+ *  +---------------------------------------------+
+ */
+
+#menuArea {
+   padding: 0;     /* clear left, right padding to save space for board */
+   border: groove;
+   height: 100vh;  /* let menu fill the whole height space */
+   text-align: center;
+}
+
+#menuArea .row {
+   height: 100%;
+   font-size: 2.5vw;
+}
+
+/*#menuArea ul {*/
+/*-webkit-padding-start: 10px;*/
+/*}*/
+
+#menuArea > .row > .col-xs-12{
+   padding-bottom: 1.3vw    /* [Setter] here for distance between items in left menu */
+}
+
+.btn-circle {
+   width: 24px;
+   height: 24px;
+   text-align: center;
+   padding: 0 0;
+   font-size: 2vw;
+   line-height: 1.428571429;
+   border-radius: 12px;
+}
+
+#board-panel .row {
+   margin: 0.8vh 0;       /* [Setter] distance between rows in board */
+}
+
+/* customed column for Bootstrap's grid system */
+.col-xs-18 {
+   width: 5.55555%;      /* 100 / 18 = 5.55% */
+   float: left;
+   position: relative;
+   min-height: 1px;
+   padding-left: 2px;
+   padding-right: 2px;
+}
+
+#info-panel {
+   font-size: 1.5vw;
+}
+
+#player-panel ul {
+   padding-left: 0;
+   /*width: 100%;*/
+   height: 80%;
+   list-style: none;
+   /*overflow-x: scroll;*/
+   /*overflow-y: hidden;*/
+   /*white-space: nowrap;*/
+   -webkit-overflow-scrolling: touch;
+}
+
+#player-panel ul li {
+   position: relative;
+   width: 7.14%;
+   /*float: left;*/
+   display: inline-block;
+   vertical-align: middle;
+}
+
+/* center the image of carousel inside modal */
+.carousel-inner > .item > img, h6{
+   margin: 0 auto;
+   text-align: center;
+   color: #808080;
+   text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+
+/* move the carousel indicators down a little bit */
+.carousel-indicators {
+   /*bottom:-10px;*/
+}
+
 .row {
    margin: 0;
 }
@@ -6,41 +121,3 @@ div[class^='col-xs-'] {
    padding: 0;
 }
 
-#bg {
-   background-position: center top;
-   padding: 70px 90px 120px 90px;
-}
-
-@media screen and (orientation:landscape) {
-   #menuArea {
-
-   }
-   .btn-circle {
-      width: 26px;
-      height: 26px;
-      border-radius: 13px;
-   }
-
-   #rotate {
-      display: none;
-   }
-
-}
-
-@media screen and (orientation:portrait) {
-   #menuArea {
-      width: 96%;
-      margin: 5% 2%;
-      border: none;
-   }
-
-   .btn-circle {
-      width: 28px;
-      height: 28px;
-      border-radius: 14px;
-   }
-
-   #rotate {
-      display: inline;
-   }
-}

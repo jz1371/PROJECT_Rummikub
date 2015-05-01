@@ -13,17 +13,17 @@
     angular.module('myApp')
         .controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
-        'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONSTANT',
+        'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONFIG',
         function($scope, $log, $window,  $animate, $timeout,
-                 stateService ,gameService, gameLogicService, gameAIService, CONSTANT) {
+                 stateService ,gameService, gameLogicService, gameAIService, CONFIG) {
 
             /*************************************************************
              *********************   Configuration  *********************/
             // whether output information to console
-            var verbose = false;
+            var verbose = CONFIG.SETTING.verbose;
 
             // whether show dragging lines while dragging
-            var showDraggingLines = true;
+            var showDraggingLines = CONFIG.SETTING.show_dragging_lines;
 
             // enable to manipulate game state in e2e tests
             window.e2e_test_stateService = stateService;
@@ -32,7 +32,7 @@
             window.handleDragEvent = handleDragEvent;
             /** ************************************************************/
 
-            $scope.gameAreaPaddingPercent = CONSTANT.GAME_AREA_PADDING_PERCENTAGE;
+            $scope.gameAreaPaddingPercent = CONFIG.GAME_AREA_PADDING_PERCENTAGE;
 
             function logout(log, obj) {
                 if (verbose) {
@@ -46,8 +46,8 @@
 
             var gameEnd = false;
 
-            var gameBoardRows = CONSTANT.GAME_BOARD_ROWS;
-            var gameBoardCols = CONSTANT.GAME_BOARD_COLS;
+            var gameBoardRows = CONFIG.GAME_BOARD_ROWS;
+            var gameBoardCols = CONFIG.GAME_BOARD_COLS;
 
             $scope.rows = gameBoardRows;
             $scope.cols = gameBoardCols;
@@ -570,7 +570,7 @@
                 if ($scope.board === undefined) {
                     return [];
                 }
-                var len = $scope.board[CONSTANT.GAME_BOARD_ROWS + $scope.turnIndex].length;
+                var len = $scope.board[CONFIG.GAME_BOARD_ROWS + $scope.turnIndex].length;
                 var result = [];
                 for (var i = 0; i < len; i++) {
                     result.push(i);

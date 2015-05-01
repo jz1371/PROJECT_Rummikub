@@ -14,15 +14,16 @@
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     <!-- build:css dist/game.css -->
-    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <link rel="stylesheet" type="text/css" href="css/animation.css">
     <link rel="stylesheet" type="text/css" href="css/tile.css">
-    <link rel="stylesheet" type="text/css" href="css/responsive.css">
     <link rel="stylesheet" type="text/css" href="css/game.css">
+    <link rel="stylesheet" type="text/css" href="css/responsive.css">
     <!-- /build -->
 </head>
 
 <body ng-cloak ng-controller="GameCtrl">
 <div id="game" class="row">
+
     <div id="gameArea" class="col-xs-11" style="padding: 0 {{gameAreaPaddingPercent * 100}}%;">
         <div class="tile-wrapper"
              id="MyDrag" style="display: none; position: absolute;width: 0; padding-bottom: 0;z-index: 106;background-color: yellow;">
@@ -87,7 +88,7 @@
             <div id="rotate" class="text-primary" style="font-size: 4vh">{{'ROTATE_INFO' | translate}}</div>
         </div>
 
-        <div id="player-panel" class="row row-eq-height" style="border: groove;" ng-click="curPlayerAreaClicked()">
+        <div id="player-panel" class="row" style="border: groove;" ng-click="curPlayerAreaClicked()">
 
             <div class="col-xs-10" id="hand-panel">
                 <ul id="hand-ul" ng-repeat="row in [rows + yourPlayerIndex]">
@@ -171,7 +172,6 @@
             </div>
 
         </div><!-- /.row -->
-
     </div><!-- /#menuArea col-xs-1 -->
 
 </div><!-- #game /.row -->
