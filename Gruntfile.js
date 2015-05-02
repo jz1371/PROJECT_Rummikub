@@ -102,8 +102,7 @@ module.exports = function(grunt) {
                         'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js',
                         'http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-touch.min.js',
                         'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js',
-                        'http://yoav-zibin.github.io/emulator/dist/gameServices.min.js',
-                        'http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.min.js',
+                        'http://yoav-zibin.github.io/emulator/dist/turnBasedServices.2.min.js',
                         'dist/everything.min.js',
 
                         'http://yoav-zibin.github.io/emulator/main.css',

@@ -13,9 +13,9 @@
     angular.module('myApp')
         .controller('GameCtrl', [
         '$scope', '$log', '$window', '$animate', '$timeout',
-        'stateService', 'gameService', 'gameLogicService', 'gameAIService', 'CONFIG',
+        'stateService', 'gameService', 'dragAndDropService', 'gameLogicService', 'gameAIService', 'CONFIG',
         function($scope, $log, $window,  $animate, $timeout,
-                 stateService ,gameService, gameLogicService, gameAIService, CONFIG) {
+                 stateService ,gameService, dragAndDropService, gameLogicService, gameAIService, CONFIG) {
 
             /*************************************************************
              *********************   Configuration  *********************/
@@ -29,7 +29,7 @@
             window.e2e_test_stateService = stateService;
 
             // enable platform's drag-n-drop listener
-            window.handleDragEvent = handleDragEvent;
+            dragAndDropService.addDragListener("gameArea", handleDragEvent);
             /** ************************************************************/
 
             $scope.gameAreaPaddingPercent = CONFIG.GAME_AREA_PADDING_PERCENTAGE;
