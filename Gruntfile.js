@@ -104,14 +104,16 @@ module.exports = function(grunt) {
                         'http://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js',
                         'http://yoav-zibin.github.io/emulator/dist/gameServices.min.js',
                         'http://yoav-zibin.github.io/emulator/angular-translate/angular-translate.min.js',
+                        'dist/everything.min.js',
+
                         'http://yoav-zibin.github.io/emulator/main.css',
-                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css',
-                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/fonts/glyphicons-halflings-regular.woff',
-                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/fonts/glyphicons-halflings-regular.ttf',
+                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css',
+                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/fonts/glyphicons-halflings-regular.woff',
+                        'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/fonts/glyphicons-halflings-regular.ttf',
                         '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css',
                         'http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.woff2?v=4.3.0',
-                        'dist/everything.min.js',
                         'dist/game.css',
+
                         'img/favicon.ico',
                         'img/game-background.jpg',
                         'img/joker-red.png',
@@ -120,6 +122,7 @@ module.exports = function(grunt) {
                         'img/valid-groups.png',
                         'img/valid-joker.png',
                         'img/valid-run2.png',
+
                         'template/help.html'
                     ],
                     network: [

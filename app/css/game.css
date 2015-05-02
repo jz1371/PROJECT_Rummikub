@@ -45,10 +45,6 @@
    font-size: 2.5vw;
 }
 
-/*#menuArea ul {*/
-/*-webkit-padding-start: 10px;*/
-/*}*/
-
 #menuArea > .row > .col-xs-12{
    padding-bottom: 1.3vw    /* [Setter] here for distance between items in left menu */
 }
@@ -86,16 +82,12 @@
    /*width: 100%;*/
    height: 80%;
    list-style: none;
-   /*overflow-x: scroll;*/
-   /*overflow-y: hidden;*/
-   /*white-space: nowrap;*/
    -webkit-overflow-scrolling: touch;
 }
 
 #player-panel ul li {
    position: relative;
    width: 7.14%;
-   /*float: left;*/
    display: inline-block;
    vertical-align: middle;
 }
@@ -113,6 +105,8 @@
    /*bottom:-10px;*/
 }
 
+/* overloading css in Bootstrap */
+
 .row {
    margin: 0;
 }
@@ -121,3 +115,6 @@ div[class^='col-xs-'] {
    padding: 0;
 }
 
+#menuArea p {
+   margin: 0 0 10%;
+}
