@@ -15,7 +15,8 @@ module.exports = function (config) {
             'app/js/services/gameLogicService.js',
             'app/js/services/gameAIService.js',
 
-            'test/unit/gameAIServiceSpec.js'
+            'test/unit/gameAIServiceSpec.js',
+            'test/unit/gameLogicServiceSpec.js'
 
         ],
 

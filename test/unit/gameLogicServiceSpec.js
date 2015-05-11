@@ -8,7 +8,7 @@
  *   1. $ cd test
  *   2. $ ../node_modules/karma/bin/karma start
  *
- * Usage from Webstorm
+ * Usage from Webstorm IDE
  *
  *   1. right click on karma.conf.js file -> 'Create karma.conf.js'
  *   2. fill in:
@@ -311,6 +311,8 @@ describe("Rummikub Unit Tests", function() {
             state.trace = initialMove[2].set.value;
             state.board = initialMove[3].set.value;
             state.deltas = initialMove[4].set.value;
+
+            // assign tiles
             for (var i = 0; i < 106; i++) {
                 state['tile' + i] = _service.getTileByIndex(i);
             }
@@ -493,6 +495,16 @@ describe("Rummikub Unit Tests", function() {
 
             });
 
+            it ("[Wrong] wrong number of operations in move", function() {
+                var stateBefore = angular.copy(state);
+                stateBefore.trace.nexttile = 80;
+                var move = pickMoveTemplate(1, 80);
+                move.push({});
+                /* ! tile index should be [0,106] ! */
+                expectIllegalMove(1, stateBefore, move);
+
+            });
+
             it ("[Wrong] after game is over, cannot pick anymore", function() {
                 var stateBefore = angular.copy(state);
                 stateBefore.trace.nexttile = 106;
@@ -501,9 +513,11 @@ describe("Rummikub Unit Tests", function() {
                 expectIllegalMove(1, stateBefore, move);
 
             });
+
         });
 
         describe("[MOVE]", function() {
+
             function moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove, visibleTo) {
                 return [
                     {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
@@ -895,62 +909,69 @@ describe("Rummikub Unit Tests", function() {
 
         });
 
-        describe("MELD move unit tests", function(){
+        describe("[MELD]", function(){
 
-            beforeEach(function setTiles(){
-                for (var i = 0; i < 106; i++) {
-                    state['tile' + i] = _service.getTileByIndex(i);
-                }
-            });
-
-            function defaultMeldMove(playerIndex) {
-                var meldMove = [
+            function meldMoveTemplate(playerIndex, boardExpected, traceExpected) {
+                return [
                     {setTurn: {turnIndex: 1 - playerIndex}},
                     {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                    {set: {key: 'board', value: boardExpected}},
+                    {set: {key: 'deltas', value: []}},     // meld move will clear delta history
+                    {set: {key: 'trace', value: traceExpected}}
                 ];
-                return meldMove;
             }
 
             it ("[Right] player1 scores 30 by one 'groups' for his initial meld, ", function(){
                 var playerIndex = 1;
+
+                // p1 sent tile22, tile35, tile61 to board before meld move
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : false,
-                    tiles    : [14,15,16,17,18,19,20,21,23,24,25]
-                };
+                stateBefore.deltas = [
+                    {from:{row:7,col:8}, to:{row:0,col:0},tileIndex:22},
+                    {from:{row:7,col:14},to:{row:0,col:1},tileIndex:35},
+                    {from:{row:7,col:15},to:{row:0,col:2},tileIndex:61}
+                ];
                 // 'tile22', {color: 'blue',  score: 10}
                 // 'tile35', {color: 'red' ,  score: 10}
                 // 'tile61', {color: 'black', score: 10}
-                state.tilesSentToBoardThisTurn = [22,61,35];   // has already sent tile 22, tile61, and tile 35 to baord.
-                stateBefore.board[1] = [-1,-1,22,35,61,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[0] = [22,35,61,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[7] = [14,15,16,17,18,19,20,21,-1,23,24,25,26,27,-1,-1];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [14,15,16,17,18,19,20,21,23,24,25]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [22,35,61,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],               // 6
+                    [14,15,16,17,18,19,20,21,23,24,25,26,27]                  // 7
                 ];
 
-                expectMoveOk(playerIndex, stateBefore, move);
+                var traceExpected = angular.copy(state.trace);
+                // p1 finishes his initial meld
+                traceExpected.initial[playerIndex] = true;
+
+                var meldMove = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
+
+                expectMoveOk(playerIndex, stateBefore,  meldMove);
 
             });
 
             it ("[Right] player1 scores 30 by combination of 'runs' and 'groups' for his initial meld, ", function(){
-                var playerIndex = 0;
+                var playerIndex = 1;
+                // p1 sent tile15, tile16,tile17,tile18,tile21,tile34,tile60 to board
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : false,
-                    tiles    : [14,19,20,22,23,24,25]
-                };
-                // has already sent tile 15,16,17,18,21,34,60 to board
+                stateBefore.deltas = [
+                    {from:{row:7,col:15},to:{row:1,col:4},tileIndex:60},
+                    {from:{row:7,col:14},to:{row:1,col:3},tileIndex:34},
+                    {from:{row:7,col: 1},to:{row:3,col:14},tileIndex:15},
+                    {from:{row:7,col: 4},to:{row:3,col:17},tileIndex:18},
+                    {from:{row:7,col: 3},to:{row:3,col:16},tileIndex:17},
+                    {from:{row:7,col: 2},to:{row:3,col:15},tileIndex:16},
+                    {from:{row:7,col: 7},to:{row:1,col:2},tileIndex:21}
+                ];
                 // 'tile15', {color: 'blue',  score:  3}
                 // 'tile16', {color: 'blue',  score:  4}
                 // 'tile17', {color: 'blue',  score:  5}
@@ -958,19 +979,26 @@ describe("Rummikub Unit Tests", function() {
                 // 'tile21', {color: 'blue',  score:  9}
                 // 'tile34', {color: 'red' ,  score:  9}
                 // 'tile60', {color: 'black', score:  9}
-                stateBefore.tilesSentToBoardThisTurn = [15,16,34,60,21,17,18];
-                stateBefore.board[1] = [-1,-1,21,34,60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-                stateBefore.board[3] = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,15,16,17,18];
+                stateBefore.board[1] = [-1,-1,21,34,60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[3] = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,15,16,17,18];
+                stateBefore.board[7] = [14,-1,-1,-1,-1,19,20,-1,22,23,24,25,26,27,-1,-1];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [14,19,20,22,23,24,25]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,21,34,60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,15,16,17,18],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],              // 6
+                    [14,19,20,22,23,24,25,26,27]                              // 7
                 ];
+
+                var traceExpected = angular.copy(state.trace);
+                // p1 finishes his initial meld
+                traceExpected.initial[playerIndex] = true;
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
                 expectMoveOk(playerIndex, stateBefore, move);
 
@@ -979,187 +1007,228 @@ describe("Rummikub Unit Tests", function() {
             it ("[Right] player0 scores 36 by one 'runs' for his initial meld", function(){
                 var playerIndex = 0;
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : false,
-                    tiles    : [0,1,2,3,4,5,6,7,8,9,13]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [11,12,10];
+                // p0 sent tile10, tile11, tile12 to board
+                stateBefore.deltas = [
+                    {from:{row:6,col:13},to:{row:0,col:3},tileIndex:12},
+                    {from:{row:6,col:12},to:{row:0,col:2},tileIndex:11},
+                    {from:{row:6,col:11},to:{row:0,col:1},tileIndex:10}
+                ];
                 // tile10: {color: "blue" , score: 11}
                 // tile11: {color: "blue" , score: 12}
                 // tile12: {color: "blue" , score: 13}
-                stateBefore.board[0] = [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[0] = [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[6] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1,13];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [0,1,2,3,4,5,6,7,8,9,13]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,13],                       // 6
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
                 ];
 
-                expectMoveOk(0, stateBefore, move);
+                var traceExpected = angular.copy(state.trace);
+                // p1 finishes his initial meld
+                traceExpected.initial[playerIndex] = true;
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
-            });
-
-            it ("[Right] player0's another meld after initial meld", function(){
-                var playerIndex = 0;
-                var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : true,
-                    tiles    : [0,1,2,3,4,5,6,7,8,13]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [9];
-                stateBefore.board = [
-                    [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,87,35,61, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-                ];
-
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [0,1,2,3,4,5,6,7,8,13]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
-                ];
-
-                expectMoveOk(0, stateBefore, move);
+                expectMoveOk(playerIndex, stateBefore, move);
 
             });
 
             it ("[Right] player1 melds with joker after initial meld", function(){
                 var playerIndex = 1;
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : true,
-                    tiles    : [17,18,19,20,21,23,24,25]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [14,16,105,15];
                 stateBefore.board = [
-                    [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,87,105,61,22,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,14,15,16,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,105,87,61,22,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,14,15,16,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,13],                       // 6
+                    [17,18,19,20,21,23,24,25,26,27,-1]                        // 7
+                ];
+                stateBefore.trace.initial = [true, true];
+                // tile87: {color: "orange", score: 10}
+                // tile61: {color: "black" , score: 10}
+                // tile22: {color: "blue"  , score: 10}
+                stateBefore.deltas = [
+                    {from:{row:7,col:10},to:{row:2,col:3},tileIndex:105}
                 ];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [17,18,19,20,21,23,24,25]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,105,87,61,22,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 2
+                    [-1,14,15,16,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,13],                       // 6
+                    [17,18,19,20,21,23,24,25,26,27]                           // 7
                 ];
+
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
                 expectMoveOk(playerIndex, stateBefore, move);
+
             });
 
             it ("[Right] player0 melds with two jokers in one group", function(){
+
                 var playerIndex = 0;
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : true,
-                    tiles    : [0,3,5,6,7,8,13]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [4,2];
                 stateBefore.board = [
-                    [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,87,35,61, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [1, 2,105, 4,104,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 1
+                    [-1,-1,-1,87,35,61, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 2
+                    [ 1,2,105,4,104,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 5
+                    [ 0, 1,-1, 3,-1, 5, 6, 7, 8, 9,13,-1,-1],               // 6
+                    [14,15,16,17,18,19,20,21,23,24,25,26,27]                // 7
                 ];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [0,3,5,6,7,8,13]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                stateBefore.trace.initial = [true, true];
+
+                // tile2: {color: "blue" , score: 3}
+                // tile4: {color: "blue" , score: 5}
+                // tile104: {color: "joker", score: 0}
+                // tile105: {color: "joker", score: 0}
+                stateBefore.deltas = [
+                    {from:{row:6,col:2},to:{row:2,col:2},tileIndex:2},
+                    {from:{row:6,col:12},to:{row:2,col:4},tileIndex:104},
+                    {from:{row:6,col:11},to:{row:2,col:2},tileIndex:105},
+                    {from:{row:6,col:3},to:{row:2,col:3},tileIndex:4}
                 ];
 
-                expectMoveOk(0, stateBefore, move);
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 1
+                    [-1,-1,-1,87,35,61, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 2
+                    [ 1,2,105,4,104,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],// 5
+                    [ 0, 1, 3, 5, 6, 7, 8, 9,13],                           // 6
+                    [14,15,16,17,18,19,20,21,23,24,25,26,27]                // 7
+                ];
+
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
+
+                expectMoveOk(playerIndex, stateBefore, move);
+
 
             });
 
             it ("[Wrong] player0 needs more than 30 score for his initial meld", function(){
                 var playerIndex = 0;
                 var stateBefore = angular.copy(state);
-                stateBefore.player0 = {
-                    initial  : false,
-                    tiles    : [0,      4,5,6,7,8,9,10,11,12,13]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [1,2,3];
-                stateBefore.board = [
-                    [-1, 1, 2, 3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                // p0 sent tile10, tile11, tile12 to board
+                // tile1: {color: "blue" , score: 2}
+                // tile2: {color: "blue" , score: 3}
+                // tile3: {color: "blue" , score: 4}
+                stateBefore.deltas = [
+                    {from:{row:6,col:1},to:{row:0,col:1},tileIndex:1},
+                    {from:{row:6,col:2},to:{row:0,col:2},tileIndex:2},
+                    {from:{row:6,col:3},to:{row:0,col:3},tileIndex:3}
+                ];
+                stateBefore.board[0] = [-1,1,2,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[6] = [0,-1,-1,-1,4, 5, 6, 7, 8, 9,10,11,12,13];
+
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1, 1, 2, 3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 4, 5, 6, 7, 8, 9,10,11,12,13],                       // 6
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
                 ];
 
-                var move = [
-                    {setTurn: {turnIndex: 1}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [0,      4,5,6,7,8,9,10,11,12,13]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
-                ];
+                var traceExpected = angular.copy(state.trace);
+                // p1 finishes his initial meld
+                traceExpected.initial[playerIndex] = true;
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
                 expectIllegalMove(0, stateBefore, move);
 
             });
 
-            it ("[Wrong] player1 tries to meld with wrong number of tiles", function(){
-                var playerIndex = 1;
+            it ("[Wrong] player0 tries to meld with wrong number of tiles", function(){
+                var playerIndex = 0;
                 var stateBefore = angular.copy(state);
-                stateBefore['player' + playerIndex] = {
-                    initial  : true,
-                    tiles    : [0,    3,4,5,6,7,8,9,10,11,12,13]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [2,1];
-                stateBefore.board[0] = [-1,2,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                // p0 sent tile10, tile11, tile12 to board
+                // tile1: {color: "blue" , score: 2}
+                // tile2: {color: "blue" , score: 3}
+                // tile3: {color: "blue" , score: 4}
+                stateBefore.deltas = [
+                    {from:{row:6,col:2},to:{row:0,col:2},tileIndex:2},
+                    {from:{row:6,col:3},to:{row:0,col:3},tileIndex:3}
+                ];
+                stateBefore.board[0] = [-1,-1,2,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[6] = [0,-1,-1,-1,4, 5, 6, 7, 8, 9,10,11,12,13];
 
-                var move = defaultMeldMove();
-                move[3].set.value.tiles    = [0,3,4,5,6,7,8,9,10,11,12,13];
-                move[3].set.value.lastTurn = [0,3,4,5,6,7,8,9,10,11,12,13];
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1, 2, 3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 4, 5, 6, 7, 8, 9,10,11,12,13],                    // 6
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
+                ];
+
+                var traceExpected = angular.copy(state.trace);
+                // p1 finishes his initial meld
+                traceExpected.initial[playerIndex] = true;
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
                 expectIllegalMove(playerIndex, stateBefore, move);
 
             });
 
             it ("[Wrong] tiles in 'runs' should have the same color", function(){
-                var playerIndex = 1;
+                var playerIndex = 0;
                 var stateBefore = angular.copy(state);
-                stateBefore['player' + playerIndex] = {
-                    initial  : true,
-                    tiles    : [0,1,2,3,4,5,6,7,8,9,      12,13   ]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [64,11,10];
+                stateBefore.deltas = [
+                    {from:{row:6,col:11},to:{row:3,col:2},tileIndex:11},
+                    {from:{row:6,col:10},to:{row:3,col:1},tileIndex:10},
+                    {from:{row:6,col:14},to:{row:3,col:3},tileIndex:64}
+                ];
                 // tile10: {color: "blue" , score: 11}
                 // tile10: {color: "blue" , score: 12}
                 // tile64: {color: "black", score: 13}   /* !! should have "blue" color to make a 'runs' !! */
-                stateBefore.board[3] = [-1,10,11,64,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[3] = [-1,10,11,64,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[6] = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,12,13,-1];
 
-                var move = defaultMeldMove(playerIndex);
-                move[3].set.value.tiles = [0,1,2,3,4,5,6,7,8,9,12,13];
-                move[3].set.value.lastTurn = [0,1,2,3,4,5,6,7,8,9,12,13];
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,10,11,64,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,12,13],                    // 6
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
+                ];
+
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
                 expectIllegalMove(playerIndex, stateBefore, move);
 
@@ -1168,27 +1237,33 @@ describe("Rummikub Unit Tests", function() {
             it ("[Wrong] tiles in 'runs' should have the consecutive number order", function(){
                 var playerIndex = 0;
                 var stateBefore = angular.copy(state);
-                stateBefore['player' + playerIndex] = {
-                    initial  : true,
-                    tiles    : [0,1,2,3,4,5,6,7,  9,      12,13]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [11,8,10];
-                // tile10: {color: "blue" , score: 11}
-                // tile11: {color: "blue" , score: 12}
-                // tile64: {color: "black", score: 13}   /* !! should have "blue" color to make a 'runs' !! */
-                stateBefore.board[5] = [8,10,11,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-
-                var move = defaultMeldMove(playerIndex);
-                move[3].set.value.tiles = [0,1,2,3,4,5,6,7,9,12,13];
-
-                expectIllegalMove(playerIndex, stateBefore, move);
 
                 // tile10: {color: "blue" , score: 11}
                 // tile11: {color: "blue" , score: 12}
                 // tile24: {color: "blue",  score: 12}   /* !! should have score:13 or score:10 to make a 'runs' !! */
-                stateBefore['player' + playerIndex].tiles    = [0,1,2,3,4,5,6,7,8,9,      12,13   ];
-                stateBefore['player' + playerIndex].lastTurn = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,24];
-                stateBefore.board[5] = [10,11,24,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.deltas = [
+                    {from:{row:6,col:11},to:{row:3,col:2},tileIndex:11},
+                    {from:{row:6,col:10},to:{row:3,col:1},tileIndex:10},
+                    {from:{row:6,col:14},to:{row:3,col:3},tileIndex:24}
+                ];
+                stateBefore.board[3] = [-1,10,11,24,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[6] = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,12,13,-1];
+
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,10,11,24,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,12,13],                    // 6
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]               // 7
+                ];
+
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
+
                 expectIllegalMove(playerIndex, stateBefore, move);
 
             });
@@ -1196,26 +1271,32 @@ describe("Rummikub Unit Tests", function() {
             it ("[Wrong] tiles in 'groups' should have the same score", function(){
                 var playerIndex = 1;
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : false,
-                    tiles    : [14,15,16,17,18,19,20,21,   23,24,25]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [35,22,60];
                 // 'tile22', {color: 'blue',  score: 10}
                 // 'tile35', {color: 'red' ,  score: 10}
                 // 'tile60', {color: 'black', score:  9}   /*!! should have score 10 to make a 'groups' !!*/
-                stateBefore.board[2] = [-1,-1,35,22,60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[2] = [-1,-1,35,22,60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [14,15,16,17,18,19,20,21,   23,24,25]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
-
+                stateBefore.deltas = [
+                    {from:{row:7,col:14},to:{row:2,col:2},tileIndex:35},
+                    {from:{row:7,col:15},to:{row:2,col:4},tileIndex:60},
+                    {from:{row:7,col:8},to:{row:2,col:3},tileIndex:22}
                 ];
+                stateBefore.board[7] = [14,15,16,17,18,19,20,21,-1,23,24,25,26,27,-1,-1];
+
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,35,22,60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,12,13],                    // 6
+                    [14,15,16,17,18,19,20,21,23,24,25,26,27]                  // 7
+                ];
+
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
                 expectIllegalMove(playerIndex, stateBefore, move);
 
@@ -1224,41 +1305,40 @@ describe("Rummikub Unit Tests", function() {
             it ("[Wrong] tiles in 'groups' should have different colors with each other" , function(){
                 var playerIndex = 1;
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : false,
-                    tiles    : [14,15,16,17,18,19,20,21,   23,24,25]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [22,48,35];
                 // 'tile22', {color: 'blue',  score: 10}
                 // 'tile35', {color: 'red' ,  score: 10}
                 // 'tile48', {color: 'red' ,  score: 10}  /* !! cannot have color 'red' to make a 'groups' !! */
                 stateBefore.board[3] = [-1,-1,35,22,48,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [14,15,16,17,18,19,20,21,   23,24,25]
-                    }}},
-                    {set: {key: "tilesSentToBoardThisTurn", value: []}}
+                stateBefore.deltas = [
+                    {from:{row:7,col:14},to:{row:3,col:2},tileIndex:35},
+                    {from:{row:7,col:15},to:{row:3,col:4},tileIndex:60},
+                    {from:{row:7,col:8},to:{row: 3,col:3},tileIndex:22}
+                ];
+                stateBefore.board[7] = [14,15,16,17,18,19,20,21,-1,23,24,25,26,27,-1,-1];
+
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,35,22,48,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,12,13],                    // 6
+                    [14,15,16,17,18,19,20,21,23,24,25,26,27]                  // 7
                 ];
 
-                expectIllegalMove(playerIndex, stateBefore, move);
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
+                expectIllegalMove(playerIndex, stateBefore, move);
             });
 
             it ("[Wrong] score in initial meld should be at least 30", function(){
 
                 var playerIndex = 1;
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : false,
-                    // player sent tile14,tile15,tile16,tile35,tile36 to board in current turn.
-                    tiles    : [         17,18,19,20,21,22,23,24,25      ]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [15,16,14,61,35];
-
                 // 'tile14', {color: 'blue',  score:  2}
                 // 'tile15', {color: 'blue',  score:  3}
                 // 'tile16', {color: 'blue',  score:  4}
@@ -1267,17 +1347,31 @@ describe("Rummikub Unit Tests", function() {
                 // 'tile61', {color: 'black', score: 10}
                 /* !! sets = {9,35,61} cannot count as score because player has not finished initial meld,
                       all tiles in 'sets' to be scored should from the same player.!! */
-                stateBefore.board[3] = [-1,-1,9,35,61,-1,-1,14,15,16,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[3] = [-1,-1,9,35,61,-1,-1,14,15,16,-1,-1,-1,-1,-1,-1,-1,-1];
+                stateBefore.board[7] = [-1,-1,-1,17,18,19,20,21,22,23,24,25,26,27,-1,-1];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [17,18,19,20,21,22,23,24,25]
-                    }}},
-                    {set: {key: "tilesSentToBoardThisTurn", value: []}}
+                stateBefore.deltas = [
+                    {from:{row:7,col:14},to:{row:3,col:2},tileIndex:35},
+                    {from:{row:7,col:15},to:{row:3,col:4},tileIndex:61},
+                    {from:{row:7,col:0},to:{row: 3,col:2},tileIndex:14},
+                    {from:{row:7,col:1},to:{row: 3,col:2},tileIndex:15},
+                    {from:{row:7,col:2},to:{row: 3,col:2},tileIndex:16}
                 ];
+
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,12,13],                    // 6
+                    [17,18,19,20,21,23,24,25,26,27]                  // 7
+                ];
+
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
 
                 expectIllegalMove(playerIndex, stateBefore, move);
             });
@@ -1285,25 +1379,199 @@ describe("Rummikub Unit Tests", function() {
             it ("[Wrong] player0 sent no tiles to board but want to meld", function(){
                 var playerIndex = 0;
                 var stateBefore = angular.copy(state);
-                stateBefore["player" + playerIndex] = {
-                    initial  : true,
-                    tiles    : [14,15,16,17,18,19,20,21,22,23,24,25,35,61]
-                };
-                stateBefore.tilesSentToBoardThisTurn = [];
 
-                var move = [
-                    {setTurn: {turnIndex: 1 - playerIndex}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : [14,15,16,17,18,19,20,21,22,23,24,25,35,61]
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],                    // 6
+                    [14,15,16,17,18,19,20,21,23,24,25,26,27,28]                  // 7
                 ];
 
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
+
                 expectIllegalMove(playerIndex, stateBefore, move);
+
             });
 
+            it ("[Wrong] player1 sent no tiles to board but want to meld", function(){
+                var playerIndex = 1;
+                var stateBefore = angular.copy(state);
+                // player1: [7,0] -> [1,1] -> [2,2] -> [7,0], actually sends no tile to board
+                stateBefore.deltas = [
+                    {from: {row: 7, col: 0}, to: {row: 1, col: 1}, tileIndex: 14},
+                    {from: {row: 1, col: 1}, to: {row: 2, col: 2}, tileIndex: 14},
+                    {from: {row: 2, col: 2}, to: {row: 7, col: 0}, tileIndex: 14}
+                ];
+
+                var boardExpect = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 1
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 3
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],                    // 6
+                    [14,15,16,17,18,19,20,21,23,24,25,26,27,28]                  // 7
+                ];
+
+                var traceExpected = angular.copy(stateBefore.trace);
+                var move = meldMoveTemplate(playerIndex, boardExpect, traceExpected);
+
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+            });
+
+        });
+
+        describe("[SORT]", function () {
+
+            function sortMoveTemplate(playerIndex, sortType,  boardExpected) {
+                return [
+                    {setTurn: {turnIndex: playerIndex}},
+                    {set: {key: 'type', value: "SORT"}},
+                    {set: {key: 'sorttype', value: sortType}},
+                    {set: {key: 'board', value: boardExpected}}
+                ];
+            }
+
+            it("[Right] sort by tiles' scores", function () {
+                var playerIndex = 1;
+                var stateBefore = angular.copy(state);
+                stateBefore.board[7] = [14,15,16,17,18,19,20,21,22,23,24,25,26,27];
+
+                var sortType = "score";
+                var boardExpected = angular.copy(state.board);
+                // tile26: 1, tile14: 2, tile27: 2,  tile15: 3,  tile16: 4,  tile17: 5, tile18: 6,
+                // tile19: 7  tile20: 8, tile21: 9, tile22: 10, tile23: 11, tile24: 12, tile25: 13
+                boardExpected[7] = [26,14,27,15,16,17,18,19,20,21,22,23,24,25];
+                var move = sortMoveTemplate(playerIndex, sortType, boardExpected);
+
+                expectMoveOk(playerIndex, stateBefore, move);
+
+            });
+
+            it("[Right] sort by tiles' colors", function () {
+                var playerIndex = 0;
+                var stateBefore = angular.copy(state);
+                stateBefore.board[6] = [0,1,2,3,4,5,6,7,8,9,10,11,12,13];
+
+                var sortType = "color";
+                var boardExpected = angular.copy(state.board);
+                //tile1 - tile13: blue
+                boardExpected[6] = [0,13,1,2,3,4,5,6,7,8,9,10,11,12];
+                var move = sortMoveTemplate(playerIndex, sortType, boardExpected);
+
+                expectMoveOk(playerIndex, stateBefore, move);
+
+            });
+
+            it("[Right] sort by tiles' sets", function () {
+                var playerIndex = 1;
+                var stateBefore = angular.copy(state);
+                stateBefore.board[7] = [27,14,18,15,19,20,16];
+
+                var sortType = "set";
+                var boardExpected = angular.copy(state.board);
+
+                // t14: blue2, tile15: blue3, tile16: blue4
+                // t18: blue6, tile19, blue7, tile20: blue8, tile27: red2
+                boardExpected[7] = [14,15,16,18,19,20,27];
+                var move = sortMoveTemplate(playerIndex, sortType, boardExpected);
+
+                expectMoveOk(playerIndex, stateBefore, move);
+
+            });
+
+            it("[Right] sort by tiles' sets", function () {
+                var playerIndex = 1;
+                var stateBefore = angular.copy(state);
+                stateBefore.board[7] = [18,15,19,20,27,1,53];
+
+                var sortType = "set";
+                var boardExpected = angular.copy(state.board);
+
+                // tile27: red2, tile1: blue2, tile53: black2
+                boardExpected[7] = [27,1,53,18,19,20,15];
+                var move = sortMoveTemplate(playerIndex, sortType, boardExpected);
+
+                expectMoveOk(playerIndex, stateBefore, move);
+
+            });
+
+            it("[Wrong] unknown sort type", function () {
+                var playerIndex = 1;
+                var stateBefore = angular.copy(state);
+                stateBefore.board[7] = [18,15,19,20,27,1,53];
+
+                var sortType = "xx";
+                var boardExpected = angular.copy(state.board);
+
+                // tile27: red2, tile1: blue2, tile53: black2
+                boardExpected[7] = [27,1,53,18,19,20,15];
+                var move = sortMoveTemplate(playerIndex, sortType, boardExpected);
+
+                expectIllegalMove(playerIndex, stateBefore, move);
+
+            });
+        });
+
+        describe("[UNDO]", function () {
+
+            function undoMoveTemplate(playerIndex, boardExpected, deltasExpected, tileToMove, visibility) {
+                return [
+                    {setTurn: {turnIndex: playerIndex}},        // this move will not change turnIndex
+                    {set: {key: 'type', value: 'UNDO'}},
+                    {set: {key: 'board', value: boardExpected}},
+                    {set: {key: 'deltas', value: deltasExpected}},
+                    {setVisibility: {key: 'tile' + tileToMove, visibleToPlayerIndices: visibility}}
+                ];
+            }
+
+            it("[Right] player0 undoes last move", function () {
+                // p0 sent tile0 to board[0][0] before undo move
+                var playerIndex = 0;
+                var tileToMove = 0;
+                var stateBefore = angular.copy(state);
+                stateBefore.board = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [ 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]
+                ];
+                stateBefore.deltas.push({from: {row: 6, col: 0}, to: {row: 0, col: 0}, tileIndex: tileToMove} );
+
+                // in undo move, p0 retrieves tile0 back and remove element in deltas.
+                var boardExpected = [
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+                    [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],
+                    [14,15,16,17,18,19,20,21,22,23,24,25,26,27]
+                ];
+                var deltasExpected = [];
+
+                var visibility = [playerIndex];
+                var move = undoMoveTemplate(playerIndex, boardExpected, deltasExpected, tileToMove, visibility);
+
+                expectMoveOk(playerIndex, stateBefore, move);
+
+            });
         });
 
         describe("UNKNOWN move unit tests", function(){
@@ -1317,47 +1585,36 @@ describe("Rummikub Unit Tests", function() {
             });
         });
 
-        describe("Ending game unit tests", function(){
+        describe("[END]", function(){
 
-            beforeEach(function setTiles(){
-                for (var i = 0; i < 106; i++) {
-                    state['tile' + i] = _service.getTileByIndex(i);
-                }
-            });
-
-            it ("[Right] player0 wins the game", function() {
+            it ("[Right] player0 wins the game by melding", function() {
                 var playerIndex = 0;
-                var stateBefore = angular.copy(state);
-                stateBefore.tilesSentToBoardThisTurn = [17,9,8];
-                stateBefore["player" + playerIndex] = {
-                    initial : true,
-                    tiles   : []
-                };
-                var playerIndexBefore = 1 - playerIndex;
-                stateBefore["player" + playerIndexBefore] = {
-                    initial : true,
-                    // 'tile14': {color:'blue',score:  2}
-                    // 'tile15': {color:'blue',score:  3}
-                    tiles   : [14,15]
-                };
 
+                // before move, player0 sent tile105 to board in last move
+                var stateBefore = angular.copy(state);
                 stateBefore.board = [
-                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [10,104,105,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 1
+                    [10,104,105,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 3
+                    [-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 5
+                    [-1],                                                      // 6
+                    [1,2] // tile1: blue2, tile2: blue3
                 ];
+                stateBefore.deltas = [{from: {row: 6, col: 0}, to: {row: 2, col: 2}, tileIndex: 105}];
+                stateBefore.trace.initial[0] = true;
+
+                var boardExpected = angular.copy(stateBefore.board);
+                boardExpected[6] = [];
 
                 var move = [
-                    {endMatch: {endMatchScores:[5, -5]}},
+                    {endMatch: {endMatchScores: [5, -5]}}, // score(tile1 + tile2) = 5
                     {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial  : true,
-                        tiles    : []
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
+                    {set: {key: 'board', value: boardExpected}},
+                    {set: {key: 'deltas', value: []}},     // meld move will clear delta history
+                    {set: {key: 'trace', value: stateBefore.trace}}
                 ];
 
                 expectMoveOk(playerIndex, stateBefore, move);
@@ -1365,160 +1622,102 @@ describe("Rummikub Unit Tests", function() {
 
             it ("[Right] player1 wins the game, player0 still holds joker in hand", function(){
                 var playerIndex = 1;
-                var stateBefore = angular.copy(state);
-                // player1 sent tile9 to board in this turn and has no tiles left in hand.
-                stateBefore.tilesSentToBoardThisTurn = [9];
-                stateBefore["player" + playerIndex] = {
-                    initial : true,
-                    tiles   : []
-                };
-                var playerIndexBefore = 1 - playerIndex;
-                stateBefore["player" + playerIndexBefore] = {
-                    initial : true,
-                    // 'tile14': {color:'blue',score:  2}
-                    // 'tile15': {color:'blue',score:  3}
-                    // 'tile104': {color:'joker',score: 0}
-                    // joker's score is 30 when calculating ending score
-                    tiles   : [14,15,104]
-                };
 
+                var stateBefore = angular.copy(state);
                 stateBefore.board = [
-                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [105,10,11,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 1
+                    [10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 3
+                    [-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 5
+                    [104,1, 2],  //tile104: joker, tile1: blue2, tile2: blue3
+                    [-1,-1,-1]
+                ];
+                // player1 sent tile16, tile17, tile18 to board before
+                stateBefore.deltas = [
+                    {from: {row: 7, col: 0}, to: {row: 4, col: 2}, tileIndex: 16},
+                    {from: {row: 7, col: 1}, to: {row: 4, col: 3}, tileIndex: 17},
+                    {from: {row: 7, col: 2}, to: {row: 4, col: 4}, tileIndex: 18}
+                ];
+                stateBefore.trace.initial[1] = true;
+
+                var boardExpected = angular.copy(stateBefore.board);
+                boardExpected[7] = [];
+
+                var move = [
+                    {endMatch: {endMatchScores: [-35, 35]}}, // score(tile104 + tile1 + tile2) = 35
+                    {set: {key: 'type', value: "MELD"}},
+                    {set: {key: 'board', value: boardExpected}},
+                    {set: {key: 'deltas', value: []}},     // meld move will clear delta history
+                    {set: {key: 'trace', value: stateBefore.trace}}
                 ];
 
-                expectMoveOk(playerIndex, stateBefore, [
-                    {endMatch: {endMatchScores:[-35, 35]}},
-                    {set: {key: 'type', value: "MELD"}},
-                    {set: {key: 'player' + playerIndex, value: {
-                        initial:  true,
-                        tiles   : []
-                    }}},
-                    {set: {key: 'tilesSentToBoardThisTurn', value: []}}
-                    ]);
+                expectMoveOk(playerIndex, stateBefore, move);
+
             });
 
             it ("[Wrong] cannot move any more when someone wins the game.", function(){
-                var playerIndex = 1;
-                var stateBefore = angular.copy(state);
-                stateBefore.tilesSentToBoardThisTurn = [];
-                var playerIndexBefore = 1 - playerIndex;
-                stateBefore["player" + playerIndexBefore] = {
-                    initial : true,
-                    tiles   : []
-                };
-                stateBefore["player" + playerIndex] = {
-                    initial : true,
-                    // 'tile14': {color:'blue',score:  2}
-                    // 'tile15': {color:'blue',score:  3}
-                    // 'tile104': {color:'joker',score:0}
-                    tiles   : [14,15,104]
-                };
-
-                stateBefore.board = [
-                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [10,105,11,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-                ];
-
-
-                expectIllegalMove(playerIndex, stateBefore, [
-                        {setTurn: {turnIndex: 1 - playerIndex}},
-                        {set: {key: 'type', value: "MELD"}},
-                        {set: {key: 'player' + playerIndex, value: {
-                            initial:  true,
-                            tiles   : []
-                        }}},
-                        {set: {key: 'tilesSentToBoardThisTurn', value: []}}
-                    ]
-                );
-            });
-
-            it ("[Right] game maybe not over even if all tiles are sent to players", function(){
                 var playerIndex = 0;
+
+                // before move, player0 won the game already
                 var stateBefore = angular.copy(state);
-                // all tiles are sent to players
-                stateBefore.nexttile = 106;
-
-                stateBefore.tilesSentToBoardThisTurn = [];
-                var playerIndexBefore = 1 - playerIndex;
-                stateBefore["player" + playerIndexBefore] = {
-                    initial : true,
-                    // player can send tile to board
-                    tiles   : [2]
-                };
-                stateBefore["player" + playerIndex] = {
-                    initial : true,
-                    tiles   : [14]
-                };
-
                 stateBefore.board = [
-                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1, 3, 4, 5, 6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [10,105,11,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 1
+                    [10,104,105,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 3
+                    [-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 5
+                    [],                                                      // 6
+                    [1,2] // tile1: blue2, tile2: blue3
+                ];
+                stateBefore.trace.initial[0] = true;
+
+                var boardExpected = angular.copy(stateBefore.board);
+
+                var move = [
+                    {endMatch: {endMatchScores: [5, -5]}}, // score(tile1 + tile2) = 5
+                    {set: {key: 'type', value: "MELD"}},
+                    {set: {key: 'board', value: boardExpected}},
+                    {set: {key: 'deltas', value: []}},     // meld move will clear delta history
+                    {set: {key: 'trace', value: stateBefore.trace}}
                 ];
 
-
-                expectIllegalMove(playerIndex, stateBefore, [
-                        {setTurn: {turnIndex: 1 - playerIndex}},
-                        {set: {key: 'type', value: "MELD"}},
-                        {set: {key: 'player' + playerIndex, value: {
-                            initial:  true,
-                            tiles   : []
-                        }}},
-                        {set: {key: 'tilesSentToBoardThisTurn', value: []}}
-                    ]
-                );
-
+                expectIllegalMove(playerIndex, stateBefore, move);
             });
 
             it ("[Wrong] cannot move after game is tied", function(){
                 var playerIndex = 1;
+
+                // before move, player0 won the game already
                 var stateBefore = angular.copy(state);
-                // all tiles are sent to players
-                stateBefore.nexttile = 106;
-
-                stateBefore.tilesSentToBoardThisTurn = [];
-                var playerIndexBefore = 1 - playerIndex;
-                stateBefore["player" + playerIndexBefore] = {
-                    initial : true,
-                    tiles   : [2]
-                };
-                stateBefore["player" + playerIndex] = {
-                    initial : true,
-                    tiles   : [14]
-                };
-
                 stateBefore.board = [
-                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1, 4, 5, 6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [10,105,11,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
-                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+                    //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                    [-1, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 0
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 1
+                    [10,104,105,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 2
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 3
+                    [-1,-1,16,17,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 4
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],   // 5
+                    [10,11,12],
+                    [1,2] // tile1: blue2, tile2: blue3
+                ];
+                stateBefore.trace.nexttile = 106;
+
+                var boardExpected = angular.copy(stateBefore.board);
+
+                var move = [
+                    {endMatch: {endMatchScores: [5, -5]}}, // score(tile1 + tile2) = 5
+                    {set: {key: 'type', value: "MELD"}},
+                    {set: {key: 'board', value: boardExpected}},
+                    {set: {key: 'deltas', value: []}},     // meld move will clear delta history
+                    {set: {key: 'trace', value: stateBefore.trace}}
                 ];
 
-
-                expectIllegalMove(playerIndex, stateBefore, [
-                        {setTurn: {turnIndex: 1 - playerIndex}},
-                        {set: {key: 'type', value: "MELD"}},
-                        {set: {key: 'player' + playerIndex, value: {
-                            initial:  true,
-                            tiles   : []
-                        }}},
-                        {set: {key: 'tilesSentToBoardThisTurn', value: []}}
-                    ]
-                );
+                expectIllegalMove(playerIndex, stateBefore, move);
             });
 
         });

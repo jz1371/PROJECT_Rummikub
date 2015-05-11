@@ -163,6 +163,13 @@ describe("AI service", function() {
 
     }
 
+    function expectMoveOk(turnIndexBeforeMove, stateBeforeMove, move) {
+        expect(_gameLogic.isMoveOk( {
+            turnIndexBeforeMove: turnIndexBeforeMove,
+            stateBeforeMove: stateBeforeMove,
+            move: move})).toBe(true);
+    }
+
     function expectMeldOk(playerIndex, stateAfter, moveExpected) {
 
         var actualMove = _gameLogic.createMeldMove(playerIndex, stateAfter);
@@ -186,39 +193,39 @@ describe("AI service", function() {
         expect(angular.equals(actualMove, moveExpected)).toBe(true);
     }
 
-    function updateGameState(stateBefore, move) {
+    function updateGameStateAfterAIMove(stateBefore, aiMove) {
         var stateAfter = angular.copy(stateBefore);
-        stateAfter.board  = move[2].set.value;
-        stateAfter.deltas = move[3].set.value;
-        stateAfter.trace  = move[4].set.value;
+        stateAfter.board  = aiMove[2].set.value;
+        stateAfter.deltas = aiMove[3].set.value;
+        stateAfter.trace  = aiMove[4].set.value;
         return stateAfter;
     }
 
-    it ("[computer makes winning move by sending group]", function() {
-        var stateBefore = getDefaultState();
+    it ("[computer makes winning move by sending group to board]", function() {
         var playerIndex = 0;
 
+        /**** Stage I: game state before computer making move */
+        var stateBefore = getDefaultState();
         // computer has tile10, tile11, tile12 in hand, and can meld with them
         stateBefore.board = [
             //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
             [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 0
-            [0,1,2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1],    // 1
+            [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1], // 1
             [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 2
             [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 3
             [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 4
-            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],  // 5
-            [10,11,12],  // {tile10: blue11}, {tile11: blue12}, {tile12: blue13}
+            [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 5
+            [10,11,12], // {tile10: blue11}, {tile11: blue12}, {tile12: blue13}
             [14,15]
         ];
 
+        /**** Stage II: computer make ai move */
         // ai move will send tile10, tile11, tile12 from player's hand to board
         var move = _aiService.createComputerMove(0, stateBefore);
+        expectMoveOk(playerIndex, stateBefore, move);
 
-        var stateAfter = stateBefore;
-        stateAfter.board = move[2].set.value;
-        stateAfter.deltas = move[3].set.value;
-        stateAfter.trace = move[4].set.value;
-
+        /**** Stage III: after last ai move, computer will make a meld move to finish this turn */
+        var stateAfter = updateGameStateAfterAIMove(stateBefore, move);
         var boardExpect = [
             [10,11,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1], // 0
             [0,1,2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1],    // 1
@@ -232,7 +239,7 @@ describe("AI service", function() {
         ];
         var traceExpect = {nexttile: 28, nplayers: 2, initial: [true, false]};
 
-        expectMeldOk(playerIndex, stateAfter, [
+        expectMoveOk(playerIndex, stateAfter, [
             {endMatch: {endMatchScores: [5, -5]}}, // tiles left in player1' hand
             {set: {key: "type", value: "MELD"}},
             {set: {key: "board", value: boardExpect}},
@@ -256,8 +263,9 @@ describe("AI service", function() {
         ];
 
         var aiMove = _aiService.createComputerMove(0, stateBefore);
+        expectMoveOk(0, stateBefore, aiMove);
 
-        var stateAfter = updateGameState(stateBefore, aiMove);
+        var stateAfter = updateGameStateAfterAIMove(stateBefore, aiMove);
 
         var boardExpect = [
             [ 9,35,61,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -296,8 +304,9 @@ describe("AI service", function() {
         ];
 
         var aiMove = _aiService.createComputerMove(1, stateBefore);
+        expectMoveOk(1, stateBefore, aiMove);
 
-        var stateAfter = updateGameState(stateBefore, aiMove);
+        var stateAfter = updateGameStateAfterAIMove(stateBefore, aiMove);
 
         var boardExpect = [
             [35,36,37,38,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -337,14 +346,16 @@ describe("AI service", function() {
             [35,37,38] // tile35: red10, tile36: red11, tile38: red13
         ];
 
-        // computer cannot meld using tiles in his hand, he has to pick one more tile to his hand
+        // computer cannot meld using tiles in his hand,
+        // so computer has to pick one more tile to his hand
         var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+        expectMoveOk(1, stateBefore, aiMove);
 
         expectPickOk(1, stateBefore, aiMove);
 
     });
 
-    it("[computere sends two sets to borad]", function () {
+    it("[computere sends two sets to board]", function () {
 
         var playerIndex = 1;
 
@@ -363,10 +374,9 @@ describe("AI service", function() {
         ];
 
         var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+        expectMoveOk(playerIndex, stateBefore, aiMove);
 
-        //console.log(JSON.stringify(aiMove));
-
-        var stateAfter = updateGameState(stateBefore, aiMove);
+        var stateAfter = updateGameStateAfterAIMove(stateBefore, aiMove);
 
         var boardExpect = [
             [7, 8, 9, -1,35,36,37,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -388,7 +398,7 @@ describe("AI service", function() {
             {set: {key: 'type', value: "MELD"}},
             {set: {key: 'board', value: boardExpect}},
             {set: {key: 'deltas', value: []}},
-            {set: {key: 'trace', value: traceExpect}},
+            {set: {key: 'trace', value: traceExpect}}
         ]);
 
     });
@@ -413,8 +423,9 @@ describe("AI service", function() {
             ];
 
             var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+            expectMoveOk(playerIndex, stateBefore, aiMove);
 
-            var stateAfter = updateGameState(stateBefore, aiMove);
+            var stateAfter = updateGameStateAfterAIMove(stateBefore, aiMove);
 
             var boardExpect = [
                 [ 1, 2, 3,-1,35,36,37,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -457,8 +468,9 @@ describe("AI service", function() {
             ];
 
             var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+            expectMoveOk(playerIndex, stateBefore, aiMove);
 
-            var stateAfter = updateGameState(stateBefore, aiMove);
+            var stateAfter = updateGameStateAfterAIMove(stateBefore, aiMove);
 
             var boardExpect = [
                 //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
@@ -502,8 +514,9 @@ describe("AI service", function() {
             ];
 
             var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+            expectMoveOk(playerIndex, stateBefore, aiMove);
 
-            var stateAfter = updateGameState(stateBefore, aiMove);
+            var stateAfter = updateGameStateAfterAIMove(stateBefore, aiMove);
 
             var boardExpect = [
                 //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
@@ -547,8 +560,9 @@ describe("AI service", function() {
             ];
 
             var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+            expectMoveOk(playerIndex, stateBefore, aiMove);
 
-            var stateAfter = updateGameState(stateBefore, aiMove);
+            var stateAfter = updateGameStateAfterAIMove(stateBefore, aiMove);
 
             var boardExpect = [
                 //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
@@ -571,6 +585,30 @@ describe("AI service", function() {
                 {set: {key: "trace", value: traceExpect}}
             ]);
         });
+
+        it ("player0 finds the position at the next row", function() {
+            var playerIndex = 0;
+
+            var stateBefore = getDefaultState();
+            // no place on board to send tiles, so computer has to pick one more tile
+            stateBefore.board = [
+                //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+                [ 1, 2, 3,-1,-1,-1, 4, 5, 6,-1,-1, 7, 8, 9,10,-1,-1,-1],
+                [-1,-1,-1,13,14,15,-1,-1,-1,-1,16,17,18,-1,-1,19,20,21],
+                [-1,-1,22,23,24,25,-1,-1,-1,-1,26,27,28,29,30,-1,-1,-1],
+                [-1,-1,-1,31,32,33,34,-1,-1,-1,-1,35,36,37,38,-1,-1,-1],
+                [-1,-1,39,40,41,42,-1,-1,-1,-1,43,44,45,46,47,-1,-1,-1],
+                [-1,-1,-1,48,49,50,51,-1,-1,-1,-1,52,53,54,55,-1,-1,-1],
+                [35,36,37,39], // tile35: red10, tile36: red11, tile37: red12
+                [9]
+            ];
+
+            var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+
+            expectPickOk(0, stateBefore, aiMove);
+
+        });
+
     });
 
     describe("[initial meld]", function () {
@@ -591,6 +629,7 @@ describe("AI service", function() {
 
             // computer has to pick, since tiles in hand score less than 30
             var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+            expectMoveOk(playerIndex, stateBefore, aiMove);
 
             expectPickOk(playerIndex, stateBefore, aiMove);
 
@@ -615,8 +654,9 @@ describe("AI service", function() {
 
             // computer can send tile4-tile6, since he has finished initial meld
             var aiMove = _aiService.createComputerMove(playerIndex, stateBefore);
+            expectMoveOk(playerIndex, stateBefore, aiMove);
 
-            var stateAfter = updateGameState(stateBefore, aiMove);
+            var stateAfter = updateGameStateAfterAIMove(stateBefore, aiMove);
 
             var boardExpect = [
                 //0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17

@@ -1,5 +1,5 @@
 /**
- * File: gameLogicService.js
+ * File: app/js/services/gameLogicService.js
  * ----------------------------------------------------------
  * Game logic for Rummikub game.
  *
@@ -7,7 +7,6 @@
  * @date  : 2015.02.14
  * ----------------------------------------------------------
  */
-
 (function () {
 
     'use strict';
@@ -18,34 +17,34 @@
      * I. Elements in game state.
      *
      * 1. board: 2D array.
-     *      Each element is tileIndex ([0, 105]), -1 means no tile at that position. 
+     *      Each element is tileIndex ([0, 105]), -1 means no tile at that position.
      *      1.1  game board   (6 x 18)
      *      1.2  player board (nplayers x tiles in each player's hand)
-     *     
+     *
      *      e.g. 2-players initial scenario:
      *      row 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17  col
      *      [ [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  0  ----------
      *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  1      |
-     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  2  game board    
+     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  2  game board
      *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  3      |
      *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  4      |
-     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  5  -----------   
-     *        [ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],                6 // 1st player's hand     
-     *        [14,15,16,17,18,19,20,21,22,23,24,25,26]              ]  7 // 2nd player's hand 
+     *        [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]  5  -----------
+     *        [ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13],                6 // 1st player's hand
+     *        [14,15,16,17,18,19,20,21,22,23,24,25,26]              ]  7 // 2nd player's hand
      *
      * 2. deltas: 1D array, recording the move history in current turn.
      *      Each element is like: {tileIndex:*, from: {row: * ,col: * }, to: {row: * ,col: *} }
      *
-     * 3. type:  'INIT' / "MOVE" / "PICK" / "MELD" / "UNDO" / "SORT"
-     * 
-     * 4. trace: {nplayers: *, intial: [], nexttile: *}
+     * 3. type:  'INIT' / 'MOVE' / 'PICK' / 'MELD' / 'UNDO' / 'SORT'
+     *
+     * 4. trace: {nplayers: *, initial: [], nexttile: *}
      *
      * 5. tiles: array of tile, each tile is {tileIndex: {score: *, color: 'red'/'black'/'orange'/'blue'/'joker'}}
-     * 
-     *---------------------------------------------------------------------------------- 
+     *
+     *----------------------------------------------------------------------------------
      *
      * II Moves in game process.
-     *  
+     *
      *  0 - setTurn : {setTurn : {turnIndex: 0}},
      *  0 - endMatch: {endMatch: {endMatchScores: [90, -90]}}
      *  1 - setType : {set: {key: 'type', value: "PICK"}}
@@ -85,13 +84,14 @@
                 var expectedMove = createMove(stateBefore, playerIndex, actualMove);
                 if (!angular.equals(actualMove, expectedMove)) {
                     if (CONFIG.SETTING.verbose) {
+                        // print debug info
                         var actLen = actualMove.length;
                         var expLen = expectedMove.length;
                         if (actLen !== expLen) {
                             console.log("Different length for actual move and expected move");
                         } else {
                             for (var i = 0; i < actLen; i++) {
-                                if (actualMove[i] !== expectedMove[i]) {
+                                if ( !angular.equals(actualMove[i], expectedMove[i]) ) {
                                     console.log("act: " + JSON.stringify(actualMove[i]));
                                     console.log("exp: " + JSON.stringify(expectedMove[i]));
                                 }
@@ -101,15 +101,22 @@
                     return false;
                 }
             } catch (e) {
-                if (CONFIG.SETTING.verbose) {
-                    //console.log(e.stack);
-                    console.log(e.message);
-                }
+                //if (CONFIG.SETTING.verbose) {
+                //    //console.log(e.stack);
+                //    console.log(e.message);
+                //}
                 return false;
             }
             return true;
         }
 
+        /**
+         *
+         * @param stateBefore
+         * @param playerIndex
+         * @param actualMove
+         * @returns {*}
+         */
         function createMove(stateBefore, playerIndex, actualMove) {
             var moveType = actualMove[1].set.value;
             if (moveType !== "INIT") {
@@ -127,7 +134,7 @@
                 case "MOVE":
                     deltas = actualMove[3].set.value;
                     var delta = deltas[deltas.length - 1];
-                    expectedMove = getMoveMove(playerIndex, stateBefore, delta);
+                    expectedMove = getMoveMove(playerIndex, stateBefore, delta, null);
                     break;
                 case "PICK":
                     expectedMove = getPickMove(playerIndex, stateBefore);
@@ -211,6 +218,7 @@
          * @param playerIndex
          * @param stateBefore
          * @param delta
+         * @param undo
          * @returns {*[]}
          */
         function getMoveMove(playerIndex, stateBefore, delta, undo) {
@@ -264,7 +272,7 @@
             if (to.row === playerRow) {
                 check( from.row === playerRow  ||   // move tiles in hand
                     isTileSentToBoardInCurrentTurnByPlayer(tileToMove, playerIndex, deltas), // retrieve own tile from board
-                "[MOVE] cannot retrieve tile" + tileToMove+ " back to hand because" +
+                    "[MOVE] cannot retrieve tile" + tileToMove+ " back to hand because" +
                     "it is not sent by board by you in current turn" );
                 // after back to hand, only player himself can see that tile
                 visibility = [playerIndex];
@@ -361,19 +369,16 @@
             check (isMeldOk(stateBefore, board, playerIndex ,stateBefore.trace.initial[playerIndex]),
                 "[MELD] meld is not ok" );
 
-            // 2. check winner
-            var firstOperation;
-            var hasPlayerWon = board[playerRow].length === 0;
-            if (hasPlayerWon === false) {
-                hasPlayerWon = true;
-                for (var i = 0; i < board[playerRow].length; i++) {
-                    if (board[playerRow][i] !== -1) {
-                        hasPlayerWon = false;
-                        break;
-                    }
+            // 2. check winner: player only has -1 tile in hand, he wins
+            var hasPlayerWon = true;
+            for (var i = 0; i < board[playerRow].length; i++) {
+                if (board[playerRow][i] !== -1) {
+                    hasPlayerWon = false;
+                    break;
                 }
             }
-            // player has no tile left in hand, or only has -1 tile in hand, he wins
+
+            var firstOperation;
             if ( hasPlayerWon ) {
                 firstOperation = {endMatch: {endMatchScores: getEndScores(playerIndex, stateBefore)}};
             } else {
@@ -492,7 +497,7 @@
 
             var ableToInitial = true;
             if (stateBefore.trace.initial[playerIndex] === false) {
-                if (getScore(playerIndex, sets, stateBefore) < 30) {
+                if (getScore(sets, stateBefore) < 30) {
                     ableToInitial = false;
                 }
             }
@@ -642,7 +647,7 @@
         //    return gameState["tile" + tileIndex];
         //}
 
-        function getScore(playerIndex, sets, gameState) {
+        function getScore(sets, gameState) {
             var score = 0;
             for (var i = 0; i < sets.length; i++) {
                 for (var j = 0; j < sets[i].length; j++) {
@@ -658,9 +663,9 @@
         }
 
         function getNextEmptySlotInBoard(board, start, slot_size) {
-            if (start.row > getGameBoardRows() ) {
-                return null;
-            }
+            //if (start.row > getGameBoardRows() ) {
+            //    return null;
+            //}
             var row = start.row;
             var col = start.col;
             var emptyCount = 0;
@@ -701,31 +706,45 @@
             var sets = [];
             var groups = [];
             var runs = [];
-            if (option === "groupFirst") {
-                groups = findAllGroups(tiles, state);
-                if (groups.length !== 0) {
-                    // group found in hand
-                    remains = getRemainTilesFromSets(tiles, groups);
-                    sets = sets.concat(groups);
-                }
-                runs = findAllRuns(remains, state);
-                if (runs.length !== 0) {
-                    sets = sets.concat(runs);
-                    remains = getRemainTilesFromSets(remains, runs);
-                }
-            } else {
-                // "runFirst" option
-                runs = findAllRuns(tiles, state);
-                if (runs.length !== 0) {
-                    remains = getRemainTilesFromSets(tiles, runs);
-                    sets = sets.concat(runs);
-                }
-                groups = findAllGroups(remains, state);
-                if (groups.length !== 0) {
-                    sets = sets.concat(groups);
-                    remains = getRemainTilesFromSets(remains, groups);
-                }
+
+            groups = findAllGroups(tiles, state);
+            if (groups.length !== 0) {
+                // group found in hand
+                remains = getRemainTilesFromSets(tiles, groups);
+                sets = sets.concat(groups);
             }
+            runs = findAllRuns(remains, state);
+            if (runs.length !== 0) {
+                sets = sets.concat(runs);
+                remains = getRemainTilesFromSets(remains, runs);
+            }
+
+
+            //if (option === "groupFirst") {
+            //    groups = findAllGroups(tiles, state);
+            //    if (groups.length !== 0) {
+            //        // group found in hand
+            //        remains = getRemainTilesFromSets(tiles, groups);
+            //        sets = sets.concat(groups);
+            //    }
+            //    runs = findAllRuns(remains, state);
+            //    if (runs.length !== 0) {
+            //        sets = sets.concat(runs);
+            //        remains = getRemainTilesFromSets(remains, runs);
+            //    }
+            //} else {
+            //    // "runFirst" option
+            //    runs = findAllRuns(tiles, state);
+            //    if (runs.length !== 0) {
+            //        remains = getRemainTilesFromSets(tiles, runs);
+            //        sets = sets.concat(runs);
+            //    }
+            //    groups = findAllGroups(remains, state);
+            //    if (groups.length !== 0) {
+            //        sets = sets.concat(groups);
+            //        remains = getRemainTilesFromSets(remains, groups);
+            //    }
+            //}
             return {sets: sets, remains: remains};
         }
 
@@ -1099,7 +1118,7 @@
          *
          * @param state
          * @param setsInBoard
-         * @param tilesLastTurn (array) of tile indices that player holding in last turn.
+         * @param tilesSentThisTurn
          * @returns {number}
          */
         function getInitialMeldScore(state, setsInBoard, tilesSentThisTurn) {
@@ -1125,7 +1144,7 @@
         }
 
         /**
-         * check wether game is over.
+         * check whether game is over.
          *
          * @param state
          * @returns {boolean}
@@ -1135,10 +1154,11 @@
         }
 
         /**
-         *
          * get index of winning player. returns -1 if no player wins.
          * After game is on, player with no tiles left in hand is the winner.
+         *
          * @param board
+         * @param deltas
          * @returns {number}
          */
         function getWinner(board, deltas) {
@@ -1163,10 +1183,7 @@
          * @returns {boolean}
          */
         function isTie(state) {
-            var isTied = state.trace.nexttile >= 106;
-            //if (isTied === false) {
-            //}
-            return isTied;
+            return state.trace.nexttile >= 106;
         }
 
         /**
@@ -1237,9 +1254,9 @@
          * @returns {Array}
          */
         function findAllSetInHand(playerHand, state) {
-            if (playerHand.length === 0) {
-                return playerHand;
-            }
+            //if (playerHand.length === 0) {
+            //    return playerHand;
+            //}
             // try to find all groups in hand
             var hand = angular.copy(playerHand);
 
@@ -1308,9 +1325,6 @@
         function findRun(runCandidate, state) {
             //console.log("same: " + runCandidate);
             var validRuns = [];
-            if (runCandidate.length === 0) {
-                return validRuns;
-            }
             var scoreExpect = getTileScoreByIndex(runCandidate[0], state);
             var consecutive = [];
             for (var i = 0; i < runCandidate.length; i++) {
@@ -1334,9 +1348,6 @@
         }
 
         function findAllGroups(tiles, state) {
-            if (tiles.length === 0) {
-                return [];
-            }
             tiles.sort(sortBy("score", state));
             var groups = [];
             var fast = getTileScoreByIndex(tiles[0], state);
@@ -1368,9 +1379,6 @@
          */
         function findGroup(groupCandidate, state) {
             var validGroups = [];
-            if (groupCandidate.length === 0) {
-                return validGroups;
-            }
             var colors = [];
             var group = [];
             for (var i = 0; i < groupCandidate.length; i++) {
@@ -1401,21 +1409,21 @@
         /**
          * usage:
          *   playerHand.sort(sortBy("score", $scope.state));
+         *
          * @param type
+         * @param state
          * @returns {Function}
          */
         function sortBy(type, state) {
             return function (tileIndexA, tileIndexB) {
                 var tileA = state["tile" + tileIndexA];
                 var tileB =  state["tile" + tileIndexB];
-                if (tileA !== undefined && tileB !== undefined) {
-                    if (type === "score") {
-                        return tileA.score - tileB.score;
-                    } else if (type === "color") {
-                        return (tileA.color > tileB.color) ? 1 : (tileA.color < tileB.color) ? -1 : (tileA.score - tileB.score);
-                    }
+                if (type === "score") {
+                    return tileA.score - tileB.score;
+                } else {
+                    // sort by "color"
+                    return (tileA.color > tileB.color) ? 1 : (tileA.color < tileB.color) ? -1 : (tileA.score - tileB.score);
                 }
-                return 1;
             };
         }
 
