@@ -118,3 +118,10 @@ div[class^='col-xs-'] {
 #menuArea p {
    margin: 0 0 10%;
 }
+
+.carousel-indicators li {
+   background-color: black;
+}
+.carousel-indicators .active {
+   background-color: green;
+}
