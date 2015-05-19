@@ -25,11 +25,6 @@
             // whether show dragging lines while dragging
             var showDraggingLines = CONFIG.SETTING.show_dragging_lines;
 
-            // enable to manipulate game state in e2e tests
-            window.e2e_test_stateService = stateService;
-
-            // enable platform's drag-n-drop listener
-            dragAndDropService.addDragListener("gameArea", handleDragEvent);
             /** ************************************************************/
 
             $scope.gameAreaPaddingPercent = CONFIG.GAME_AREA_PADDING_PERCENTAGE;
@@ -89,7 +84,7 @@
                     dragEndHandler(pos);
                 } else {
                     // drag continues
-                    dragContinueHandler(pos, clientX, clientY);
+                    dragContinueHandler(pos);
                 }
                 if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
                     draggingLines.style.display = "none";
@@ -128,7 +123,7 @@
                 }
             }
 
-            function dragContinueHandler(pos, clientX, clientY) {
+            function dragContinueHandler(pos) {
                 if (pos) {
                     var container = getTileContainerSize(pos);
                     $scope.$apply(function () {
@@ -578,6 +573,12 @@
                 return result;
             };
 
+            // enable to manipulate game state in e2e tests
+            window.e2e_test_stateService = stateService;
+
+            // enable platform's drag-n-drop listener
+            dragAndDropService.addDragListener("gameArea", handleDragEvent);
+
             gameService.setGame( {
                 gameDeveloperEmail: "jz1371@nyu.edu",
                 minNumberOfPlayers: 2,
@@ -587,5 +588,5 @@
                 updateUI: updateUI
             });
 
-        }])
+        }]);
 }());

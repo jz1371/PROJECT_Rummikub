@@ -47,5 +47,5 @@ angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance
 
 angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scope) {
     'use strict';
-    $scope.myInterval = 5000;
+    $scope.myInterval = 0;
 }]);

@@ -406,9 +406,9 @@ describe("Rummikub Unit Tests", function() {
                 stateBefore.trace.nexttile = 105;
                 var move = pickMoveTemplate(0, 105);
                 move[0] = {endMatch: {endMatchScores: [0, 0]}};
-                move[2].set.value[6] = [13,1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,0,105],
+                move[2].set.value[6] = [13,1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,0,105];
                     /* ! tile index should be [0,106] ! */
-                    expectMoveOk(0, stateBefore, move);
+                expectMoveOk(0, stateBefore, move);
 
             });
 
@@ -703,11 +703,10 @@ describe("Rummikub Unit Tests", function() {
                 ];
                 var deltasExpect = angular.copy(stateBefore.deltas);
 
-                var tileToMove = undefined;
-                var move = moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove,null);
+                var tileToMove = "tileUnknown";
+                var move = moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove, null);
                 expectIllegalMove(playerIndex, stateBefore, move);
 
-                tileToMove = "tileUnknown";
                 move = moveMoveTemplate(playerIndex, boardExpect, deltasExpect, tileToMove,null);
                 expectIllegalMove(playerIndex, stateBefore, move);
 

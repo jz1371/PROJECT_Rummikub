@@ -47,11 +47,6 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
             // whether show dragging lines while dragging
             var showDraggingLines = CONFIG.SETTING.show_dragging_lines;
 
-            // enable to manipulate game state in e2e tests
-            window.e2e_test_stateService = stateService;
-
-            // enable platform's drag-n-drop listener
-            dragAndDropService.addDragListener("gameArea", handleDragEvent);
             /** ************************************************************/
 
             $scope.gameAreaPaddingPercent = CONFIG.GAME_AREA_PADDING_PERCENTAGE;
@@ -111,7 +106,7 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                     dragEndHandler(pos);
                 } else {
                     // drag continues
-                    dragContinueHandler(pos, clientX, clientY);
+                    dragContinueHandler(pos);
                 }
                 if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
                     draggingLines.style.display = "none";
@@ -150,7 +145,7 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                 }
             }
 
-            function dragContinueHandler(pos, clientX, clientY) {
+            function dragContinueHandler(pos) {
                 if (pos) {
                     var container = getTileContainerSize(pos);
                     $scope.$apply(function () {
@@ -600,6 +595,12 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                 return result;
             };
 
+            // enable to manipulate game state in e2e tests
+            window.e2e_test_stateService = stateService;
+
+            // enable platform's drag-n-drop listener
+            dragAndDropService.addDragListener("gameArea", handleDragEvent);
+
             gameService.setGame( {
                 gameDeveloperEmail: "jz1371@nyu.edu",
                 minNumberOfPlayers: 2,
@@ -609,7 +610,7 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                 updateUI: updateUI
             });
 
-        }])
+        }]);
 }());
 ;angular.module('myApp').controller('HelpCtrl', ['$scope','$modal','$log',function ($scope, $modal, $log) {
 
@@ -660,7 +661,7 @@ angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance
 
 angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scope) {
     'use strict';
-    $scope.myInterval = 5000;
+    $scope.myInterval = 0;
 }]);
 ;/**
  * File: app/js/filters/filters.js
@@ -1470,7 +1471,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
             return null;
         }
 
-        function findSetsInHand(tiles, state, option) {
+        function findSetsInHand(tiles, state) {
             var remains = tiles;
             var sets = [];
             var groups = [];

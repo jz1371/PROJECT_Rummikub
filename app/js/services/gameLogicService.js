@@ -701,7 +701,7 @@
             return null;
         }
 
-        function findSetsInHand(tiles, state, option) {
+        function findSetsInHand(tiles, state) {
             var remains = tiles;
             var sets = [];
             var groups = [];
