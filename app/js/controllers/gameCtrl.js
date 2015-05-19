@@ -70,6 +70,7 @@
             function handleDragEvent(type, clientX, clientY) {
                 if (!$scope.isYourTurn || !isWithinGameArea(clientX, clientY)) {
                     draggingLines.style.display = "none";
+                    myDrag.style.display = "none";
                     return;
                 }
                 var pos = getDraggingTilePosition(clientX, clientY);
