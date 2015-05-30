@@ -16,7 +16,7 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
 
         SETTING: {
             verbose            : true,
-            show_dragging_lines: true
+            show_dragging_lines: false
         }
     }
 );

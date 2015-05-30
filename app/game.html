@@ -83,7 +83,7 @@
 
         <div id="info-panel" class="row text-primary" ng-if="true">
             <i class="fa fa-volume-up"></i>
-            {{debug}}
+            {{debug || "debug" | translate}}
             <div id="rotate" class="text-primary" style="font-size: 4vh">{{'ROTATE_INFO' | translate}}</div>
         </div>
 

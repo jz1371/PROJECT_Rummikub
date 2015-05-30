@@ -12,9 +12,9 @@
 
     angular.module('myApp')
         .controller('GameCtrl', [
-        '$scope', '$log', '$window', '$animate', '$timeout',
+        '$scope', '$log', '$window', '$animate', '$timeout', '$translate',
         'stateService', 'gameService', 'dragAndDropService', 'gameLogicService', 'gameAIService', 'CONFIG',
-        function($scope, $log, $window,  $animate, $timeout,
+        function($scope, $log, $window,  $animate, $timeout, $translate,
                  stateService ,gameService, dragAndDropService, gameLogicService, gameAIService, CONFIG) {
 
             /*************************************************************
@@ -110,12 +110,12 @@
                         try {
                             $scope.boardCellClicked(from.row, from.col);
                             $scope.boardCellClicked(to.row, to.col);
-                            var msg = "Dragged to " + to.row + "x" + to.col;
-                            logout(msg);
+                            //var msg = "Dragged to " + to.row + "x" + to.col;
+                            //logout(msg);
                             $scope.msg = msg;
                         }catch(e) {
                             // illegal move, restore
-                            logout(e.message);
+                            //logout(e.message);
                             /* return immediately! */
                             //$scope.debug = e.message;
                             return;
@@ -144,9 +144,10 @@
 
                     var centerXY = {
                         //TODO: better to determine center x
-                        x: container.left - gameArea.getBoundingClientRect().left + container.width / 2 - document.getElementById("game").clientWidth * $scope.gameAreaPaddingPercent,
+                        x: container.left - gameArea.getBoundingClientRect().left + container.width / 2
+                            - document.getElementById("game").clientWidth * $scope.gameAreaPaddingPercent,
                         y: container.top  + container.height / 2};
-                    logout("centerXY: " + centerXY.x);
+                    //logout("centerXY: " + centerXY.x);
 
                     setDraggingLines(centerXY);
 
@@ -213,8 +214,8 @@
                         col = Math.floor($scope.board[row].length * x / windowOffset.width);
                     }
                 }
-                logout("row: " + row);
-                logout("col: " + col);
+                //logout("row: " + row);
+                //logout("col: " + col);
                 return row !== -1 ? {row: row, col: col} : null ;
             }
 
@@ -308,7 +309,7 @@
             }
 
             $scope.boardCellClicked =  function (row, col) {
-                logout(["Clicked on cell:", row, col]);
+                //logout(["Clicked on cell:", row, col]);
                 //$scope.debug = "click board cell: (" + row + "," + col + ")";
                 if ( $scope.isYourTurn === false ) {
                     return;
@@ -347,7 +348,7 @@
                     }
                 } catch (e) {
                     clearActiveTile();
-                    //$scope.debug = e.message;
+                    $scope.debug = e.message;
                     logout(e);
                     return false;
                 }
@@ -372,7 +373,7 @@
                         var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                         gameService.makeMove(move);
                     } catch (e) {
-                        //$scope.debug = e.message;
+                        $scope.debug = e.message;
                     }
                     clearActiveTile();
                 }
@@ -423,10 +424,10 @@
                         gameService.makeMove(move);
                         // reset sort
                         $scope.sortType = "sort";
-                        //$scope.debug = "pick one tile";
+                        $scope.debug = "pick one tile";
                     } catch (e) {
                         logout(e.stack);
-                        //$scope.debug = e.message;
+                        $scope.debug = e.message;
                     }
                 }
             };
@@ -439,7 +440,7 @@
                         // reset sort
                         $scope.sortType = "sort";
                     } catch (e) {
-                        //$scope.debug = e.message;
+                        $scope.debug = e.message;
                     }
                 }
             };
