@@ -2,10 +2,12 @@
  * File: app/js/app.js
  * ------------------------------------------------
  * Starting point for application and configuration
+ *
  * @author: Jingxin Zhu
  * @date  : 2015.05.10
- *
+ * ------------------------------------------------
  */
+
 'use strict';
 
 angular.module('myApp',['ngTouch', 'ui.bootstrap'])

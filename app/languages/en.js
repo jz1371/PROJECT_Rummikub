@@ -14,7 +14,7 @@ window.angularTranslationsLoaded('en',{
 "COLOR":"color",
 "UNDO":"undo",
 "HELP":"help",
-123:"\"123\"",
+123:"123'",
 "UNDO_ALL":"undo all",
 "TILES_LEFT":"tiles left",
 "First time to play Rummikub?":"First time to play Rummikub?",
@@ -28,8 +28,13 @@ window.angularTranslationsLoaded('en',{
 "RULE_8":"See more rules on",
 "wiki":"wiki",
 "ROTATE_INFO":"Please rotate your phone for better display",
+"pick one tile":"pick one tile",
+"[PICK] you cannot pick, since you sent tile to board.":"[PICK] you cannot pick, since you sent tile to board.",
+"[PICK] you should not mess up the board, if you want to pick":"[PICK] you should not mess up the board, if you want to pick",
 "[MELD] meld is not ok":"[MELD] meld is not ok",
 "[MELD] you cannot meld since no tiles sent to board in this turn":"[MELD] you cannot meld since no tiles sent to board in this turn",
-"pick one tile":"pick one tile",
+"[MELD]: you must score at least 30 (without joker tile) for your initial meld":"[MELD]: you must score at least 30 (without joker tile) for your initial meld",
+"[MOVE] you cannot move tiles from other player's hand":"[MOVE] you cannot move tiles from other player's hand",
+"[MOVE] you cannot move tiles to other player's hand":"[MOVE] you cannot move tiles to other player's hand",
 "CLOSE":"Close"
 });

@@ -14,7 +14,7 @@ window.angularTranslationsLoaded('zh',{
 "COLOR":"颜色",
 "UNDO":"撤销",
 "HELP":"帮助",
-123:"\"123\"",
+123:"数字",
 "UNDO_ALL":"撤销全部",
 "TILES_LEFT":" 张牌剩余",
 "First time to play Rummikub?":"第一次玩拉密牌?",
@@ -28,8 +28,13 @@ window.angularTranslationsLoaded('zh',{
 "RULE_8":"更多规则参考",
 "wiki":"维基百科",
 "ROTATE_INFO":"请旋转手机屏幕来获得更好的显示效果",
+"pick one tile":"抽牌",
+"[PICK] you cannot pick, since you sent tile to board.":"不能抽牌因为已经有牌送出",
+"[PICK] you should not mess up the board, if you want to pick":"如果想要融合就不能打乱桌上的牌",
 "[MELD] meld is not ok":"无法完成融合",
 "[MELD] you cannot meld since no tiles sent to board in this turn":"无法融合：本轮中没有牌送到台面",
-"pick one tile":"抽牌",
+"[MELD]: you must score at least 30 (without joker tile) for your initial meld":"无法融合: 至少达到30分(鬼牌为0分)才能完成第一次融合",
+"[MOVE] you cannot move tiles from other player's hand":"不能移动其他对手手里的牌",
+"[MOVE] you cannot move tiles to other player's hand":"不可以把牌送给其他对手",
 "CLOSE":"关闭"
 });

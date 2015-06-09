@@ -12,10 +12,10 @@
 
     angular.module('myApp')
         .controller('GameCtrl', [
-        '$scope', '$log', '$window', '$animate', '$timeout', '$translate',
-        'stateService', 'gameService', 'dragAndDropService', 'gameLogicService', 'gameAIService', 'CONFIG',
-        function($scope, $log, $window,  $animate, $timeout, $translate,
-                 stateService ,gameService, dragAndDropService, gameLogicService, gameAIService, CONFIG) {
+        '$scope', '$log', '$window', '$animate', '$timeout', '$translate', 'stateService', 'gameService',
+            'dragAndDropService', 'gameLogicService', 'gameAIService', 'CONFIG',
+        function($scope, $log, $window,  $animate, $timeout, $translate, stateService ,gameService,
+                 dragAndDropService, gameLogicService, gameAIService, CONFIG) {
 
             /*************************************************************
              *********************   Configuration  *********************/
@@ -28,6 +28,8 @@
             /** ************************************************************/
 
             $scope.gameAreaPaddingPercent = CONFIG.GAME_AREA_PADDING_PERCENTAGE;
+            var gameBoardRows = CONFIG.GAME_BOARD_ROWS;
+            var gameBoardCols = CONFIG.GAME_BOARD_COLS;
 
             function logout(log, obj) {
                 if (verbose) {
@@ -40,9 +42,6 @@
             }
 
             var gameEnd = false;
-
-            var gameBoardRows = CONFIG.GAME_BOARD_ROWS;
-            var gameBoardCols = CONFIG.GAME_BOARD_COLS;
 
             $scope.rows = gameBoardRows;
             $scope.cols = gameBoardCols;
@@ -110,14 +109,10 @@
                         try {
                             $scope.boardCellClicked(from.row, from.col);
                             $scope.boardCellClicked(to.row, to.col);
-                            //var msg = "Dragged to " + to.row + "x" + to.col;
-                            //logout(msg);
                             $scope.msg = msg;
                         }catch(e) {
                             // illegal move, restore
-                            //logout(e.message);
                             /* return immediately! */
-                            //$scope.debug = e.message;
                             return;
                         }
                     });
@@ -147,10 +142,8 @@
                         x: container.left - gameArea.getBoundingClientRect().left + container.width / 2
                             - document.getElementById("game").clientWidth * $scope.gameAreaPaddingPercent,
                         y: container.top  + container.height / 2};
-                    //logout("centerXY: " + centerXY.x);
 
                     setDraggingLines(centerXY);
-
                 }
             }
 
@@ -244,8 +237,11 @@
                 return $scope.activeTile !== undefined;
             };
 
+            /**
+             * Platform's API
+             * @param params
+             */
             function updateUI(params) {
-
                 $scope.isYourTurn = params.turnIndexAfterMove >=0 &&          // -1 means game end, -2 means game viewer
                 params.yourPlayerIndex === params.turnIndexAfterMove;         // it's my turn
 
@@ -255,7 +251,6 @@
                     var nPlayers = 2;
                     try {
                         var move = gameLogicService.createInitialMove(nPlayers);
-                        /* let player0 initializes the game. */
                         gameService.makeMove(move);
                     } catch (e) {
                         logout(e.message);
@@ -298,6 +293,7 @@
 
                 }
 
+                // Undo all process finished ?
                 if (undoAllInProcess && $scope.state.deltas.length === 0) {
                     undoAllInProcess = false;
                 }
@@ -309,12 +305,7 @@
             }
 
             $scope.boardCellClicked =  function (row, col) {
-                //logout(["Clicked on cell:", row, col]);
-                //$scope.debug = "click board cell: (" + row + "," + col + ")";
-                if ( $scope.isYourTurn === false ) {
-                    return;
-                }
-                if (row === -1 || col === -1) {
+                if ( $scope.isYourTurn === false || row === -1 || col === -1 ) {
                     return;
                 }
                 try {
@@ -324,31 +315,24 @@
                             // clicking a tile to activate it
                             $scope.activeTile = $scope.board[row][col];
                             $scope.from = {row: row, col: col};
-                            //$scope.debug = "picking Tile" + $scope.activeTile + " (" +
-                            //getTileByIndex($scope.activeTile).color +
-                            //"," + getTileByIndex($scope.activeTile).score +
-                            //" from: (" + row + "," + col + ")";
+                            var log = "picking Tile" + $scope.activeTile + " (" +
+                            getTileByIndex($scope.activeTile).color +
+                            "," + getTileByIndex($scope.activeTile).score +
+                            " from: (" + row + "," + col + "))";
+                            logout(log);
                         }
                     } else {
-                        //$scope.debug = "row: " + row + " col: " + col + " here: " + $scope.board[row][col];
                         // some tile has been activated before clicking
                         if ($scope.board[row][col] === -1) {
                             // clicking an empty position to send tile to
                             $scope.to = {row: row, col: col};
                             var delta = {tileIndex: $scope.activeTile, from: $scope.from, to: $scope.to};
-                            //$scope.debug = "index: " + delta.tileIndex;
                             var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                             gameService.makeMove(move);
                         }
                         clearActiveTile();
                     }
-                    // In case the board is not updated
-                    if (!$scope.$$phase) {
-                        $scope.$apply();
-                    }
                 } catch (e) {
-                    clearActiveTile();
-                    $scope.debug = e.message;
                     logout(e);
                     return false;
                 }
@@ -373,7 +357,7 @@
                         var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                         gameService.makeMove(move);
                     } catch (e) {
-                        $scope.debug = e.message;
+                        $scope.info = e.message;
                     }
                     clearActiveTile();
                 }
@@ -417,6 +401,8 @@
             /** ****************************************
              *********      Button Controls    *********
              *******************************************/
+
+            //TODO: deactivate button when tiles sent to board
             $scope.pickBtnClicked = function () {
                 if ($scope.isYourTurn) {
                     try {
@@ -424,14 +410,15 @@
                         gameService.makeMove(move);
                         // reset sort
                         $scope.sortType = "sort";
-                        $scope.debug = "pick one tile";
+                        $scope.info = "pick one tile";
                     } catch (e) {
-                        logout(e.stack);
-                        $scope.debug = e.message;
+                        logout(e.message);
+                        $scope.info = e.message;
                     }
                 }
             };
 
+            //TODO: deactivate button when no tiles sent to board yet
             $scope.meldBtnClicked = function () {
                 if ($scope.isYourTurn) {
                     try {
@@ -440,7 +427,9 @@
                         // reset sort
                         $scope.sortType = "sort";
                     } catch (e) {
-                        $scope.debug = e.message;
+                        //TODO:
+                        logout(e.message);
+                        $scope.info = e.message;
                     }
                 }
             };
@@ -451,6 +440,7 @@
                         var undo = gameLogicService.createSingleUndoMove($scope.turnIndex, $scope.state);
                         gameService.makeMove(undo);
                     } catch (e) {
+                        //$scope.info = e.message;
                     }
                 }
             };
@@ -468,7 +458,6 @@
                     return;
                 }
                 var type = $scope.sortType;
-                //var playerRow = getCurrentPlayerRow();
                 var nextType;
                 try {
                     switch (type) {
@@ -491,7 +480,7 @@
                     gameService.makeMove(move);
                     $scope.sortType = nextType;
                 } catch (e) {
-                    logout(e);
+                    logout(e.message);
                 }
             };
 
@@ -511,21 +500,16 @@
 
             /* ================= Helper Functions =================== */
             function isEmptyObj(obj) {
-
                 // null and undefined are "empty"
                 if (obj === null) {
                     return true;
                 }
-
-                // Assume if it has a length property with a non-zero value
-                // that that property is correct.
                 if (obj.length > 0)    {
                     return false;
                 }
                 if (obj.length === 0)  {
                     return true;
                 }
-
                 // Otherwise, does it have any properties of its own?
                 // Note that this doesn't handle
                 // toString and valueOf enumeration bugs in IE < 9
@@ -534,7 +518,6 @@
                         return false;
                     }
                 }
-
                 return true;
             }
 
