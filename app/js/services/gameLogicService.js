@@ -1222,6 +1222,7 @@
         }
 
         /**
+         * get the array of tiles sent by player to board during current turn.
          *
          * @param deltas
          * @param playerRow
