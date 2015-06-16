@@ -1,0 +1,33 @@
+<div class="overlayModal" ng-show="isHelpModalShown" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" ng-click="isHelpModalShown = false" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title" id="myModalLabel">
+                Title
+              </h4>
+            </div>
+            <div class="modal-body">
+              <carousel style="height: 150px">
+                <slide>
+                  <table>
+                    <tr>
+                      <td>
+                        Rule1
+                      </td>
+                      <td>
+                        <img src="img/icon_download.png" style="height:100px;">
+                      </td>
+                    </tr>
+                  </table>
+                </slide>
+              </carousel>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" ng-click="isHelpModalShown = false">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>

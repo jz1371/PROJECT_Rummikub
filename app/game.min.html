@@ -128,12 +128,12 @@
             </div>
             <!--</div>-->
 
-            <div class="col-xs-12">
+            <div class="col-xs-12" ng-show="!tileSentToBoard">
                 <button id="pickbtn" type="button" class="btn btn-info btn-circle" ng-click="pickBtnClicked()">{{'PICK' | translate}}</button>
             </div>
 
-            <div class="col-xs-12">
-                <button id="meldbtn" type="button" class="btn btn-warning btn-circle" ng-click="meldBtnClicked()">{{'MELD' | translate}}</button>
+            <div class="col-xs-12" ng-show="tileSentToBoard">
+                <button id="meldbtn" type="button" class="btn btn-warning btn-circle"  ng-click="meldBtnClicked()">{{'MELD' | translate}}</button>
             </div>
 
             <div class="col-xs-12">
@@ -146,7 +146,6 @@
 
             <div class="col-xs-12">
                 <button id="undoallbtn" type="button" class="btn btn-danger btn-circle" ng-click="undoAllBtnClicked()">
-
                     <p style="font-size: 1vw;"> {{'UNDO_ALL' | translate}}</p>
                 </button>
             </div>

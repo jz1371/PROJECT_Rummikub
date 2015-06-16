@@ -2,6 +2,7 @@ angular.module('myApp').controller('HelpCtrl', ['$scope','$modal','$log',functio
 
     'use strict';
 
+
     $scope.items = ['item1', 'item2', 'item3'];
 
     $scope.open = function (size) {
@@ -47,5 +48,12 @@ angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance
 
 angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scope) {
     'use strict';
+    $scope.helps = [
+        {"image": "img/valid.png", "rule": 'RULE_1'},
+        {"image": "img/valid-runs.png", "rule": 'RULE_2'},
+        {"image": "img/valid-groups.png", "rule": 'RULE_3'},
+        {"image": "img/valid-joker.png", "rule": 'RULE_4'},
+        {"image": "img/valid-run2.png", "rule": 'RULE_5'}
+    ];
     $scope.myInterval = 0;
 }]);

@@ -314,7 +314,6 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                     // Waiting 0.5 seconds to let the move animation finish; if we call aiService
                     // then the animation is paused until the javascript finishes.
                     sendComputerMove();
-
                 }
 
                 // Undo all process finished ?
@@ -326,6 +325,9 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                     $scope.undoBtnClicked();
                 }
 
+                $scope.tileSentToBoard = gameLogicService.getTilesSentToBoardThisTurn($scope.state.deltas, $scope.rows + $scope.turnIndex).length !== 0 ;
+                console.log("turn: " + gameLogicService.getTilesSentToBoardThisTurn($scope.state.deltas, $scope.rows + $scope.turnIndex));
+
             }
 
             $scope.boardCellClicked =  function (row, col) {
@@ -334,9 +336,8 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                 }
                 try {
                     if ($scope.activeTile === undefined) {
-                        // no tile has been activated
+                        // clicking a tile to activate it
                         if ($scope.board[row][col] !== -1) {
-                            // clicking a tile to activate it
                             $scope.activeTile = $scope.board[row][col];
                             $scope.from = {row: row, col: col};
                             var log = "picking Tile" + $scope.activeTile + " (" +
@@ -346,13 +347,13 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                             logout(log);
                         }
                     } else {
-                        // some tile has been activated before clicking
+                        // clicking a cell to send tile to
                         if ($scope.board[row][col] === -1) {
-                            // clicking an empty position to send tile to
                             $scope.to = {row: row, col: col};
                             var delta = {tileIndex: $scope.activeTile, from: $scope.from, to: $scope.to};
                             var move = gameLogicService.createMoveMove($scope.turnIndex, $scope.state, delta);
                             gameService.makeMove(move);
+                            //$scope.tileSentToBoard = gameLogicService.getTilesSentToBoardThisTurn.length !== 0 ;
                         }
                         clearActiveTile();
                     }
@@ -473,6 +474,7 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                 if ($scope.isYourTurn) {
                     undoAllInProcess = true;
                     $scope.undoBtnClicked();
+                    //$scope.tileSentToBoard = false;
                 }
             };
 
@@ -603,6 +605,7 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
 
     'use strict';
 
+
     $scope.items = ['item1', 'item2', 'item3'];
 
     $scope.open = function (size) {
@@ -648,6 +651,13 @@ angular.module('myApp').controller('ModalInstanceCtrl',['$scope','$modalInstance
 
 angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scope) {
     'use strict';
+    $scope.helps = [
+        {"image": "img/valid.png", "rule": 'RULE_1'},
+        {"image": "img/valid-runs.png", "rule": 'RULE_2'},
+        {"image": "img/valid-groups.png", "rule": 'RULE_3'},
+        {"image": "img/valid-joker.png", "rule": 'RULE_4'},
+        {"image": "img/valid-run2.png", "rule": 'RULE_5'}
+    ];
     $scope.myInterval = 0;
 }]);
 ;/**
@@ -1979,6 +1989,7 @@ angular.module('myApp').controller('CarouselDemoCtrl',['$scope', function ($scop
         }
 
         /**
+         * get the array of tiles sent by player to board during current turn.
          *
          * @param deltas
          * @param playerRow

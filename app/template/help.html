@@ -10,32 +10,9 @@
         <div ng-controller="CarouselDemoCtrl">
             <div>
                 <carousel interval="0">
-                    <slide active="slide.active">
-                        <img src="img/valid.png" style="margin:auto;">
-                        <h6>{{"RULE_1" | translate }}</h6>
-                    </slide>
-                    <slide>
-                        <img src="img/valid-runs.png" style="margin:auto;">
-                        <h6> {{'RULE_2' | translate }} </h6>
-                    </slide>
-                    <slide>
-                        <img src="img/valid-groups.png" style="margin: auto">
-                        <h6> {{'RULE_3' | translate}} </h6>
-                    </slide>
-                    <slide>
-                        <img src="img/valid-joker.png" style="margin: auto">
-                        <h6> {{'RULE_4' | translate}} </h6>
-                    </slide>
-                    <slide>
-                        <h6>{{"RULE_5" | translate}}.</h6>
-                        <br>
-                        <img src="img/valid-run2.png" style="margin: auto">
-                        <br>
-                        <h6> {{"RULE_6" | translate}}.</h6>
-                        <br>
-                        <h6>{{"RULE_7" | translate}}</h6>
-                        <br>
-                        <h6>{{'RULE_8' | translate}}<a href="http://en.wikipedia.org/wiki/Rummikub">{{'wiki' | translate}}</a></h6>
+                    <slide ng-repeat="help in helps">
+                        <img ng-src={{help.image}} style="margin: auto">
+                        <h6> {{ help.rule | translate}} </h6>
                     </slide>
                 </carousel>
             </div>
