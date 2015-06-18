@@ -294,6 +294,9 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                     $scope.nexttile = params.stateAfterMove.trace.nexttile;
                     $scope.playerHand = $scope.board[$scope.rows + $scope.turnIndex];
 
+                    $scope.tileSentToBoard = gameLogicService.getTilesSentToBoardThisTurn($scope.state.deltas, $scope.rows + $scope.turnIndex).length !== 0 ;
+                    //console.log("turn: " + gameLogicService.getTilesSentToBoardThisTurn($scope.state.deltas, $scope.rows + $scope.turnIndex));
+
                     // disable sort feature when empty slots left in board
                     // because sort will reset player hand
                     $scope.sortDisabled = false;
@@ -325,8 +328,6 @@ angular.module('myApp',['ngTouch', 'ui.bootstrap'])
                     $scope.undoBtnClicked();
                 }
 
-                $scope.tileSentToBoard = gameLogicService.getTilesSentToBoardThisTurn($scope.state.deltas, $scope.rows + $scope.turnIndex).length !== 0 ;
-                console.log("turn: " + gameLogicService.getTilesSentToBoardThisTurn($scope.state.deltas, $scope.rows + $scope.turnIndex));
 
             }
 
